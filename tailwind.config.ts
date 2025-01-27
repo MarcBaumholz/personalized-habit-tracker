@@ -19,6 +19,9 @@ export default {
     },
     extend: {
       colors: {
+        border: {
+          DEFAULT: "hsl(var(--border))",
+        },
         primary: {
           DEFAULT: "#2B3A67",
           light: "#3D5A80",
@@ -33,6 +36,8 @@ export default {
           primary: "#2C3E50",
           secondary: "#607080",
         },
+        input: "hsl(var(--input))",
+        ring: "hsl(var(--ring))",
       },
       animation: {
         "fade-in": "fadeIn 0.5s ease-in-out",
