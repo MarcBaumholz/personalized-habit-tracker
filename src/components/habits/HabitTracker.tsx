@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle, Info } from "lucide-react";
+import { CheckCircle } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -9,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { AddHabitDialog } from "./AddHabitDialog";
 
 export const HabitTracker = () => {
   return (
@@ -64,9 +65,7 @@ export const HabitTracker = () => {
       </div>
 
       <div className="pt-4 border-t">
-        <Button className="w-full" variant="outline">
-          Neue Gewohnheit hinzufügen
-        </Button>
+        <AddHabitDialog />
       </div>
     </Card>
   );
