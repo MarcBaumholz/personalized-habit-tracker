@@ -10,19 +10,19 @@ const Index = () => {
         <h1 className="text-4xl md:text-6xl font-bold text-primary">
           Entwickle nachhaltige Gewohnheiten
         </h1>
-        <p className="text-xl text-text-secondary">
+        <p className="text-xl text-muted-foreground">
           Ein wissenschaftlich fundiertes System, das dir hilft, deine Gewohnheiten
           zu verstehen und zu transformieren.
         </p>
         <div className="space-y-4">
           <Button
             size="lg"
-            className="bg-primary hover:bg-primary-light text-white px-8"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 px-8"
             onClick={() => navigate("/onboarding")}
           >
             Starte deine Reise
           </Button>
-          <p className="text-sm text-text-secondary">
+          <p className="text-sm text-muted-foreground">
             Basierend auf wissenschaftlicher Forschung und individueller Anpassung
           </p>
         </div>
