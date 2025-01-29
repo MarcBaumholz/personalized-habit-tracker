@@ -109,7 +109,7 @@ export const TodoList = () => {
                 size="sm"
                 onClick={() => toggleTodoMutation.mutate(todo)}
               >
-                <Check className={`h-4 w-4 ${todo.completed ? "text-primary" : ""}`} />
+                <Check className={`h-4 w-4 ${todo.completed ? "text-green-500" : ""}`} />
               </Button>
             </div>
           ))}

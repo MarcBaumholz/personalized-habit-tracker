@@ -13,7 +13,6 @@ import Profile from "./pages/Profile";
 import Calendar from "./pages/Calendar";
 import Education from "./pages/Education";
 import Toolbox from "./pages/Toolbox";
-import Community from "./pages/Community";
 
 const queryClient = new QueryClient();
 
@@ -80,10 +79,6 @@ const App = () => {
             <Route
               path="/toolbox"
               element={session ? <Toolbox /> : <Navigate to="/auth" />}
-            />
-            <Route
-              path="/community"
-              element={session ? <Community /> : <Navigate to="/auth" />}
             />
           </Routes>
         </BrowserRouter>

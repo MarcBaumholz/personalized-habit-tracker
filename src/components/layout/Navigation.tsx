@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Package, Calendar, Home, User, Wrench } from "lucide-react";
+import { Package, Calendar, Home, User, BookOpen } from "lucide-react";
 
 export const Navigation = () => {
   return (
@@ -17,6 +17,12 @@ export const Navigation = () => {
             <Button variant="ghost" size="sm">
               <Calendar className="h-5 w-5 mr-2" />
               Kalender
+            </Button>
+          </Link>
+          <Link to="/education">
+            <Button variant="ghost" size="sm">
+              <BookOpen className="h-5 w-5 mr-2" />
+              Education
             </Button>
           </Link>
           <Link to="/toolbox">
