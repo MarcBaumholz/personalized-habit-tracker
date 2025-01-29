@@ -1,11 +1,28 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate, useLocation } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 export const Navigation = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { toast } = useToast();
 
   const isActive = (path: string) => location.pathname === path;
+
+  const handleSignOut = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      navigate("/auth");
+    } catch (error: any) {
+      toast({
+        title: "Error signing out",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <nav className="bg-white border-b border-gray-200">
@@ -17,7 +34,7 @@ export const Navigation = () => {
           >
             HabitJourney
           </div>
-          <div className="space-x-4">
+          <div className="flex items-center space-x-4">
             <Button 
               variant={isActive("/dashboard") ? "default" : "ghost"} 
               onClick={() => navigate("/dashboard")}
@@ -53,6 +70,12 @@ export const Navigation = () => {
               onClick={() => navigate("/community")}
             >
               Community
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={handleSignOut}
+            >
+              Abmelden
             </Button>
           </div>
         </div>

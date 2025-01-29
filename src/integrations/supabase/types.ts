@@ -9,7 +9,131 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      habit_reflections: {
+        Row: {
+          created_at: string
+          habit_id: string
+          id: string
+          reflection_text: string | null
+          srhi_score: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          habit_id: string
+          id?: string
+          reflection_text?: string | null
+          srhi_score?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          habit_id?: string
+          id?: string
+          reflection_text?: string | null
+          srhi_score?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "habit_reflections_habit_id_fkey"
+            columns: ["habit_id"]
+            isOneToOne: false
+            referencedRelation: "habits"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "habit_reflections_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      habits: {
+        Row: {
+          category: string
+          context: string | null
+          created_at: string
+          difficulty: string | null
+          effort: string | null
+          frequency: string | null
+          id: string
+          identity: string | null
+          name: string
+          smart_goal: string | null
+          time_of_day: string | null
+          user_id: string
+          why: string | null
+        }
+        Insert: {
+          category: string
+          context?: string | null
+          created_at?: string
+          difficulty?: string | null
+          effort?: string | null
+          frequency?: string | null
+          id?: string
+          identity?: string | null
+          name: string
+          smart_goal?: string | null
+          time_of_day?: string | null
+          user_id: string
+          why?: string | null
+        }
+        Update: {
+          category?: string
+          context?: string | null
+          created_at?: string
+          difficulty?: string | null
+          effort?: string | null
+          frequency?: string | null
+          id?: string
+          identity?: string | null
+          name?: string
+          smart_goal?: string | null
+          time_of_day?: string | null
+          user_id?: string
+          why?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "habits_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          full_name: string | null
+          id: string
+          updated_at: string
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id: string
+          updated_at?: string
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
