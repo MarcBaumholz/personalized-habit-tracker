@@ -1,12 +1,36 @@
 import { Navigation } from "@/components/layout/Navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar as CalendarIcon, Plus } from "lucide-react";
+import { CalendarIcon, Plus, X } from "lucide-react";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { format } from "date-fns";
+import { de } from "date-fns/locale";
 
 const Calendar = () => {
   const [date, setDate] = useState<Date | undefined>(new Date());
+
+  const { data: completions } = useQuery({
+    queryKey: ["habit-completions"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
+
+      const { data } = await supabase
+        .from("habit_completions")
+        .select("*")
+        .eq("user_id", user.id);
+
+      return data || [];
+    },
+  });
+
+  const isDateCompleted = (date: Date) => {
+    const dateStr = format(date, "yyyy-MM-dd");
+    return completions?.some(c => c.completed_date === dateStr);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -33,12 +57,33 @@ const Calendar = () => {
               selected={date}
               onSelect={setDate}
               className="rounded-md border"
+              modifiers={{
+                completed: (date) => isDateCompleted(date),
+              }}
+              modifiersStyles={{
+                completed: {
+                  color: "red",
+                  position: "relative",
+                },
+              }}
+              components={{
+                DayContent: ({ date }) => (
+                  <div className="relative w-full h-full flex items-center justify-center">
+                    {date.getDate()}
+                    {isDateCompleted(date) && (
+                      <X className="absolute text-red-500 h-full w-full opacity-50" />
+                    )}
+                  </div>
+                ),
+              }}
             />
           </Card>
 
           <Card className="p-6">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">Tagesplan</h2>
+              <h2 className="text-xl font-semibold">
+                Tagesplan für {date ? format(date, "dd. MMMM yyyy", { locale: de }) : ""}
+              </h2>
               <Button size="sm">
                 <Plus className="h-4 w-4 mr-2" />
                 Gewohnheit planen

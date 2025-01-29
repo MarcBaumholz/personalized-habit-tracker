@@ -2,8 +2,29 @@ import { Navigation } from "@/components/layout/Navigation";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Brain, Heart, Star, Users, Coffee } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const Profile = () => {
+  const { data: responses } = useQuery({
+    queryKey: ["onboarding-responses"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
+
+      const { data } = await supabase
+        .from("onboarding_responses")
+        .select("*")
+        .eq("user_id", user.id);
+
+      return data || [];
+    },
+  });
+
+  const getResponse = (key: string) => {
+    return responses?.find(r => r.question_key === key)?.response || "";
+  };
+
   const personalityTraits = [
     { trait: "Offenheit", score: 75, icon: Brain },
     { trait: "Gewissenhaftigkeit", score: 82, icon: Star },
@@ -19,6 +40,24 @@ const Profile = () => {
         <h1 className="text-2xl font-bold mb-6">Dein Persönlichkeitsprofil</h1>
         
         <div className="grid gap-6">
+          <Card className="p-6">
+            <h2 className="text-xl font-semibold mb-4">Deine Antworten aus dem Onboarding</h2>
+            <div className="space-y-4">
+              <div className="p-4 border rounded-lg">
+                <h3 className="font-medium mb-2">Motivation</h3>
+                <p className="text-muted-foreground">{getResponse("motivation")}</p>
+              </div>
+              <div className="p-4 border rounded-lg">
+                <h3 className="font-medium mb-2">Herausforderungen</h3>
+                <p className="text-muted-foreground">{getResponse("challenges")}</p>
+              </div>
+              <div className="p-4 border rounded-lg">
+                <h3 className="font-medium mb-2">Gewünschte Überzeugungen</h3>
+                <p className="text-muted-foreground">{getResponse("beliefs")}</p>
+              </div>
+            </div>
+          </Card>
+
           <Card className="p-6">
             <h2 className="text-xl font-semibold mb-4">Big Five Persönlichkeitsmerkmale</h2>
             <div className="space-y-4">
@@ -36,41 +75,19 @@ const Profile = () => {
           </Card>
 
           <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Persönliche Stärken</h2>
+            <h2 className="text-xl font-semibold mb-4">Keystone Habits</h2>
             <div className="grid gap-4 md:grid-cols-2">
               <div className="p-4 bg-primary/10 rounded-lg">
-                <h3 className="font-medium mb-2">Fokussierte Arbeit</h3>
+                <h3 className="font-medium mb-2">Deep Work</h3>
                 <p className="text-sm text-muted-foreground">
-                  Deine hohe Gewissenhaftigkeit unterstützt dich bei konzentrierter Arbeit.
+                  {getResponse("keystone_habits")}
                 </p>
               </div>
               <div className="p-4 bg-primary/10 rounded-lg">
-                <h3 className="font-medium mb-2">Soziale Interaktion</h3>
+                <h3 className="font-medium mb-2">Meditation</h3>
                 <p className="text-sm text-muted-foreground">
-                  Deine Verträglichkeit hilft dir bei der Zusammenarbeit mit anderen.
+                  {getResponse("implementation")}
                 </p>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-4">ZRM-Entwicklungsbereiche</h2>
-            <div className="space-y-4">
-              <div className="p-4 border rounded-lg">
-                <h3 className="font-medium mb-2">Aktuelles Haltungsziel</h3>
-                <p className="text-sm text-muted-foreground">
-                  "Ich bin wie ein ruhiger Berg, der gelassen neue Herausforderungen meistert"
-                </p>
-              </div>
-              <div className="p-4 border rounded-lg">
-                <h3 className="font-medium mb-2">Ressourcenpool</h3>
-                <div className="flex gap-2 flex-wrap">
-                  {["Meditation", "Sport", "Natur", "Musik"].map((resource) => (
-                    <span key={resource} className="px-2 py-1 bg-secondary rounded text-sm">
-                      {resource}
-                    </span>
-                  ))}
-                </div>
               </div>
             </div>
           </Card>

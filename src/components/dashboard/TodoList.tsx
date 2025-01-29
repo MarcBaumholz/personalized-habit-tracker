@@ -101,7 +101,7 @@ export const TodoList = () => {
               key={todo.id}
               className="flex items-center justify-between p-2 rounded-lg hover:bg-secondary/20"
             >
-              <span className={todo.completed ? "line-through text-muted-foreground" : ""}>
+              <span className={todo.completed ? "line-through font-bold text-muted-foreground" : ""}>
                 {todo.title}
               </span>
               <Button
