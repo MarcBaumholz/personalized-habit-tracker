@@ -1,17 +1,11 @@
 import { Navigation } from "@/components/layout/Navigation";
 import { HabitTracker } from "@/components/habits/HabitTracker";
-import { WeeklyReflection } from "@/components/habits/WeeklyReflection";
-import { ProgressStats } from "@/components/dashboard/ProgressStats";
 import { TodoList } from "@/components/dashboard/TodoList";
-import { CommitmentPact } from "@/components/onboarding/CommitmentPact";
-import { DeepInterview } from "@/components/onboarding/DeepInterview";
+import { ProgressStats } from "@/components/dashboard/ProgressStats";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useState } from "react";
 
 const Index = () => {
-  const [onboardingStep, setOnboardingStep] = useState<"pact" | "interview" | "complete">("pact");
-
   const { data: hasCompletedOnboarding } = useQuery({
     queryKey: ["onboarding-status"],
     queryFn: async () => {
@@ -23,17 +17,12 @@ const Index = () => {
         .select("*")
         .eq("user_id", user.id);
 
-      return (data?.length || 0) >= 6; // Commitment + 5 interview questions
+      return (data?.length || 0) >= 6;
     },
   });
 
   if (!hasCompletedOnboarding) {
-    if (onboardingStep === "pact") {
-      return <CommitmentPact onComplete={() => setOnboardingStep("interview")} />;
-    }
-    if (onboardingStep === "interview") {
-      return <DeepInterview onComplete={() => setOnboardingStep("complete")} />;
-    }
+    return <Navigate to="/auth" />;
   }
 
   return (
@@ -45,9 +34,8 @@ const Index = () => {
         <div className="grid gap-6 md:grid-cols-2 mt-6">
           <div className="space-y-6">
             <HabitTracker />
-            <TodoList />
           </div>
-          <WeeklyReflection />
+          <TodoList />
         </div>
       </main>
     </div>

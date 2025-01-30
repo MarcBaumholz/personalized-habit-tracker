@@ -1,11 +1,17 @@
 import { Navigation } from "@/components/layout/Navigation";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Brain, Heart, Star, Users, Coffee } from "lucide-react";
+import { Brain, Heart, Star, Users, Coffee, RefreshCw } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 const Profile = () => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  
   const { data: responses } = useQuery({
     queryKey: ["onboarding-responses"],
     queryFn: async () => {
@@ -25,6 +31,31 @@ const Profile = () => {
     return responses?.find(r => r.question_key === key)?.response || "";
   };
 
+  const handleRestartOnboarding = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
+
+      await supabase
+        .from("onboarding_responses")
+        .delete()
+        .eq("user_id", user.id);
+
+      toast({
+        title: "Onboarding zurückgesetzt",
+        description: "Du kannst den Prozess jetzt neu starten.",
+      });
+
+      navigate("/auth");
+    } catch (error) {
+      toast({
+        title: "Fehler",
+        description: "Beim Zurücksetzen ist ein Fehler aufgetreten.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const personalityTraits = [
     { trait: "Offenheit", score: 75, icon: Brain },
     { trait: "Gewissenhaftigkeit", score: 82, icon: Star },
@@ -37,7 +68,13 @@ const Profile = () => {
     <div className="min-h-screen bg-background">
       <Navigation />
       <main className="container py-6">
-        <h1 className="text-2xl font-bold mb-6">Dein Persönlichkeitsprofil</h1>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">Dein Persönlichkeitsprofil</h1>
+          <Button onClick={handleRestartOnboarding} variant="outline">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Reflexion neustarten
+          </Button>
+        </div>
         
         <div className="grid gap-6">
           <Card className="p-6">

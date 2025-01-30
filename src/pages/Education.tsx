@@ -1,30 +1,55 @@
 import { Navigation } from "@/components/layout/Navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Video, Award, Users } from "lucide-react";
+import { BookOpen, Video, Award, Users, Brain, Target, Calendar } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+
+const courses = [
+  {
+    title: "Gewohnheiten verstehen",
+    description: "Die wissenschaftlichen Grundlagen der Gewohnheitsbildung",
+    icon: Brain,
+    duration: "5 Tage",
+    modules: [
+      "Die Anatomie einer Gewohnheit",
+      "Der Habit Loop",
+      "Trigger identifizieren",
+      "Belohnungssysteme verstehen",
+      "Implementation Intentions"
+    ],
+    progress: 60
+  },
+  {
+    title: "Keystone Habits",
+    description: "Identifiziere und entwickle Schlüsselgewohnheiten",
+    icon: Target,
+    duration: "7 Tage",
+    modules: [
+      "Was sind Keystone Habits?",
+      "Deep Work als Keystone Habit",
+      "Meditation als Keystone Habit",
+      "Kleine Gewohnheiten, große Wirkung",
+      "Habit Stacking Methode"
+    ],
+    progress: 30
+  },
+  {
+    title: "Habit Tracking Mastery",
+    description: "Effektives Tracking und Reflexion von Gewohnheiten",
+    icon: Calendar,
+    duration: "5 Tage",
+    modules: [
+      "Tracking Systeme verstehen",
+      "Die Seinfeld Methode",
+      "Digitale vs. analoge Tracker",
+      "Reflexionsroutinen etablieren",
+      "Anpassung und Optimierung"
+    ],
+    progress: 0
+  }
+];
 
 const Education = () => {
-  const courses = [
-    {
-      title: "Gewohnheiten erfolgreich etablieren",
-      description: "Lerne die wissenschaftlichen Grundlagen der Gewohnheitsbildung",
-      icon: BookOpen,
-      progress: 60,
-    },
-    {
-      title: "ZRM Grundlagen",
-      description: "Verstehe die Prinzipien des Zürcher Ressourcen Modells",
-      icon: Video,
-      progress: 30,
-    },
-    {
-      title: "Community Best Practices",
-      description: "Erfolgsgeschichten und Tipps aus der Community",
-      icon: Users,
-      progress: 0,
-    },
-  ];
-
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
@@ -43,14 +68,28 @@ const Education = () => {
                   <div>
                     <h3 className="font-medium">{course.title}</h3>
                     <p className="text-sm text-muted-foreground">{course.description}</p>
+                    <p className="text-sm text-primary mt-1">{course.duration}</p>
                   </div>
                 </div>
+                
+                <div className="space-y-2 mb-4">
+                  {course.modules.map((module, index) => (
+                    <div key={index} className="flex items-center text-sm">
+                      <div className="w-5 h-5 rounded-full border border-primary flex items-center justify-center mr-2">
+                        {index + 1}
+                      </div>
+                      {module}
+                    </div>
+                  ))}
+                </div>
+
                 <div className="h-2 bg-secondary rounded-full mb-4">
                   <div
                     className="h-full bg-primary rounded-full"
                     style={{ width: `${course.progress}%` }}
                   />
                 </div>
+                
                 <Button className="w-full" variant={course.progress > 0 ? "outline" : "default"}>
                   {course.progress > 0 ? "Fortsetzen" : "Starten"}
                 </Button>
