@@ -9,10 +9,11 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Brain, Target, Calendar, Users, Plus } from "lucide-react";
+import { Brain, Target, Calendar, Plus } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { AddHabitDialog } from "@/components/habits/AddHabitDialog";
 
 const HABIT_TOOLKITS = [
   {
@@ -86,7 +87,10 @@ export const Toolbox = () => {
     <div className="min-h-screen bg-background">
       <Navigation />
       <main className="container py-6">
-        <h1 className="text-2xl font-bold mb-6">Habit Baukasten</h1>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">Habit Baukasten</h1>
+          <AddHabitDialog />
+        </div>
         
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {HABIT_TOOLKITS.map((toolkit) => {
