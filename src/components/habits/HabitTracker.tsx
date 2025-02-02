@@ -32,7 +32,7 @@ export const HabitTracker = () => {
 
       const { data: habitsData } = await supabase
         .from("habits")
-        .select("*, habit_completions(*), habit_reflections(*))")
+        .select("*, habit_completions(*), habit_reflections(*)")
         .eq("user_id", user.id);
 
       return habitsData;
@@ -115,9 +115,9 @@ export const HabitTracker = () => {
   };
 
   return (
-    <Card className="p-6 space-y-4">
+    <Card className="p-6 space-y-4 bg-white">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-bold text-primary">Deine Gewohnheiten</h2>
+        <h2 className="text-xl font-bold text-gray-900">Deine Gewohnheiten</h2>
       </div>
       
       <div className="space-y-4">
@@ -125,8 +125,8 @@ export const HabitTracker = () => {
           <div key={habit.id} className="space-y-3 p-4 bg-gray-50 rounded-lg">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-medium">{habit.name}</h3>
-                <p className="text-sm text-muted-foreground">
+                <h3 className="font-medium text-gray-900">{habit.name}</h3>
+                <p className="text-sm text-gray-600">
                   {habit.habit_completions?.length || 0} Tage Streak
                 </p>
               </div>
@@ -141,7 +141,7 @@ export const HabitTracker = () => {
                   }}
                 >
                   <CheckCircle 
-                    className={`h-5 w-5 ${isCompletedToday(habit) ? "text-green-500" : ""}`} 
+                    className={`h-5 w-5 ${isCompletedToday(habit) ? "text-green-500" : "text-gray-400"}`} 
                   />
                 </Button>
                 <Button
@@ -154,7 +154,7 @@ export const HabitTracker = () => {
               </div>
             </div>
             <Progress value={calculateProgress(habit)} className="h-2" />
-            <div className="flex justify-between text-sm text-muted-foreground">
+            <div className="flex justify-between text-sm text-gray-600">
               <span>Fortschritt: {calculateProgress(habit)}%</span>
               <span>
                 Noch {66 - (habit.habit_completions?.length || 0)} Tage bis zum Automatismus
