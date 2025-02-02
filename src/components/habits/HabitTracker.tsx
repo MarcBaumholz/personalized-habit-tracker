@@ -112,22 +112,6 @@ export const HabitTracker = () => {
     );
   };
 
-  const handleSubmitReflection = () => {
-    if (Object.keys(srhiResponses).length === SRHI_QUESTIONS.length) {
-      addReflectionMutation.mutate({
-        habit: selectedHabit,
-        text: reflection,
-        srhiScore: calculateSRHIScore(),
-      });
-    } else {
-      toast({
-        title: "Bitte alle Fragen beantworten",
-        description: "Beantworte bitte alle SRHI Fragen bevor du fortfährst.",
-        variant: "destructive",
-      });
-    }
-  };
-
   return (
     <Card className="p-6 space-y-4 bg-white">
       <div className="flex justify-between items-center">
@@ -157,7 +141,21 @@ export const HabitTracker = () => {
         }
         reflection={reflection}
         onReflectionChange={setReflection}
-        onSubmit={handleSubmitReflection}
+        onSubmit={() => {
+          if (Object.keys(srhiResponses).length === SRHI_QUESTIONS.length) {
+            addReflectionMutation.mutate({
+              habit: selectedHabit,
+              text: reflection,
+              srhiScore: calculateSRHIScore(),
+            });
+          } else {
+            toast({
+              title: "Bitte alle Fragen beantworten",
+              description: "Beantworte bitte alle SRHI Fragen bevor du fortfährst.",
+              variant: "destructive",
+            });
+          }
+        }}
       />
     </Card>
   );
