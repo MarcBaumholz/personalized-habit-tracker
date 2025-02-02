@@ -10,10 +10,7 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-      <div 
-        className="container py-6 space-y-6"
-        onClick={triggerAnimation}
-      >
+      <div className="container py-20 space-y-6 animate-fade-in">
         {animations.map(({ id, x, y }) => (
           <SurpriseAnimation key={id} position={{ x, y }} />
         ))}
