@@ -2,26 +2,22 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle, BellDot, AlertCircle } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription,
-} from "@/components/ui/dialog";
+import { CheckCircle, BellDot, AlertCircle, Trash2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { differenceInDays } from "date-fns";
+import { SurpriseAnimation } from "@/components/feedback/SurpriseAnimation";
+import { useSurpriseAnimation } from "@/hooks/useSurpriseAnimation";
 
 export const HabitTracker = () => {
   const [selectedHabit, setSelectedHabit] = useState<any>(null);
   const [reflection, setReflection] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { animations, triggerAnimation } = useSurpriseAnimation();
 
   const { data: habits } = useQuery({
     queryKey: ["habits"],
@@ -115,15 +111,26 @@ export const HabitTracker = () => {
     return daysSinceLastReflection >= 7;
   };
 
+  const handleComplete = async (habit: any, event: React.MouseEvent) => {
+    if (!isCompletedToday(habit)) {
+      triggerAnimation(event);
+      completeHabitMutation.mutate(habit);
+    }
+  };
+
   return (
     <Card className="p-6 space-y-4">
+      {animations.map(({ id, x, y }) => (
+        <SurpriseAnimation key={id} position={{ x, y }} />
+      ))}
+      
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-bold text-primary">Deine Gewohnheiten</h2>
       </div>
       
       <div className="space-y-4">
         {habits?.map((habit: any) => (
-          <div key={habit.id} className="space-y-3 p-4 bg-secondary/10 rounded-lg">
+          <div key={habit.id} className="space-y-3 p-4 bg-secondary/10 rounded-lg animate-fade-in">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="font-medium">{habit.name}</h3>
@@ -135,11 +142,8 @@ export const HabitTracker = () => {
                 <Button 
                   size="sm" 
                   variant="ghost"
-                  onClick={() => {
-                    if (!isCompletedToday(habit)) {
-                      completeHabitMutation.mutate(habit);
-                    }
-                  }}
+                  onClick={(e) => handleComplete(habit, e)}
+                  className="transition-transform hover:scale-110"
                 >
                   <CheckCircle 
                     className={`h-5 w-5 ${isCompletedToday(habit) ? "text-green-500" : ""}`} 
@@ -149,12 +153,16 @@ export const HabitTracker = () => {
                   size="sm"
                   variant={needsWeeklyReflection(habit) ? "destructive" : "outline"}
                   onClick={() => setSelectedHabit(habit)}
+                  className="transition-transform hover:scale-110"
                 >
                   <BellDot className="h-4 w-4" />
                 </Button>
               </div>
             </div>
-            <Progress value={calculateProgress(habit)} className="h-2" />
+            <Progress 
+              value={calculateProgress(habit)} 
+              className="h-2 transition-all duration-500" 
+            />
             <div className="flex justify-between text-sm text-muted-foreground">
               <span>Fortschritt: {calculateProgress(habit)}%</span>
               <span>
@@ -166,7 +174,7 @@ export const HabitTracker = () => {
       </div>
 
       <Dialog open={!!selectedHabit} onOpenChange={(open) => !open && setSelectedHabit(null)}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Wöchentliche Reflexion</DialogTitle>
             <DialogDescription>
@@ -191,6 +199,7 @@ export const HabitTracker = () => {
                   });
                 }
               }}
+              className="w-full sm:w-auto"
             >
               Reflexion speichern
             </Button>
