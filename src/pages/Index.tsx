@@ -23,7 +23,7 @@ const Index = () => {
   });
 
   if (!hasCompletedOnboarding) {
-    return <Navigate to="/auth" />;
+    return <Navigate to="/onboarding" />;
   }
 
   return (
