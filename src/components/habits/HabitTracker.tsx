@@ -2,13 +2,12 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle, BellDot } from "lucide-react";
+import { CheckCircle, BellDot, AlertCircle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogFooter,
   DialogDescription,
 } from "@/components/ui/dialog";
@@ -32,7 +31,7 @@ export const HabitTracker = () => {
 
       const { data: habitsData } = await supabase
         .from("habits")
-        .select("*, habit_completions(*), habit_reflections(*))")
+        .select("*, habit_completions(*), habit_reflections(*)")
         .eq("user_id", user.id);
 
       return habitsData;
@@ -44,11 +43,13 @@ export const HabitTracker = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
+      const today = new Date().toISOString().split('T')[0];
       const { data, error } = await supabase
         .from("habit_completions")
         .insert({
           habit_id: habit.id,
           user_id: user.id,
+          completed_date: today,
         });
 
       if (error) throw error;
@@ -57,8 +58,8 @@ export const HabitTracker = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["habits"] });
       toast({
-        title: "Gewohnheit abgeschlossen",
-        description: "Dein Fortschritt wurde gespeichert.",
+        title: "Gewohnheit abgeschlossen! 🎉",
+        description: "Weiter so! Du bist auf einem guten Weg.",
       });
     },
   });
@@ -85,7 +86,7 @@ export const HabitTracker = () => {
       setReflection("");
       toast({
         title: "Reflexion gespeichert",
-        description: "Deine Gedanken wurden erfolgreich gespeichert.",
+        description: "Deine wöchentliche Reflexion wurde erfolgreich gespeichert.",
       });
     },
   });
@@ -122,7 +123,7 @@ export const HabitTracker = () => {
       
       <div className="space-y-4">
         {habits?.map((habit: any) => (
-          <div key={habit.id} className="space-y-3 p-4 bg-gray-50 rounded-lg">
+          <div key={habit.id} className="space-y-3 p-4 bg-secondary/10 rounded-lg">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="font-medium">{habit.name}</h3>

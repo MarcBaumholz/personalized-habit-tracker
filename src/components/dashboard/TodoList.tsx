@@ -65,6 +65,10 @@ export const TodoList = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["todos"] });
+      toast({
+        title: "Todo aktualisiert",
+        description: "Status wurde erfolgreich aktualisiert.",
+      });
     },
   });
 
