@@ -9,48 +9,6 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      badges: {
-        Row: {
-          achieved_at: string
-          badge_type: string
-          created_at: string
-          habit_id: string | null
-          id: string
-          user_id: string | null
-        }
-        Insert: {
-          achieved_at?: string
-          badge_type: string
-          created_at?: string
-          habit_id?: string | null
-          id?: string
-          user_id?: string | null
-        }
-        Update: {
-          achieved_at?: string
-          badge_type?: string
-          created_at?: string
-          habit_id?: string | null
-          id?: string
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "badges_habit_id_fkey"
-            columns: ["habit_id"]
-            isOneToOne: false
-            referencedRelation: "habits"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "badges_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       habit_completions: {
         Row: {
           completed_date: string
@@ -132,69 +90,20 @@ export type Database = {
           },
         ]
       }
-      habit_schedules: {
-        Row: {
-          created_at: string
-          habit_id: string | null
-          id: string
-          scheduled_date: string | null
-          scheduled_time: string | null
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          habit_id?: string | null
-          id?: string
-          scheduled_date?: string | null
-          scheduled_time?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          habit_id?: string | null
-          id?: string
-          scheduled_date?: string | null
-          scheduled_time?: string | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "habit_schedules_habit_id_fkey"
-            columns: ["habit_id"]
-            isOneToOne: false
-            referencedRelation: "habits"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "habit_schedules_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       habits: {
         Row: {
           category: string
           context: string | null
           created_at: string
           difficulty: string | null
-          difficulty_level: string | null
           effort: string | null
           frequency: string | null
           id: string
           identity: string | null
-          last_completed_at: string | null
-          monthly_streak: number | null
           name: string
-          phase: string | null
-          satisfaction_level: string | null
           smart_goal: string | null
-          streak_count: number | null
           time_of_day: string | null
           user_id: string
-          weekly_streak: number | null
           why: string | null
         }
         Insert: {
@@ -202,21 +111,14 @@ export type Database = {
           context?: string | null
           created_at?: string
           difficulty?: string | null
-          difficulty_level?: string | null
           effort?: string | null
           frequency?: string | null
           id?: string
           identity?: string | null
-          last_completed_at?: string | null
-          monthly_streak?: number | null
           name: string
-          phase?: string | null
-          satisfaction_level?: string | null
           smart_goal?: string | null
-          streak_count?: number | null
           time_of_day?: string | null
           user_id: string
-          weekly_streak?: number | null
           why?: string | null
         }
         Update: {
@@ -224,21 +126,14 @@ export type Database = {
           context?: string | null
           created_at?: string
           difficulty?: string | null
-          difficulty_level?: string | null
           effort?: string | null
           frequency?: string | null
           id?: string
           identity?: string | null
-          last_completed_at?: string | null
-          monthly_streak?: number | null
           name?: string
-          phase?: string | null
-          satisfaction_level?: string | null
           smart_goal?: string | null
-          streak_count?: number | null
           time_of_day?: string | null
           user_id?: string
-          weekly_streak?: number | null
           why?: string | null
         }
         Relationships: [

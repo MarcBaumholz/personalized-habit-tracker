@@ -5,8 +5,6 @@ import { ProgressStats } from "@/components/dashboard/ProgressStats";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Navigate } from "react-router-dom";
-import { SurpriseAnimation } from "@/components/feedback/SurpriseAnimation";
-import { useSurpriseAnimation } from "@/hooks/useSurpriseAnimation";
 
 const Index = () => {
   const { data: hasCompletedOnboarding } = useQuery({
@@ -24,29 +22,21 @@ const Index = () => {
     },
   });
 
-  const { animations, triggerAnimation } = useSurpriseAnimation();
-
   if (!hasCompletedOnboarding) {
-    return <Navigate to="/onboarding" />;
+    return <Navigate to="/auth" />;
   }
 
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-      <main className="container py-20 animate-fade-in">
-        {animations.map(({ id, x, y }) => (
-          <SurpriseAnimation key={id} position={{ x, y }} />
-        ))}
+      <main className="container py-6">
+        <ProgressStats />
         
-        <div className="space-y-6">
-          <ProgressStats />
-          
-          <div className="grid gap-6 md:grid-cols-2">
-            <div className="space-y-6">
-              <HabitTracker />
-            </div>
-            <TodoList />
+        <div className="grid gap-6 md:grid-cols-2 mt-6">
+          <div className="space-y-6">
+            <HabitTracker />
           </div>
+          <TodoList />
         </div>
       </main>
     </div>

@@ -1,26 +1,23 @@
 import { Navigation } from "@/components/layout/Navigation";
+import { HabitTracker } from "@/components/habits/HabitTracker";
+import { WeeklyReflection } from "@/components/habits/WeeklyReflection";
+import { HabitEducation } from "@/components/habits/HabitEducation";
 import { DashboardOverview } from "@/components/habits/DashboardOverview";
-import { MotivationalStats } from "@/components/dashboard/MotivationalStats";
-import { SurpriseAnimation } from "@/components/feedback/SurpriseAnimation";
-import { useSurpriseAnimation } from "@/hooks/useSurpriseAnimation";
 
 const Dashboard = () => {
-  const { animations, triggerAnimation } = useSurpriseAnimation();
-
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-      <div className="container py-20 space-y-6 animate-fade-in">
-        {animations.map(({ id, x, y }) => (
-          <SurpriseAnimation key={id} position={{ x, y }} />
-        ))}
-        
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <DashboardOverview />
-          <MotivationalStats />
+      <main className="container py-6">
+        <DashboardOverview />
+        <div className="grid gap-6 md:grid-cols-2 mt-6">
+          <div className="space-y-6">
+            <HabitTracker />
+            <HabitEducation />
+          </div>
+          <WeeklyReflection />
         </div>
-      </div>
+      </main>
     </div>
   );
 };
