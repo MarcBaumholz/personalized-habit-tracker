@@ -190,9 +190,7 @@ export const HabitTracker = () => {
               <div key={index} className="space-y-2">
                 <Label>{question}</Label>
                 <RadioGroup
-                  value={srhiRespon
-
-ses[index]}
+                  value={srhiResponses[index]}
                   onValueChange={(value) =>
                     setSrhiResponses((prev) => ({ ...prev, [index]: value }))
                   }
