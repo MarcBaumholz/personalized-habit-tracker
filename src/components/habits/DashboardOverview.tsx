@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+const RADIAN = Math.PI / 180;
 
 export const DashboardOverview = () => {
   const { data: stats } = useQuery({
@@ -32,9 +33,22 @@ export const DashboardOverview = () => {
         weeklyData: generateWeeklyData(completions || []),
         categoryData: generateCategoryData(habits || [], completions || []),
         progressData: generateProgressData(completions || []),
+        yearlyActivity: generateYearlyActivity(completions || []),
       };
     },
   });
+
+  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) => {
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+  
+    return (
+      <text x={x} y={y} fill="white" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central">
+        {`${(percent * 100).toFixed(0)}%`}
+      </text>
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -84,21 +98,6 @@ export const DashboardOverview = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="p-6">
-          <h2 className="text-lg font-semibold mb-4">Wöchentliche Übersicht</h2>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={stats?.weeklyData || []}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Line type="monotone" dataKey="completions" stroke="hsl(var(--primary))" />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
-
-        <Card className="p-6">
           <h2 className="text-lg font-semibold mb-4">Kategorien Verteilung</h2>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -108,7 +107,8 @@ export const DashboardOverview = () => {
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  outerRadius={80}
+                  label={renderCustomizedLabel}
+                  outerRadius={100}
                   fill="#8884d8"
                   dataKey="value"
                 >
@@ -121,10 +121,50 @@ export const DashboardOverview = () => {
             </ResponsiveContainer>
           </div>
         </Card>
+
+        <Card className="p-6">
+          <h2 className="text-lg font-semibold mb-4">Wöchentlicher Fortschritt</h2>
+          <div className="h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={stats?.weeklyData || []}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Line type="monotone" dataKey="completions" stroke="hsl(var(--primary))" />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
       </div>
 
       <Card className="p-6">
-        <h2 className="text-lg font-semibold mb-4">Gesamtfortschritt zum Automatismus</h2>
+        <h2 className="text-lg font-semibold mb-4">Jahresübersicht</h2>
+        <div className="grid grid-cols-52 gap-1">
+          {stats?.yearlyActivity?.map((week: any[], weekIndex: number) => (
+            <div key={weekIndex} className="grid grid-rows-7 gap-1">
+              {week.map((day: any, dayIndex: number) => (
+                <div
+                  key={`${weekIndex}-${dayIndex}`}
+                  className={`w-3 h-3 rounded-sm ${
+                    day.count === 0
+                      ? 'bg-gray-100'
+                      : day.count < 3
+                      ? 'bg-primary/30'
+                      : day.count < 5
+                      ? 'bg-primary/60'
+                      : 'bg-primary'
+                  }`}
+                  title={`${day.date}: ${day.count} completions`}
+                />
+              ))}
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      <Card className="p-6">
+        <h2 className="text-lg font-semibold mb-4">Gewohnheiten Fortschritt</h2>
         <div className="space-y-6">
           {stats?.progressData?.map((habit: any) => (
             <div key={habit.id} className="space-y-2">
@@ -142,8 +182,29 @@ export const DashboardOverview = () => {
 };
 
 const calculateStreak = (completions: any[]) => {
-  // Implementation of streak calculation
-  return completions.length > 0 ? completions.length : 0;
+  if (completions.length === 0) return 0;
+  
+  const sortedCompletions = completions
+    .map(c => new Date(c.completed_date).toISOString().split('T')[0])
+    .sort();
+  
+  let currentStreak = 1;
+  let maxStreak = 1;
+  
+  for (let i = 1; i < sortedCompletions.length; i++) {
+    const prevDate = new Date(sortedCompletions[i - 1]);
+    const currDate = new Date(sortedCompletions[i]);
+    const diffDays = Math.floor((currDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 1) {
+      currentStreak++;
+      maxStreak = Math.max(maxStreak, currentStreak);
+    } else if (diffDays > 1) {
+      currentStreak = 1;
+    }
+  }
+  
+  return maxStreak;
 };
 
 const calculateSuccessRate = (completions: any[], habits: any[]) => {
@@ -162,33 +223,72 @@ const calculateTotalProgress = (completions: any[], habits: any[]) => {
 };
 
 const generateWeeklyData = (completions: any[]) => {
-  // Implementation to generate weekly completion data
-  return [
-    { name: 'Mo', completions: 4 },
-    { name: 'Di', completions: 3 },
-    { name: 'Mi', completions: 5 },
-    { name: 'Do', completions: 4 },
-    { name: 'Fr', completions: 3 },
-    { name: 'Sa', completions: 2 },
-    { name: 'So', completions: 4 },
-  ];
+  const days = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+  const weeklyData = days.map(day => ({
+    name: day,
+    completions: completions.filter(c => 
+      new Date(c.completed_date).toLocaleDateString('de-DE', { weekday: 'short' }) === day
+    ).length
+  }));
+  
+  return weeklyData;
 };
 
 const generateCategoryData = (habits: any[], completions: any[]) => {
-  // Implementation to generate category distribution data
-  return [
-    { name: 'Gesundheit', value: 30 },
-    { name: 'Produktivität', value: 25 },
-    { name: 'Lernen', value: 20 },
-    { name: 'Sport', value: 25 },
-  ];
+  const categories = habits.reduce((acc: any, habit: any) => {
+    const category = habit.category;
+    if (!acc[category]) {
+      acc[category] = {
+        name: category,
+        value: completions.filter((c: any) => c.habit_id === habit.id).length
+      };
+    } else {
+      acc[category].value += completions.filter((c: any) => c.habit_id === habit.id).length;
+    }
+    return acc;
+  }, {});
+
+  return Object.values(categories);
 };
 
 const generateProgressData = (completions: any[]) => {
-  // Implementation to generate progress data for each habit
-  return [
-    { id: 1, name: 'Meditation', completions: 36 },
-    { id: 2, name: 'Sport', completions: 45 },
-    { id: 3, name: 'Lesen', completions: 28 },
-  ];
+  const habitProgress = completions.reduce((acc: any, completion: any) => {
+    if (!acc[completion.habit_id]) {
+      acc[completion.habit_id] = {
+        id: completion.habit_id,
+        name: 'Habit ' + completion.habit_id,
+        completions: 1
+      };
+    } else {
+      acc[completion.habit_id].completions++;
+    }
+    return acc;
+  }, {});
+
+  return Object.values(habitProgress);
+};
+
+const generateYearlyActivity = (completions: any[]) => {
+  const year = new Date().getFullYear();
+  const startDate = new Date(year, 0, 1);
+  const endDate = new Date(year, 11, 31);
+  
+  const days = [];
+  let currentDate = startDate;
+  
+  while (currentDate <= endDate) {
+    const dateStr = currentDate.toISOString().split('T')[0];
+    days.push({
+      date: dateStr,
+      count: completions.filter(c => c.completed_date === dateStr).length
+    });
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+  
+  const weeks = [];
+  for (let i = 0; i < days.length; i += 7) {
+    weeks.push(days.slice(i, i + 7));
+  }
+  
+  return weeks;
 };
