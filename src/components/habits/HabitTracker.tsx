@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle, BellDot } from "lucide-react";
+import { CheckCircle, BellDot, BarChart } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -13,14 +13,25 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { differenceInDays } from "date-fns";
 
+const SRHI_QUESTIONS = [
+  "Dieses Verhalten ist etwas, das ich automatisch tue.",
+  "Dieses Verhalten ist etwas, das ich ohne nachzudenken tue.",
+  "Dieses Verhalten ist etwas, das ich tue, ohne dass ich mich daran erinnern muss.",
+  "Dieses Verhalten ist etwas, das typisch für mich ist.",
+  "Dieses Verhalten ist etwas, das ich schon lange tue.",
+];
+
 export const HabitTracker = () => {
   const [selectedHabit, setSelectedHabit] = useState<any>(null);
   const [reflection, setReflection] = useState("");
+  const [srhiResponses, setSrhiResponses] = useState<Record<number, string>>({});
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -64,7 +75,7 @@ export const HabitTracker = () => {
   });
 
   const addReflectionMutation = useMutation({
-    mutationFn: async ({ habit, text }: { habit: any; text: string }) => {
+    mutationFn: async ({ habit, text, srhiScore }: { habit: any; text: string; srhiScore: number }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
@@ -74,6 +85,7 @@ export const HabitTracker = () => {
           habit_id: habit.id,
           user_id: user.id,
           reflection_text: text,
+          srhi_score: srhiScore,
         });
 
       if (error) throw error;
@@ -83,6 +95,7 @@ export const HabitTracker = () => {
       queryClient.invalidateQueries({ queryKey: ["habits"] });
       setSelectedHabit(null);
       setReflection("");
+      setSrhiResponses({});
       toast({
         title: "Reflexion gespeichert",
         description: "Deine Gedanken wurden erfolgreich gespeichert.",
@@ -95,23 +108,22 @@ export const HabitTracker = () => {
     return Math.round((completions / 66) * 100);
   };
 
+  const calculateSRHIScore = () => {
+    const values = Object.values(srhiResponses);
+    if (values.length === 0) return 0;
+    
+    const total = values.reduce((sum, value) => {
+      return sum + (value === "3" ? 2 : value === "2" ? 1 : 0);
+    }, 0);
+    
+    return Math.round((total / (values.length * 2)) * 100);
+  };
+
   const isCompletedToday = (habit: any) => {
     const today = new Date().toISOString().split('T')[0];
     return habit.habit_completions?.some((c: any) => 
       c.completed_date === today
     );
-  };
-
-  const needsWeeklyReflection = (habit: any) => {
-    const lastReflection = habit.habit_reflections?.[0];
-    if (!lastReflection) return true;
-    
-    const daysSinceLastReflection = differenceInDays(
-      new Date(),
-      new Date(lastReflection.created_at)
-    );
-    
-    return daysSinceLastReflection >= 7;
   };
 
   return (
@@ -146,10 +158,11 @@ export const HabitTracker = () => {
                 </Button>
                 <Button
                   size="sm"
-                  variant={needsWeeklyReflection(habit) ? "destructive" : "outline"}
+                  variant="outline"
                   onClick={() => setSelectedHabit(habit)}
                 >
-                  <BellDot className="h-4 w-4" />
+                  <BellDot className="h-4 w-4 mr-2" />
+                  Reflektieren
                 </Button>
               </div>
             </div>
@@ -165,35 +178,69 @@ export const HabitTracker = () => {
       </div>
 
       <Dialog open={!!selectedHabit} onOpenChange={(open) => !open && setSelectedHabit(null)}>
-        <DialogContent>
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Wöchentliche Reflexion</DialogTitle>
+            <DialogTitle>SRHI - Self-Report Habit Index</DialogTitle>
             <DialogDescription>
-              Reflektiere über deinen Fortschritt und deine Erfahrungen der letzten Woche.
+              Bewerte deine Gewohnheit anhand der folgenden Aussagen
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-6">
+            {SRHI_QUESTIONS.map((question, index) => (
+              <div key={index} className="space-y-2">
+                <Label>{question}</Label>
+                <RadioGroup
+                  value={srhiRespon
+
+ses[index]}
+                  onValueChange={(value) =>
+                    setSrhiResponses((prev) => ({ ...prev, [index]: value }))
+                  }
+                >
+                  <div className="flex justify-between">
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="1" id={`q${index}-1`} />
+                      <Label htmlFor={`q${index}-1`}>Stimme nicht zu</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="2" id={`q${index}-2`} />
+                      <Label htmlFor={`q${index}-2`}>Neutral</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="3" id={`q${index}-3`} />
+                      <Label htmlFor={`q${index}-3`}>Stimme zu</Label>
+                    </div>
+                  </div>
+                </RadioGroup>
+              </div>
+            ))}
             <Textarea
               value={reflection}
               onChange={(e) => setReflection(e.target.value)}
               placeholder="Teile deine Gedanken..."
               className="h-32"
             />
-          </div>
-          <DialogFooter>
             <Button 
               onClick={() => {
-                if (reflection.trim()) {
+                if (Object.keys(srhiResponses).length === SRHI_QUESTIONS.length) {
                   addReflectionMutation.mutate({
                     habit: selectedHabit,
                     text: reflection,
+                    srhiScore: calculateSRHIScore(),
+                  });
+                } else {
+                  toast({
+                    title: "Bitte alle Fragen beantworten",
+                    description: "Beantworte bitte alle SRHI Fragen bevor du fortfährst.",
+                    variant: "destructive",
                   });
                 }
               }}
+              className="w-full"
             >
-              Reflexion speichern
+              Reflexion abschließen
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
     </Card>
