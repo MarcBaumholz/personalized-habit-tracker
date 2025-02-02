@@ -24,15 +24,18 @@ export const DashboardOverview = () => {
         .select("*")
         .eq("user_id", user.id);
 
+      const habitsData = habits || [];
+      const completionsData = completions || [];
+
       return {
-        streak: calculateStreak(completions || []),
-        successRate: calculateSuccessRate(completions || [], habits || []),
-        activeDays: calculateActiveDays(completions || []),
-        totalProgress: calculateTotalProgress(completions || [], habits || []),
-        weeklyData: generateWeeklyData(completions || []),
-        categoryData: generateCategoryData(habits || [], completions || []),
-        progressData: generateProgressData(completions || []),
-        yearlyActivity: generateYearlyActivity(completions || []),
+        streak: calculateStreak(completionsData),
+        successRate: calculateSuccessRate(completionsData, habitsData),
+        activeDays: calculateActiveDays(completionsData),
+        totalProgress: calculateTotalProgress(completionsData, habitsData),
+        weeklyData: generateWeeklyData(completionsData),
+        categoryData: generateCategoryData(habitsData, completionsData),
+        progressData: generateProgressData(completionsData, habitsData),
+        yearlyActivity: generateYearlyActivity(completionsData),
       };
     },
   });

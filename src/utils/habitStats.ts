@@ -1,3 +1,19 @@
+interface CategoryData {
+  name: string;
+  value: number;
+}
+
+interface ProgressData {
+  id: string;
+  name: string;
+  completions: number;
+}
+
+interface WeeklyData {
+  name: string;
+  completions: number;
+}
+
 export const calculateStreak = (completions: any[]) => {
   if (completions.length === 0) return 0;
   
@@ -39,7 +55,7 @@ export const calculateTotalProgress = (completions: any[], habits: any[]) => {
   return Math.round((completions.length / (habits.length * 66)) * 100);
 };
 
-export const generateWeeklyData = (completions: any[]) => {
+export const generateWeeklyData = (completions: any[]): WeeklyData[] => {
   const days = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
   return days.map(day => ({
     name: day,
@@ -49,36 +65,34 @@ export const generateWeeklyData = (completions: any[]) => {
   }));
 };
 
-export const generateCategoryData = (habits: any[], completions: any[]) => {
-  const categories = habits.reduce((acc: any, habit: any) => {
+export const generateCategoryData = (habits: any[], completions: any[]): CategoryData[] => {
+  const categories: Record<string, CategoryData> = {};
+  
+  habits.forEach(habit => {
     const category = habit.category;
-    if (!acc[category]) {
-      acc[category] = {
+    if (!categories[category]) {
+      categories[category] = {
         name: category,
-        value: completions.filter((c: any) => c.habit_id === habit.id).length
+        value: completions.filter(c => c.habit_id === habit.id).length
       };
     } else {
-      acc[category].value += completions.filter((c: any) => c.habit_id === habit.id).length;
+      categories[category].value += completions.filter(c => c.habit_id === habit.id).length;
     }
-    return acc;
-  }, {});
+  });
 
   return Object.values(categories);
 };
 
-export const generateProgressData = (completions: any[]) => {
-  const habitProgress = completions.reduce((acc: any, completion: any) => {
-    if (!acc[completion.habit_id]) {
-      acc[completion.habit_id] = {
-        id: completion.habit_id,
-        name: 'Habit ' + completion.habit_id,
-        completions: 1
-      };
-    } else {
-      acc[completion.habit_id].completions++;
-    }
-    return acc;
-  }, {});
+export const generateProgressData = (completions: any[], habits: any[]): ProgressData[] => {
+  const habitProgress: Record<string, ProgressData> = {};
+  
+  habits.forEach(habit => {
+    habitProgress[habit.id] = {
+      id: habit.id,
+      name: habit.name,
+      completions: completions.filter(c => c.habit_id === habit.id).length
+    };
+  });
 
   return Object.values(habitProgress);
 };
