@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle, BellDot } from "lucide-react";
+import { CheckCircle, Plus } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -10,13 +10,11 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogFooter,
-  DialogDescription,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { differenceInDays } from "date-fns";
 
 export const HabitTracker = () => {
   const [selectedHabit, setSelectedHabit] = useState<any>(null);
@@ -30,12 +28,12 @@ export const HabitTracker = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
-      const { data: habitsData } = await supabase
+      const { data } = await supabase
         .from("habits")
-        .select("*, habit_completions(*), habit_reflections(*))")
+        .select("*, habit_completions(*)")
         .eq("user_id", user.id);
 
-      return habitsData;
+      return data;
     },
   });
 
@@ -102,18 +100,6 @@ export const HabitTracker = () => {
     );
   };
 
-  const needsWeeklyReflection = (habit: any) => {
-    const lastReflection = habit.habit_reflections?.[0];
-    if (!lastReflection) return true;
-    
-    const daysSinceLastReflection = differenceInDays(
-      new Date(),
-      new Date(lastReflection.created_at)
-    );
-    
-    return daysSinceLastReflection >= 7;
-  };
-
   return (
     <Card className="p-6 space-y-4">
       <div className="flex justify-between items-center">
@@ -126,35 +112,27 @@ export const HabitTracker = () => {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="font-medium">{habit.name}</h3>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-text-secondary">
                   {habit.habit_completions?.length || 0} Tage Streak
                 </p>
               </div>
-              <div className="flex items-center gap-2">
-                <Button 
-                  size="sm" 
-                  variant="ghost"
-                  onClick={() => {
-                    if (!isCompletedToday(habit)) {
-                      completeHabitMutation.mutate(habit);
-                    }
-                  }}
-                >
-                  <CheckCircle 
-                    className={`h-5 w-5 ${isCompletedToday(habit) ? "text-green-500" : ""}`} 
-                  />
-                </Button>
-                <Button
-                  size="sm"
-                  variant={needsWeeklyReflection(habit) ? "destructive" : "outline"}
-                  onClick={() => setSelectedHabit(habit)}
-                >
-                  <BellDot className="h-4 w-4" />
-                </Button>
-              </div>
+              <Button 
+                size="sm" 
+                variant="ghost"
+                onClick={() => {
+                  if (!isCompletedToday(habit)) {
+                    completeHabitMutation.mutate(habit);
+                  }
+                  setSelectedHabit(habit);
+                }}
+              >
+                <CheckCircle 
+                  className={`h-5 w-5 ${isCompletedToday(habit) ? "text-green-500" : ""}`} 
+                />
+              </Button>
             </div>
             <Progress value={calculateProgress(habit)} className="h-2" />
-            <div className="flex justify-between text-sm text-muted-foreground">
+            <div className="flex justify-between text-sm text-text-secondary">
               <span>Fortschritt: {calculateProgress(habit)}%</span>
               <span>
                 Noch {66 - (habit.habit_completions?.length || 0)} Tage bis zum Automatismus
@@ -167,12 +145,12 @@ export const HabitTracker = () => {
       <Dialog open={!!selectedHabit} onOpenChange={(open) => !open && setSelectedHabit(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Wöchentliche Reflexion</DialogTitle>
-            <DialogDescription>
-              Reflektiere über deinen Fortschritt und deine Erfahrungen der letzten Woche.
-            </DialogDescription>
+            <DialogTitle>Tagesreflexion</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Wie war deine Erfahrung heute mit dieser Gewohnheit?
+            </p>
             <Textarea
               value={reflection}
               onChange={(e) => setReflection(e.target.value)}

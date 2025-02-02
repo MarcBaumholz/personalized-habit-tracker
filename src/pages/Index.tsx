@@ -4,7 +4,6 @@ import { TodoList } from "@/components/dashboard/TodoList";
 import { ProgressStats } from "@/components/dashboard/ProgressStats";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Navigate } from "react-router-dom";
 
 const Index = () => {
   const { data: hasCompletedOnboarding } = useQuery({
