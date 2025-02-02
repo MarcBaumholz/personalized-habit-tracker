@@ -65,11 +65,19 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md p-8 space-y-6">
-        <h1 className="text-2xl font-bold text-center">
-          {isSignUp ? "Create Account" : "Welcome Back"}
-        </h1>
+    <div className="min-h-screen flex items-center justify-center bg-[#1A1F2C] p-4">
+      <Card className="w-full max-w-md p-8 space-y-6 bg-[#242B3D] border-none shadow-xl">
+        <div className="text-center space-y-2">
+          <h1 className="text-3xl font-bold text-white">
+            {isSignUp ? "Create Account" : "Welcome Back"}
+          </h1>
+          <p className="text-gray-400">
+            {isSignUp
+              ? "Sign up to start building better habits"
+              : "Sign in to continue your journey"}
+          </p>
+        </div>
+
         <form onSubmit={handleEmailAuth} className="space-y-4">
           <div className="space-y-2">
             <Input
@@ -78,6 +86,7 @@ const Auth = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              className="bg-[#1A1F2C] border-gray-700 text-white placeholder:text-gray-500"
             />
           </div>
           <div className="space-y-2">
@@ -87,37 +96,42 @@ const Auth = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              className="bg-[#1A1F2C] border-gray-700 text-white placeholder:text-gray-500"
             />
           </div>
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button 
+            type="submit" 
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white" 
+            disabled={loading}
+          >
             {isSignUp ? "Sign Up" : "Sign In"}
           </Button>
         </form>
 
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t"></div>
+            <div className="w-full border-t border-gray-700"></div>
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-background text-muted-foreground">Or</span>
+            <span className="px-2 bg-[#242B3D] text-gray-400">Or</span>
           </div>
         </div>
 
         <Button
           type="button"
           variant="outline"
-          className="w-full"
+          className="w-full border-gray-700 text-white hover:bg-[#1A1F2C]"
           onClick={handleGoogleAuth}
         >
-          <FcGoogle className="mr-2 h-4 w-4" />
+          <FcGoogle className="mr-2 h-5 w-5" />
           Continue with Google
         </Button>
 
-        <p className="text-center text-sm">
+        <p className="text-center text-sm text-gray-400">
           {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
           <button
             type="button"
-            className="text-primary hover:underline"
+            className="text-blue-500 hover:text-blue-400"
             onClick={() => setIsSignUp(!isSignUp)}
           >
             {isSignUp ? "Sign In" : "Sign Up"}
