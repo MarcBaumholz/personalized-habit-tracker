@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { CheckCircle, BellDot } from "lucide-react";
+import { Flame, Circle, Check } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface HabitCardProps {
   habit: any;
@@ -17,45 +17,75 @@ export const HabitCard = ({
   isCompletedToday,
   calculateProgress,
 }: HabitCardProps) => {
+  const progress = calculateProgress(habit);
+  const totalDays = 66;
+  const completedDays = habit.habit_completions?.length || 0;
+  const remainingDays = totalDays - completedDays;
+  
+  // Calculate if reflection is needed (7 days since last reflection)
+  const lastReflection = habit.habit_reflections?.sort((a: any, b: any) => 
+    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  )[0];
+  
+  const needsReflection = lastReflection ? 
+    (new Date().getTime() - new Date(lastReflection.created_at).getTime()) / (1000 * 60 * 60 * 24) >= 7 
+    : false;
+
   return (
-    <div className="space-y-3 p-4 bg-gray-50 rounded-lg">
+    <div className="space-y-4 p-6 bg-white rounded-lg shadow-sm border">
       <div className="flex items-center justify-between">
-        <div>
-          <h3 className="font-medium text-gray-900">{habit.name}</h3>
-          <p className="text-sm text-gray-600">
-            {habit.habit_completions?.length || 0} Tage Streak
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button 
-            size="sm" 
-            variant="ghost"
+        <div className="flex items-center gap-3">
+          <button
             onClick={() => {
               if (!isCompletedToday(habit)) {
                 onComplete(habit);
               }
             }}
+            className="relative w-8 h-8 rounded-full border-2 border-gray-300 flex items-center justify-center transition-colors"
           >
-            <CheckCircle 
-              className={`h-5 w-5 ${isCompletedToday(habit) ? "text-green-500" : "text-gray-400"}`} 
-            />
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => onReflect(habit)}
-          >
-            <BellDot className="h-4 w-4 mr-2" />
-            Reflektieren
-          </Button>
+            {isCompletedToday(habit) ? (
+              <Check className="w-5 h-5 text-green-500" />
+            ) : (
+              <Circle className="w-5 h-5 text-gray-300" />
+            )}
+          </button>
+          <div>
+            <h3 className="font-medium text-gray-900">{habit.name}</h3>
+            <div className="flex items-center gap-1 text-sm text-gray-600">
+              <span>{completedDays}</span>
+              {[...Array(4)].map((_, i) => (
+                <Flame key={i} className="w-4 h-4 text-orange-500" />
+              ))}
+            </div>
+          </div>
         </div>
+        <Button
+          size="sm"
+          variant={needsReflection ? "destructive" : "outline"}
+          onClick={() => onReflect(habit)}
+          className={cn(
+            "transition-colors",
+            lastReflection && !needsReflection && "border-green-500 text-green-600"
+          )}
+        >
+          Reflektieren
+        </Button>
       </div>
-      <Progress value={calculateProgress(habit)} className="h-2" />
-      <div className="flex justify-between text-sm text-gray-600">
-        <span>Fortschritt: {calculateProgress(habit)}%</span>
-        <span>
-          Noch {66 - (habit.habit_completions?.length || 0)} Tage bis zum Automatismus
-        </span>
+      
+      <div className="flex gap-1">
+        {[...Array(totalDays)].map((_, index) => (
+          <div
+            key={index}
+            className={cn(
+              "w-1.5 h-1.5 rounded-full",
+              index < completedDays ? "bg-green-500" : "bg-gray-200"
+            )}
+          />
+        ))}
+      </div>
+      
+      <div className="text-sm text-gray-600">
+        Noch {remainingDays} Tage bis zum Automatismus
       </div>
     </div>
   );

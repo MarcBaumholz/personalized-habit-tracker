@@ -20,67 +20,66 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
+import { useQuery } from "@tanstack/react-query";
 
-const HABIT_TOOLKITS = {
-  templates: [
-    {
-      id: "morning-routine",
-      title: "Morgenroutine",
-      description: "Optimaler Start in den Tag",
-      icon: Calendar,
-      example: "Meditation um 6:00 Uhr für 10 Minuten",
-      steps: [
-        "Wähle eine feste Uhrzeit",
-        "Bereite deine Umgebung vor",
-        "Starte mit 5-10 Minuten",
-      ],
-    },
-    {
-      id: "deep-work",
-      title: "Deep Work",
-      description: "Maximale Produktivität",
-      icon: Brain,
-      example: "2 Stunden fokussierte Arbeit ohne Ablenkungen",
-      steps: [
-        "Blocke feste Zeiten",
-        "Eliminiere Ablenkungen",
-        "Setze klare Ziele",
-      ],
-    },
-  ],
-  community: [
-    {
-      id: "meditation",
-      title: "Community Meditation",
-      description: "Gemeinsam meditieren",
-      icon: Users,
-      example: "Tägliche Gruppenmeditation",
-      steps: [
-        "Tritt der Meditationsgruppe bei",
-        "Wähle deine Meditationszeit",
-        "Teile deine Erfahrungen",
-      ],
-    },
-  ],
-  inspiration: [
-    {
-      id: "creative-routine",
-      title: "Kreative Routine",
-      description: "Inspiration und Kreativität fördern",
-      icon: Lightbulb,
-      example: "Tägliches Brainstorming",
-      steps: [
-        "Schaffe eine inspirierende Umgebung",
-        "Experimentiere mit verschiedenen Techniken",
-        "Dokumentiere deine Ideen",
-      ],
-    },
-  ],
-};
+const INSPIRATION_TOOLKITS = [
+  {
+    id: "morning-routine",
+    title: "Morgenroutine",
+    description: "Optimaler Start in den Tag",
+    icon: Calendar,
+    example: "Meditation um 6:00 Uhr für 10 Minuten",
+    steps: [
+      "Wähle eine feste Uhrzeit",
+      "Bereite deine Umgebung vor",
+      "Starte mit 5-10 Minuten",
+    ],
+  },
+  {
+    id: "deep-work",
+    title: "Deep Work",
+    description: "Maximale Produktivität",
+    icon: Brain,
+    example: "2 Stunden fokussierte Arbeit ohne Ablenkungen",
+    steps: [
+      "Blocke feste Zeiten",
+      "Eliminiere Ablenkungen",
+      "Setze klare Ziele",
+    ],
+  },
+  {
+    id: "creative-routine",
+    title: "Kreative Routine",
+    description: "Inspiration und Kreativität fördern",
+    icon: Lightbulb,
+    example: "Tägliches Brainstorming",
+    steps: [
+      "Schaffe eine inspirierende Umgebung",
+      "Experimentiere mit verschiedenen Techniken",
+      "Dokumentiere deine Ideen",
+    ],
+  },
+];
 
 const Toolbox = () => {
   const [selectedToolkit, setSelectedToolkit] = useState<any>(null);
   const { toast } = useToast();
+
+  const { data: myRoutines } = useQuery({
+    queryKey: ["my-routines"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
+
+      const { data } = await supabase
+        .from("habits")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("category", "routine");
+
+      return data || [];
+    },
+  });
 
   const addToolkitToProfile = async (toolkit: any) => {
     try {
@@ -90,18 +89,18 @@ const Toolbox = () => {
       await supabase.from("habits").insert({
         user_id: user.id,
         name: toolkit.title,
-        category: "toolkit",
+        category: "routine",
         context: JSON.stringify(toolkit),
       });
 
       toast({
-        title: "Baukasten hinzugefügt",
-        description: `${toolkit.title} wurde zu deinem Profil hinzugefügt.`,
+        title: "Routine hinzugefügt",
+        description: `${toolkit.title} wurde zu deinen Routinen hinzugefügt.`,
       });
     } catch (error) {
       toast({
         title: "Fehler",
-        description: "Der Baukasten konnte nicht hinzugefügt werden.",
+        description: "Die Routine konnte nicht hinzugefügt werden.",
         variant: "destructive",
       });
     }
@@ -160,7 +159,7 @@ const Toolbox = () => {
                     onClick={() => addToolkitToProfile(toolkit)}
                     className="w-full"
                   >
-                    Baukasten nutzen
+                    Routine hinzufügen
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -180,23 +179,23 @@ const Toolbox = () => {
           <AddHabitDialog />
         </div>
         
-        <Tabs defaultValue="templates" className="space-y-6">
+        <Tabs defaultValue="my-routines" className="space-y-6">
           <TabsList className="bg-gray-100">
-            <TabsTrigger value="templates">Vorlagen</TabsTrigger>
+            <TabsTrigger value="my-routines">Meine Routinen</TabsTrigger>
             <TabsTrigger value="community">Community</TabsTrigger>
             <TabsTrigger value="inspiration">Inspiration</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="templates">
-            {renderToolkits(HABIT_TOOLKITS.templates)}
+          <TabsContent value="my-routines">
+            {renderToolkits(myRoutines || [])}
           </TabsContent>
 
           <TabsContent value="community">
-            {renderToolkits(HABIT_TOOLKITS.community)}
+            {renderToolkits(INSPIRATION_TOOLKITS.filter(t => t.id === "meditation"))}
           </TabsContent>
 
           <TabsContent value="inspiration">
-            {renderToolkits(HABIT_TOOLKITS.inspiration)}
+            {renderToolkits(INSPIRATION_TOOLKITS)}
           </TabsContent>
         </Tabs>
       </main>
