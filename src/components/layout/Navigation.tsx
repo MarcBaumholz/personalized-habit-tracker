@@ -26,7 +26,7 @@ export const Navigation = () => {
   };
 
   return (
-    <nav className="border-b">
+    <nav className="border-b bg-background">
       <div className="container flex h-16 items-center px-4">
         <div className="flex items-center space-x-4 w-full">
           <Link to="/" className="mr-6">
