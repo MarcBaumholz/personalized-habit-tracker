@@ -26,50 +26,50 @@ export const Navigation = () => {
   };
 
   return (
-    <nav className="bg-[#1A1F2C] border-b border-gray-800">
+    <nav className="bg-white border-b">
       <div className="container flex h-16 items-center px-4">
         <div className="flex items-center space-x-4 w-full">
           <Link to="/" className="mr-6">
-            <span className="text-xl font-bold text-white">HabitJourney</span>
+            <span className="text-xl font-bold">HabitJourney</span>
           </Link>
           
           <Link to="/dashboard">
-            <Button variant="ghost" size="sm" className="text-gray-300 hover:text-white">
+            <Button variant="ghost" size="sm">
               <LayoutDashboard className="h-5 w-5 mr-2" />
               Dashboard
             </Button>
           </Link>
           
           <Link to="/profile">
-            <Button variant="ghost" size="sm" className="text-gray-300 hover:text-white">
+            <Button variant="ghost" size="sm">
               <User className="h-5 w-5 mr-2" />
               Profil
             </Button>
           </Link>
           
           <Link to="/calendar">
-            <Button variant="ghost" size="sm" className="text-gray-300 hover:text-white">
+            <Button variant="ghost" size="sm">
               <Calendar className="h-5 w-5 mr-2" />
               Kalender
             </Button>
           </Link>
           
           <Link to="/education">
-            <Button variant="ghost" size="sm" className="text-gray-300 hover:text-white">
+            <Button variant="ghost" size="sm">
               <BookOpen className="h-5 w-5 mr-2" />
               Education
             </Button>
           </Link>
           
           <Link to="/toolbox">
-            <Button variant="ghost" size="sm" className="text-gray-300 hover:text-white">
+            <Button variant="ghost" size="sm">
               <Package className="h-5 w-5 mr-2" />
               Toolbox
             </Button>
           </Link>
           
           <div className="ml-auto">
-            <Button variant="ghost" size="sm" onClick={handleSignOut} className="text-gray-300 hover:text-white">
+            <Button variant="ghost" size="sm" onClick={handleSignOut}>
               <LogOut className="h-5 w-5 mr-2" />
               Abmelden
             </Button>

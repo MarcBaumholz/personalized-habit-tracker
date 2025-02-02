@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Navigate } from "react-router-dom";
 
 const Index = () => {
-  const { data: hasCompletedOnboarding } = useQuery({
+  const { data: hasCompletedOnboarding, isLoading } = useQuery({
     queryKey: ["onboarding-status"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -22,8 +22,12 @@ const Index = () => {
     },
   });
 
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
   if (!hasCompletedOnboarding) {
-    return <Navigate to="/auth" />;
+    return <Navigate to="/onboarding" />;
   }
 
   return (
@@ -31,12 +35,9 @@ const Index = () => {
       <Navigation />
       <main className="container py-6">
         <ProgressStats />
-        
         <div className="grid gap-6 md:grid-cols-2 mt-6">
-          <div className="space-y-6">
-            <HabitTracker />
-          </div>
           <TodoList />
+          <HabitTracker />
         </div>
       </main>
     </div>

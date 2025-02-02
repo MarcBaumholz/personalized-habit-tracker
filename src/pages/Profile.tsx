@@ -46,7 +46,7 @@ const Profile = () => {
         description: "Du kannst den Prozess jetzt neu starten.",
       });
 
-      navigate("/auth");
+      navigate("/onboarding");
     } catch (error) {
       toast({
         title: "Fehler",
@@ -108,24 +108,6 @@ const Profile = () => {
                   <Progress value={score} className="h-2" />
                 </div>
               ))}
-            </div>
-          </Card>
-
-          <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Keystone Habits</h2>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="p-4 bg-primary/10 rounded-lg">
-                <h3 className="font-medium mb-2">Deep Work</h3>
-                <p className="text-sm text-muted-foreground">
-                  {getResponse("keystone_habits")}
-                </p>
-              </div>
-              <div className="p-4 bg-primary/10 rounded-lg">
-                <h3 className="font-medium mb-2">Meditation</h3>
-                <p className="text-sm text-muted-foreground">
-                  {getResponse("implementation")}
-                </p>
-              </div>
             </div>
           </Card>
         </div>
