@@ -2,6 +2,7 @@ import { Navigation } from "@/components/layout/Navigation";
 import { HabitTracker } from "@/components/habits/HabitTracker";
 import { TodoList } from "@/components/dashboard/TodoList";
 import { ProgressStats } from "@/components/dashboard/ProgressStats";
+import { DashboardOverview } from "@/components/habits/DashboardOverview";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Navigate } from "react-router-dom";
@@ -39,6 +40,7 @@ const Index = () => {
           <TodoList />
           <HabitTracker />
         </div>
+        <DashboardOverview />
       </main>
     </div>
   );
