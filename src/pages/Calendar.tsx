@@ -1,29 +1,14 @@
 import { Navigation } from "@/components/layout/Navigation";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { ScheduleDialog } from "@/components/calendar/ScheduleDialog";
+import { ScheduleList } from "@/components/calendar/ScheduleList";
 
 const Calendar = () => {
   const [date, setDate] = useState<Date | undefined>(new Date());
@@ -91,9 +76,14 @@ const Calendar = () => {
     },
   });
 
-  const sortedSchedules = schedules?.sort((a, b) => 
-    (a.scheduled_time || "").localeCompare(b.scheduled_time || "")
-  );
+  const handleSchedule = () => {
+    if (selectedHabit && selectedTime) {
+      scheduleHabitMutation.mutate({
+        habitId: selectedHabit,
+        time: selectedTime,
+      });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -101,57 +91,14 @@ const Calendar = () => {
       <main className="container py-6">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">Kalenderansicht</h1>
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Gewohnheit planen
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Gewohnheit einplanen</DialogTitle>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <Select
-                    value={selectedHabit}
-                    onValueChange={setSelectedHabit}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Gewohnheit auswählen" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {habits?.map((habit) => (
-                        <SelectItem key={habit.id} value={habit.id}>
-                          {habit.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid gap-2">
-                  <Input
-                    type="time"
-                    value={selectedTime}
-                    onChange={(e) => setSelectedTime(e.target.value)}
-                  />
-                </div>
-                <Button
-                  onClick={() => {
-                    if (selectedHabit && selectedTime) {
-                      scheduleHabitMutation.mutate({
-                        habitId: selectedHabit,
-                        time: selectedTime,
-                      });
-                    }
-                  }}
-                >
-                  Einplanen
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+          <ScheduleDialog
+            habits={habits}
+            selectedHabit={selectedHabit}
+            selectedTime={selectedTime}
+            onHabitChange={setSelectedHabit}
+            onTimeChange={setSelectedTime}
+            onSchedule={handleSchedule}
+          />
         </div>
 
         <div className="grid gap-6 md:grid-cols-[300px_1fr]">
@@ -165,35 +112,7 @@ const Calendar = () => {
             />
           </Card>
 
-          <Card className="p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">
-                Tagesplan für {date ? format(date, "dd. MMMM yyyy", { locale: de }) : ""}
-              </h2>
-            </div>
-
-            <div className="space-y-4">
-              {sortedSchedules?.map((schedule) => (
-                <div
-                  key={schedule.id}
-                  className="flex items-center gap-4 p-3 border rounded-lg bg-gray-50 cursor-move"
-                  draggable
-                >
-                  <span className="font-medium min-w-[60px]">
-                    {schedule.scheduled_time}
-                  </span>
-                  <div className="flex-1 p-2 rounded">
-                    <span>{schedule.habits?.name}</span>
-                  </div>
-                </div>
-              ))}
-              {!sortedSchedules?.length && (
-                <p className="text-center text-gray-500">
-                  Keine Gewohnheiten für diesen Tag geplant
-                </p>
-              )}
-            </div>
-          </Card>
+          <ScheduleList date={date} schedules={schedules} />
         </div>
       </main>
     </div>
