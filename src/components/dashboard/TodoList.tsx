@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Check } from "lucide-react";
+import { Plus, Check, Trash2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -68,6 +68,24 @@ export const TodoList = () => {
     },
   });
 
+  const deleteTodoMutation = useMutation({
+    mutationFn: async (todoId: string) => {
+      const { error } = await supabase
+        .from("todos")
+        .delete()
+        .eq("id", todoId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["todos"] });
+      toast({
+        title: "Todo gelöscht",
+        description: "Das Todo wurde erfolgreich gelöscht.",
+      });
+    },
+  });
+
   return (
     <Card className="p-6">
       <h2 className="text-xl font-bold mb-4">Top Todos für heute</h2>
@@ -101,16 +119,26 @@ export const TodoList = () => {
               key={todo.id}
               className="flex items-center justify-between p-2 rounded-lg hover:bg-secondary/20"
             >
-              <span className={todo.completed ? "line-through font-bold text-muted-foreground" : ""}>
+              <span className={todo.completed ? "line-through text-muted-foreground" : ""}>
                 {todo.title}
               </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => toggleTodoMutation.mutate(todo)}
-              >
-                <Check className={`h-4 w-4 ${todo.completed ? "text-green-500" : ""}`} />
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => toggleTodoMutation.mutate(todo)}
+                >
+                  <Check className={`h-4 w-4 ${todo.completed ? "text-green-500" : ""}`} />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => deleteTodoMutation.mutate(todo.id)}
+                  className="text-destructive hover:text-destructive/90"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           ))}
         </div>
