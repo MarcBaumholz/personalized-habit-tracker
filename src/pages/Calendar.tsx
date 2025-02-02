@@ -1,7 +1,7 @@
 import { Navigation } from "@/components/layout/Navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, Plus, X } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -91,6 +91,10 @@ const Calendar = () => {
     },
   });
 
+  const sortedSchedules = schedules?.sort((a, b) => 
+    (a.scheduled_time || "").localeCompare(b.scheduled_time || "")
+  );
+
   return (
     <div className="min-h-screen bg-white">
       <Navigation />
@@ -104,31 +108,36 @@ const Calendar = () => {
                 Gewohnheit planen
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="sm:max-w-[425px]">
               <DialogHeader>
                 <DialogTitle>Gewohnheit einplanen</DialogTitle>
               </DialogHeader>
-              <div className="space-y-4">
-                <Select value={selectedHabit} onValueChange={setSelectedHabit}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Gewohnheit auswählen" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {habits?.map((habit) => (
-                      <SelectItem key={habit.id} value={habit.id}>
-                        {habit.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Input
-                  type="time"
-                  value={selectedTime}
-                  onChange={(e) => setSelectedTime(e.target.value)}
-                  placeholder="Zeit auswählen"
-                />
-                <Button 
-                  className="w-full"
+              <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <Select
+                    value={selectedHabit}
+                    onValueChange={setSelectedHabit}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Gewohnheit auswählen" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {habits?.map((habit) => (
+                        <SelectItem key={habit.id} value={habit.id}>
+                          {habit.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
+                  <Input
+                    type="time"
+                    value={selectedTime}
+                    onChange={(e) => setSelectedTime(e.target.value)}
+                  />
+                </div>
+                <Button
                   onClick={() => {
                     if (selectedHabit && selectedTime) {
                       scheduleHabitMutation.mutate({
@@ -152,6 +161,7 @@ const Calendar = () => {
               selected={date}
               onSelect={setDate}
               className="rounded-md border"
+              locale={de}
             />
           </Card>
 
@@ -163,17 +173,21 @@ const Calendar = () => {
             </div>
 
             <div className="space-y-4">
-              {schedules?.map((schedule) => (
-                <div key={schedule.id} className="flex items-center gap-4 p-3 border rounded-lg">
+              {sortedSchedules?.map((schedule) => (
+                <div
+                  key={schedule.id}
+                  className="flex items-center gap-4 p-3 border rounded-lg bg-gray-50 cursor-move"
+                  draggable
+                >
                   <span className="font-medium min-w-[60px]">
                     {schedule.scheduled_time}
                   </span>
-                  <div className="flex-1 p-2 bg-gray-50 rounded">
+                  <div className="flex-1 p-2 rounded">
                     <span>{schedule.habits?.name}</span>
                   </div>
                 </div>
               ))}
-              {schedules?.length === 0 && (
+              {!sortedSchedules?.length && (
                 <p className="text-center text-gray-500">
                   Keine Gewohnheiten für diesen Tag geplant
                 </p>
