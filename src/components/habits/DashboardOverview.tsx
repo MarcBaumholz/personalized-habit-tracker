@@ -5,7 +5,17 @@ import { CategoryDistribution } from "@/components/dashboard/CategoryDistributio
 import { WeeklyProgress } from "@/components/dashboard/WeeklyProgress";
 import { YearlyActivity } from "@/components/dashboard/YearlyActivity";
 import { HabitProgress } from "@/components/dashboard/HabitProgress";
-import { calculateStreak, calculateSuccessRate, calculateActiveDays, calculateTotalProgress, generateWeeklyData, generateCategoryData, generateProgressData, generateYearlyActivity } from "@/utils/habitStats";
+import { TodoList } from "@/components/dashboard/TodoList";
+import { 
+  calculateStreak, 
+  calculateSuccessRate, 
+  calculateActiveDays, 
+  calculateTotalProgress,
+  generateWeeklyData,
+  generateCategoryData,
+  generateProgressData,
+  generateYearlyActivity 
+} from "@/utils/habitStats";
 
 export const DashboardOverview = () => {
   const { data: stats } = useQuery({
@@ -56,9 +66,12 @@ export const DashboardOverview = () => {
         <WeeklyProgress data={stats?.weeklyData || []} />
       </div>
 
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <HabitProgress data={stats?.progressData || []} />
+        <TodoList />
+      </div>
+
       <YearlyActivity data={stats?.yearlyActivity || []} />
-      
-      <HabitProgress data={stats?.progressData || []} />
     </div>
   );
 };
