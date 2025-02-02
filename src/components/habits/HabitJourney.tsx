@@ -21,7 +21,7 @@ export const HabitJourney = () => {
 
   return (
     <Card className="p-6 bg-white">
-      <h2 className="text-xl font-bold text-gray-900 mb-6">Deine Gewohnheiten</h2>
+      <h2 className="text-xl font-bold text-gray-900 mb-6">Gesamtfortschritt zum Automatismus</h2>
       
       <div className="space-y-6">
         {habits?.map((habit: any) => (

@@ -64,6 +64,11 @@ const Profile = () => {
     { trait: "Neurotizismus", score: 45, icon: Coffee },
   ];
 
+  const keystoneHabits = [
+    { name: "Fokussierte Arbeit", description: "Deine hohe Gewissenhaftigkeit unterstützt dich bei konzentrierter Arbeit." },
+    { name: "Soziale Interaktion", description: "Deine Verträglichkeit hilft dir bei der Zusammenarbeit mit anderen." },
+  ];
+
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
@@ -108,6 +113,43 @@ const Profile = () => {
                   <Progress value={score} className="h-2" />
                 </div>
               ))}
+            </div>
+          </Card>
+
+          <Card className="p-6">
+            <h2 className="text-xl font-semibold mb-4">Persönliche Stärken</h2>
+            <div className="grid gap-4 md:grid-cols-2">
+              {keystoneHabits.map((habit) => (
+                <Card key={habit.name} className="p-4 bg-muted">
+                  <h3 className="font-medium mb-2">{habit.name}</h3>
+                  <p className="text-sm text-muted-foreground">{habit.description}</p>
+                </Card>
+              ))}
+            </div>
+          </Card>
+
+          <Card className="p-6">
+            <h2 className="text-xl font-semibold mb-4">ZRM-Entwicklungsbereiche</h2>
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <h3 className="font-medium">Aktuelles Haltungsziel</h3>
+                <p className="text-muted-foreground italic">
+                  "Ich bin wie ein ruhiger Berg, der gelassen neue Herausforderungen meistert"
+                </p>
+              </div>
+              <div className="space-y-2">
+                <h3 className="font-medium">Ressourcenpool</h3>
+                <div className="flex gap-2 flex-wrap">
+                  {["Meditation", "Sport", "Natur", "Musik"].map((resource) => (
+                    <span
+                      key={resource}
+                      className="px-3 py-1 bg-secondary text-secondary-foreground rounded-full text-sm"
+                    >
+                      {resource}
+                    </span>
+                  ))}
+                </div>
+              </div>
             </div>
           </Card>
         </div>

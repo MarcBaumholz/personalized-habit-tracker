@@ -1,6 +1,7 @@
 import { Navigation } from "@/components/layout/Navigation";
 import { Card } from "@/components/ui/card";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -91,14 +92,22 @@ const Calendar = () => {
       <main className="container py-6">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">Kalenderansicht</h1>
-          <ScheduleDialog
-            habits={habits}
-            selectedHabit={selectedHabit}
-            selectedTime={selectedTime}
-            onHabitChange={setSelectedHabit}
-            onTimeChange={setSelectedTime}
-            onSchedule={handleSchedule}
-          />
+          <div className="flex gap-4">
+            <Button variant="outline">
+              Google Kalender
+            </Button>
+            <Button variant="outline">
+              Apple Kalender
+            </Button>
+            <ScheduleDialog
+              habits={habits}
+              selectedHabit={selectedHabit}
+              selectedTime={selectedTime}
+              onHabitChange={setSelectedHabit}
+              onTimeChange={setSelectedTime}
+              onSchedule={handleSchedule}
+            />
+          </div>
         </div>
 
         <div className="grid gap-6 md:grid-cols-[300px_1fr]">

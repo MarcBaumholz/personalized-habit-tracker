@@ -1,8 +1,6 @@
 import { Navigation } from "@/components/layout/Navigation";
-import { HabitTracker } from "@/components/habits/HabitTracker";
+import { HabitJourney } from "@/components/habits/HabitJourney";
 import { TodoList } from "@/components/dashboard/TodoList";
-import { ProgressStats } from "@/components/dashboard/ProgressStats";
-import { DashboardOverview } from "@/components/habits/DashboardOverview";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Navigate } from "react-router-dom";
@@ -35,12 +33,10 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <Navigation />
       <main className="container py-6">
-        <ProgressStats />
-        <div className="grid gap-6 md:grid-cols-2 mt-6">
+        <div className="space-y-6">
           <TodoList />
-          <HabitTracker />
+          <HabitJourney />
         </div>
-        <DashboardOverview />
       </main>
     </div>
   );
