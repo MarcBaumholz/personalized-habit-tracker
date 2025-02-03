@@ -9,6 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { ReflectionQuestions } from "./ReflectionQuestions";
 
 interface ReflectionDialogProps {
   isOpen: boolean;
@@ -31,6 +34,22 @@ export const ReflectionDialog = ({
   onReflectionChange,
   onSubmit,
 }: ReflectionDialogProps) => {
+  const { data: customQuestions } = useQuery({
+    queryKey: ["reflection-questions"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
+
+      const { data } = await supabase
+        .from("reflection_questions")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("is_active", true);
+
+      return data || [];
+    },
+  });
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-md">
@@ -65,6 +84,23 @@ export const ReflectionDialog = ({
               </RadioGroup>
             </div>
           ))}
+
+          {customQuestions?.map((q: any) => (
+            <div key={q.id} className="space-y-2">
+              <Label>{q.question}</Label>
+              <Textarea
+                placeholder="Deine Antwort..."
+                className="h-20"
+                onChange={(e) => onReflectionChange(e.target.value)}
+              />
+            </div>
+          ))}
+
+          <div className="space-y-2">
+            <Label>Persönliche Reflexionsfragen</Label>
+            <ReflectionQuestions />
+          </div>
+
           <Textarea
             value={reflection}
             onChange={(e) => onReflectionChange(e.target.value)}

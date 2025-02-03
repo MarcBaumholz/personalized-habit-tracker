@@ -90,6 +90,62 @@ export type Database = {
           },
         ]
       }
+      habit_emotions: {
+        Row: {
+          created_at: string | null
+          emotion: string
+          habit_id: string | null
+          id: string
+          note: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          emotion: string
+          habit_id?: string | null
+          id?: string
+          note?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          emotion?: string
+          habit_id?: string | null
+          id?: string
+          note?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_habit_emotions_habit"
+            columns: ["habit_id"]
+            isOneToOne: false
+            referencedRelation: "habits"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_habit_emotions_user"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "habit_emotions_habit_id_fkey"
+            columns: ["habit_id"]
+            isOneToOne: false
+            referencedRelation: "habits"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "habit_emotions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       habit_reflections: {
         Row: {
           created_at: string
@@ -182,13 +238,17 @@ export type Database = {
           difficulty: string | null
           difficulty_level: string | null
           effort: string | null
+          elastic_level: string | null
           frequency: string | null
           id: string
           identity: string | null
           last_completed_at: string | null
+          last_motivation_check: string | null
           monthly_streak: number | null
           name: string
           phase: string | null
+          reminder_time: string | null
+          reminder_type: string | null
           satisfaction_level: string | null
           smart_goal: string | null
           streak_count: number | null
@@ -196,6 +256,7 @@ export type Database = {
           user_id: string
           weekly_streak: number | null
           why: string | null
+          why_description: string | null
         }
         Insert: {
           category: string
@@ -204,13 +265,17 @@ export type Database = {
           difficulty?: string | null
           difficulty_level?: string | null
           effort?: string | null
+          elastic_level?: string | null
           frequency?: string | null
           id?: string
           identity?: string | null
           last_completed_at?: string | null
+          last_motivation_check?: string | null
           monthly_streak?: number | null
           name: string
           phase?: string | null
+          reminder_time?: string | null
+          reminder_type?: string | null
           satisfaction_level?: string | null
           smart_goal?: string | null
           streak_count?: number | null
@@ -218,6 +283,7 @@ export type Database = {
           user_id: string
           weekly_streak?: number | null
           why?: string | null
+          why_description?: string | null
         }
         Update: {
           category?: string
@@ -226,13 +292,17 @@ export type Database = {
           difficulty?: string | null
           difficulty_level?: string | null
           effort?: string | null
+          elastic_level?: string | null
           frequency?: string | null
           id?: string
           identity?: string | null
           last_completed_at?: string | null
+          last_motivation_check?: string | null
           monthly_streak?: number | null
           name?: string
           phase?: string | null
+          reminder_time?: string | null
+          reminder_type?: string | null
           satisfaction_level?: string | null
           smart_goal?: string | null
           streak_count?: number | null
@@ -240,6 +310,7 @@ export type Database = {
           user_id?: string
           weekly_streak?: number | null
           why?: string | null
+          why_description?: string | null
         }
         Relationships: [
           {
@@ -309,6 +380,45 @@ export type Database = {
           username?: string | null
         }
         Relationships: []
+      }
+      reflection_questions: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          question: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          question: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          question?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_reflection_questions_user"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reflection_questions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       todos: {
         Row: {
