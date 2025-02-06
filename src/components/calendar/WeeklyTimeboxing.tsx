@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { format, startOfWeek, addDays, parseISO, addHours, setHours, setMinutes } from "date-fns";
+import { format, startOfWeek, addDays } from "date-fns";
 import { de } from "date-fns/locale";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -19,55 +19,40 @@ interface TimeSlot {
   };
 }
 
-// Generate time slots from 5:00 to 22:30 in 30-minute intervals
-const TIME_SLOTS: TimeSlot[] = Array.from({ length: 36 }, (_, i) => {
-  const hour = Math.floor(i / 2) + 5;
-  const minute = i % 2 === 0 ? "00" : "30";
-  const nextHour = minute === "30" ? hour + 1 : hour;
-  const nextMinute = minute === "30" ? "00" : "30";
-  
+// Generate time slots from 6:00 to 23:00 in hourly intervals
+const TIME_SLOTS: TimeSlot[] = Array.from({ length: 17 }, (_, i) => {
+  const hour = i + 6;
   return {
-    time: `${hour.toString().padStart(2, "0")}:${minute} - ${nextHour.toString().padStart(2, "0")}:${nextMinute}`,
+    time: `${hour.toString().padStart(2, "0")}:00 - ${(hour + 1).toString().padStart(2, "0")}:00`,
     activities: {}
   };
 });
 
-// Generate dummy data for 50% of the slots
-const generateDummyData = (weekDays: Date[]) => {
+// Generate static dummy data for 50% of the slots
+const DUMMY_DATA = TIME_SLOTS.map(slot => {
+  const activities = { ...slot.activities };
   const dummyActivities = [
-    { title: "Meeting mit Team", category: "Arbeit" },
-    { title: "Yoga", category: "Gesundheit" },
-    { title: "Projektplanung", category: "Arbeit" },
-    { title: "Einkaufen", category: "Persönlich" },
-    { title: "Meditation", category: "Gesundheit" },
+    { title: "Meeting mit Team", category: "Arbeit", type: 'todo' as const },
+    { title: "Yoga", category: "Gesundheit", type: 'habit' as const },
+    { title: "Projektplanung", category: "Arbeit", type: 'todo' as const },
+    { title: "Einkaufen", category: "Persönlich", type: 'todo' as const },
+    { title: "Meditation", category: "Gesundheit", type: 'habit' as const },
   ];
 
-  return TIME_SLOTS.map(slot => {
-    const activities = { ...slot.activities };
-    
-    weekDays.forEach(day => {
-      // 50% chance to add an activity
-      if (Math.random() < 0.5) {
-        const dateKey = format(day, "yyyy-MM-dd");
-        const randomActivity = dummyActivities[Math.floor(Math.random() * dummyActivities.length)];
-        activities[dateKey] = {
-          ...randomActivity,
-          type: Math.random() < 0.5 ? 'todo' : 'habit'
-        };
-      }
-    });
+  if (Math.random() < 0.5) {
+    const randomActivity = dummyActivities[Math.floor(Math.random() * dummyActivities.length)];
+    activities[format(new Date(), "yyyy-MM-dd")] = randomActivity;
+  }
 
-    return {
-      ...slot,
-      activities
-    };
-  });
-};
+  return {
+    ...slot,
+    activities
+  };
+});
 
 export const WeeklyTimeboxing = () => {
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   
   const weekStart = startOfWeek(currentWeek, { weekStartsOn: 1 });
   const weekDays = Array.from({ length: 5 }, (_, i) => addDays(weekStart, i));
@@ -88,63 +73,6 @@ export const WeeklyTimeboxing = () => {
     },
   });
 
-  const { data: habits } = useQuery({
-    queryKey: ["habits-weekly"],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("No user found");
-
-      const { data } = await supabase
-        .from("habits")
-        .select("*")
-        .eq("user_id", user.id);
-
-      return data || [];
-    },
-  });
-
-  const updateTodoMutation = useMutation({
-    mutationFn: async ({ id, scheduledTime }: { id: string; scheduledTime: string | null }) => {
-      const { error } = await supabase
-        .from("todos")
-        .update({ scheduled_time: scheduledTime })
-        .eq("id", id);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["todos-weekly"] });
-      toast({
-        title: "Zeitplan aktualisiert",
-        description: "Der Zeitplan wurde erfolgreich aktualisiert.",
-      });
-    },
-  });
-
-  const [timeSlots, setTimeSlots] = useState(generateDummyData(weekDays));
-
-  useEffect(() => {
-    const updatedSlots = generateDummyData(weekDays);
-    
-    // Populate with real todos and habits
-    todos?.forEach(todo => {
-      if (todo.scheduled_time && todo.due_date) {
-        const todoTime = todo.scheduled_time.split(":")[0] + ":" + todo.scheduled_time.split(":")[1];
-        const slotIndex = TIME_SLOTS.findIndex(slot => slot.time.startsWith(todoTime));
-        
-        if (slotIndex !== -1) {
-          updatedSlots[slotIndex].activities[todo.due_date] = {
-            title: todo.title,
-            category: todo.category,
-            type: 'todo'
-          };
-        }
-      }
-    });
-
-    setTimeSlots(updatedSlots);
-  }, [todos, habits, weekDays]);
-
   const previousWeek = () => {
     setCurrentWeek(prev => addDays(prev, -7));
   };
@@ -153,8 +81,7 @@ export const WeeklyTimeboxing = () => {
     setCurrentWeek(prev => addDays(prev, 7));
   };
 
-  const handleSlotClick = async (time: string, date: Date) => {
-    const formattedDate = format(date, "yyyy-MM-dd");
+  const handleSlotClick = (time: string, date: Date) => {
     toast({
       title: "Zeitslot ausgewählt",
       description: `${time} am ${format(date, "dd.MM.yyyy")}`,
@@ -190,7 +117,7 @@ export const WeeklyTimeboxing = () => {
           </div>
 
           <div className="space-y-1">
-            {timeSlots.map((slot) => (
+            {DUMMY_DATA.map((slot) => (
               <div
                 key={slot.time}
                 className="grid grid-cols-[120px_repeat(5,1fr)] gap-1"
