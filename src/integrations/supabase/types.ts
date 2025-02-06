@@ -426,6 +426,51 @@ export type Database = {
           },
         ]
       }
+      timebox_entries: {
+        Row: {
+          created_at: string
+          date: string
+          habit_id: string | null
+          id: string
+          time_slot: string
+          todo_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          habit_id?: string | null
+          id?: string
+          time_slot: string
+          todo_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          habit_id?: string | null
+          id?: string
+          time_slot?: string
+          todo_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "timebox_entries_habit_id_fkey"
+            columns: ["habit_id"]
+            isOneToOne: false
+            referencedRelation: "habits"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "timebox_entries_todo_id_fkey"
+            columns: ["todo_id"]
+            isOneToOne: false
+            referencedRelation: "todos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       todos: {
         Row: {
           category: string | null

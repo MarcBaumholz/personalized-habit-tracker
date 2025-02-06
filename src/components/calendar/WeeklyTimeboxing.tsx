@@ -1,17 +1,26 @@
+
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { format, startOfWeek, addDays } from "date-fns";
 import { de } from "date-fns/locale";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface TimeSlot {
   time: string;
   activities: {
     [key: string]: {
+      id: string;
       title: string;
       category?: string;
       type: 'todo' | 'habit';
@@ -19,7 +28,6 @@ interface TimeSlot {
   };
 }
 
-// Generate time slots from 6:00 to 23:00 in hourly intervals
 const TIME_SLOTS: TimeSlot[] = Array.from({ length: 17 }, (_, i) => {
   const hour = i + 6;
   return {
@@ -28,34 +36,37 @@ const TIME_SLOTS: TimeSlot[] = Array.from({ length: 17 }, (_, i) => {
   };
 });
 
-// Generate static dummy data for 50% of the slots
-const DUMMY_DATA = TIME_SLOTS.map(slot => {
-  const activities = { ...slot.activities };
-  const dummyActivities = [
-    { title: "Meeting mit Team", category: "Arbeit", type: 'todo' as const },
-    { title: "Yoga", category: "Gesundheit", type: 'habit' as const },
-    { title: "Projektplanung", category: "Arbeit", type: 'todo' as const },
-    { title: "Einkaufen", category: "Persönlich", type: 'todo' as const },
-    { title: "Meditation", category: "Gesundheit", type: 'habit' as const },
-  ];
-
-  if (Math.random() < 0.5) {
-    const randomActivity = dummyActivities[Math.floor(Math.random() * dummyActivities.length)];
-    activities[format(new Date(), "yyyy-MM-dd")] = randomActivity;
-  }
-
-  return {
-    ...slot,
-    activities
-  };
-});
-
 export const WeeklyTimeboxing = () => {
   const [currentWeek, setCurrentWeek] = useState(new Date());
+  const [selectedSlot, setSelectedSlot] = useState<{ time: string; date: Date } | null>(null);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   const weekStart = startOfWeek(currentWeek, { weekStartsOn: 1 });
   const weekDays = Array.from({ length: 5 }, (_, i) => addDays(weekStart, i));
+
+  const { data: timeboxEntries } = useQuery({
+    queryKey: ["timebox-entries", weekStart],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
+
+      const { data } = await supabase
+        .from("timebox_entries")
+        .select(`
+          id,
+          date,
+          time_slot,
+          todos (id, title, category),
+          habits (id, name, category)
+        `)
+        .eq("user_id", user.id)
+        .gte("date", format(weekStart, "yyyy-MM-dd"))
+        .lte("date", format(addDays(weekStart, 4), "yyyy-MM-dd"));
+
+      return data || [];
+    },
+  });
 
   const { data: todos } = useQuery({
     queryKey: ["todos-weekly"],
@@ -67,9 +78,88 @@ export const WeeklyTimeboxing = () => {
         .from("todos")
         .select("*")
         .eq("user_id", user.id)
-        .not("scheduled_time", "is", null);
+        .is("completed", false);
 
       return data || [];
+    },
+  });
+
+  const { data: habits } = useQuery({
+    queryKey: ["habits-weekly"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
+
+      const { data } = await supabase
+        .from("habits")
+        .select("*")
+        .eq("user_id", user.id);
+
+      return data || [];
+    },
+  });
+
+  const addTimeboxEntryMutation = useMutation({
+    mutationFn: async ({ 
+      date, 
+      timeSlot, 
+      todoId, 
+      habitId 
+    }: { 
+      date: Date; 
+      timeSlot: string; 
+      todoId?: string; 
+      habitId?: string;
+    }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
+
+      const { data, error } = await supabase
+        .from("timebox_entries")
+        .insert({
+          user_id: user.id,
+          date: format(date, "yyyy-MM-dd"),
+          time_slot: timeSlot,
+          todo_id: todoId,
+          habit_id: habitId,
+        })
+        .select();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["timebox-entries"] });
+      setSelectedSlot(null);
+      toast({
+        title: "Zeitslot geplant",
+        description: "Der Eintrag wurde erfolgreich eingeplant.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Fehler",
+        description: "Der Zeitslot konnte nicht geplant werden.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteTimeboxEntryMutation = useMutation({
+    mutationFn: async (entryId: string) => {
+      const { error } = await supabase
+        .from("timebox_entries")
+        .delete()
+        .eq("id", entryId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["timebox-entries"] });
+      toast({
+        title: "Eintrag gelöscht",
+        description: "Der Eintrag wurde erfolgreich gelöscht.",
+      });
     },
   });
 
@@ -81,11 +171,33 @@ export const WeeklyTimeboxing = () => {
     setCurrentWeek(prev => addDays(prev, 7));
   };
 
-  const handleSlotClick = (time: string, date: Date) => {
-    toast({
-      title: "Zeitslot ausgewählt",
-      description: `${time} am ${format(date, "dd.MM.yyyy")}`,
-    });
+  const getActivityForSlot = (time: string, date: Date) => {
+    const dateStr = format(date, "yyyy-MM-dd");
+    const entry = timeboxEntries?.find(
+      entry => entry.time_slot === time && format(new Date(entry.date), "yyyy-MM-dd") === dateStr
+    );
+
+    if (!entry) return null;
+
+    if (entry.todos) {
+      return {
+        id: entry.id,
+        title: entry.todos.title,
+        category: entry.todos.category,
+        type: 'todo' as const,
+      };
+    }
+
+    if (entry.habits) {
+      return {
+        id: entry.id,
+        title: entry.habits.name,
+        category: entry.habits.category,
+        type: 'habit' as const,
+      };
+    }
+
+    return null;
   };
 
   return (
@@ -117,7 +229,7 @@ export const WeeklyTimeboxing = () => {
           </div>
 
           <div className="space-y-1">
-            {DUMMY_DATA.map((slot) => (
+            {TIME_SLOTS.map((slot) => (
               <div
                 key={slot.time}
                 className="grid grid-cols-[120px_repeat(5,1fr)] gap-1"
@@ -126,8 +238,7 @@ export const WeeklyTimeboxing = () => {
                   {slot.time}
                 </div>
                 {weekDays.map(day => {
-                  const dateKey = format(day, "yyyy-MM-dd");
-                  const activity = slot.activities[dateKey];
+                  const activity = getActivityForSlot(slot.time, day);
                   
                   return (
                     <div
@@ -139,7 +250,13 @@ export const WeeklyTimeboxing = () => {
                             : 'bg-green-50 hover:bg-green-100'
                           : 'bg-gray-50 hover:bg-gray-100'
                       }`}
-                      onClick={() => handleSlotClick(slot.time, day)}
+                      onClick={() => {
+                        if (activity) {
+                          deleteTimeboxEntryMutation.mutate(activity.id);
+                        } else {
+                          setSelectedSlot({ time: slot.time, date: day });
+                        }
+                      }}
                     >
                       {activity && (
                         <div>
@@ -159,6 +276,74 @@ export const WeeklyTimeboxing = () => {
           </div>
         </div>
       </div>
+
+      <Dialog open={!!selectedSlot} onOpenChange={(open) => !open && setSelectedSlot(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              Eintrag für {selectedSlot?.time} am{" "}
+              {selectedSlot?.date && format(selectedSlot.date, "dd.MM.yyyy", { locale: de })}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <Tabs defaultValue="todos">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="todos">Todos</TabsTrigger>
+              <TabsTrigger value="habits">Gewohnheiten</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="todos" className="space-y-2">
+              {todos?.map((todo) => (
+                <div
+                  key={todo.id}
+                  onClick={() => {
+                    if (selectedSlot) {
+                      addTimeboxEntryMutation.mutate({
+                        date: selectedSlot.date,
+                        timeSlot: selectedSlot.time,
+                        todoId: todo.id,
+                      });
+                    }
+                  }}
+                  className="p-2 rounded cursor-pointer hover:bg-gray-100"
+                >
+                  <span className="font-medium">{todo.title}</span>
+                  {todo.category && (
+                    <span className="ml-2 text-xs text-gray-500">
+                      {todo.category}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </TabsContent>
+            
+            <TabsContent value="habits" className="space-y-2">
+              {habits?.map((habit) => (
+                <div
+                  key={habit.id}
+                  onClick={() => {
+                    if (selectedSlot) {
+                      addTimeboxEntryMutation.mutate({
+                        date: selectedSlot.date,
+                        timeSlot: selectedSlot.time,
+                        habitId: habit.id,
+                      });
+                    }
+                  }}
+                  className="p-2 rounded cursor-pointer hover:bg-gray-100"
+                >
+                  <span className="font-medium">{habit.name}</span>
+                  {habit.category && (
+                    <span className="ml-2 text-xs text-gray-500">
+                      {habit.category}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </TabsContent>
+          </Tabs>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };
