@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { format, startOfWeek, addDays, parseISO } from "date-fns";
+import { format, startOfWeek, addDays, parseISO, addHours, setHours, setMinutes } from "date-fns";
 import { de } from "date-fns/locale";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,10 +14,12 @@ interface TimeSlot {
     [key: string]: {
       title: string;
       category?: string;
+      type: 'todo' | 'habit';
     };
   };
 }
 
+// Generate time slots from 5:00 to 22:30 in 30-minute intervals
 const TIME_SLOTS: TimeSlot[] = Array.from({ length: 36 }, (_, i) => {
   const hour = Math.floor(i / 2) + 5;
   const minute = i % 2 === 0 ? "00" : "30";
@@ -29,6 +31,38 @@ const TIME_SLOTS: TimeSlot[] = Array.from({ length: 36 }, (_, i) => {
     activities: {}
   };
 });
+
+// Generate dummy data for 50% of the slots
+const generateDummyData = (weekDays: Date[]) => {
+  const dummyActivities = [
+    { title: "Meeting mit Team", category: "Arbeit" },
+    { title: "Yoga", category: "Gesundheit" },
+    { title: "Projektplanung", category: "Arbeit" },
+    { title: "Einkaufen", category: "Persönlich" },
+    { title: "Meditation", category: "Gesundheit" },
+  ];
+
+  return TIME_SLOTS.map(slot => {
+    const activities = { ...slot.activities };
+    
+    weekDays.forEach(day => {
+      // 50% chance to add an activity
+      if (Math.random() < 0.5) {
+        const dateKey = format(day, "yyyy-MM-dd");
+        const randomActivity = dummyActivities[Math.floor(Math.random() * dummyActivities.length)];
+        activities[dateKey] = {
+          ...randomActivity,
+          type: Math.random() < 0.5 ? 'todo' : 'habit'
+        };
+      }
+    });
+
+    return {
+      ...slot,
+      activities
+    };
+  });
+};
 
 export const WeeklyTimeboxing = () => {
   const [currentWeek, setCurrentWeek] = useState(new Date());
@@ -54,6 +88,21 @@ export const WeeklyTimeboxing = () => {
     },
   });
 
+  const { data: habits } = useQuery({
+    queryKey: ["habits-weekly"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
+
+      const { data } = await supabase
+        .from("habits")
+        .select("*")
+        .eq("user_id", user.id);
+
+      return data || [];
+    },
+  });
+
   const updateTodoMutation = useMutation({
     mutationFn: async ({ id, scheduledTime }: { id: string; scheduledTime: string | null }) => {
       const { error } = await supabase
@@ -72,6 +121,30 @@ export const WeeklyTimeboxing = () => {
     },
   });
 
+  const [timeSlots, setTimeSlots] = useState(generateDummyData(weekDays));
+
+  useEffect(() => {
+    const updatedSlots = generateDummyData(weekDays);
+    
+    // Populate with real todos and habits
+    todos?.forEach(todo => {
+      if (todo.scheduled_time && todo.due_date) {
+        const todoTime = todo.scheduled_time.split(":")[0] + ":" + todo.scheduled_time.split(":")[1];
+        const slotIndex = TIME_SLOTS.findIndex(slot => slot.time.startsWith(todoTime));
+        
+        if (slotIndex !== -1) {
+          updatedSlots[slotIndex].activities[todo.due_date] = {
+            title: todo.title,
+            category: todo.category,
+            type: 'todo'
+          };
+        }
+      }
+    });
+
+    setTimeSlots(updatedSlots);
+  }, [todos, habits, weekDays]);
+
   const previousWeek = () => {
     setCurrentWeek(prev => addDays(prev, -7));
   };
@@ -80,28 +153,13 @@ export const WeeklyTimeboxing = () => {
     setCurrentWeek(prev => addDays(prev, 7));
   };
 
-  // Populate time slots with todos
-  const populatedTimeSlots = TIME_SLOTS.map(slot => {
-    const slotActivities = { ...slot.activities };
-    
-    todos?.forEach(todo => {
-      if (todo.scheduled_time) {
-        const todoTime = todo.scheduled_time.split(":")[0] + ":" + todo.scheduled_time.split(":")[1];
-        if (slot.time.startsWith(todoTime)) {
-          const todoDate = format(parseISO(todo.due_date), "yyyy-MM-dd");
-          slotActivities[todoDate] = {
-            title: todo.title,
-            category: todo.category,
-          };
-        }
-      }
+  const handleSlotClick = async (time: string, date: Date) => {
+    const formattedDate = format(date, "yyyy-MM-dd");
+    toast({
+      title: "Zeitslot ausgewählt",
+      description: `${time} am ${format(date, "dd.MM.yyyy")}`,
     });
-
-    return {
-      ...slot,
-      activities: slotActivities,
-    };
-  });
+  };
 
   return (
     <Card className="p-6 mt-6">
@@ -132,7 +190,7 @@ export const WeeklyTimeboxing = () => {
           </div>
 
           <div className="space-y-1">
-            {populatedTimeSlots.map((slot) => (
+            {timeSlots.map((slot) => (
               <div
                 key={slot.time}
                 className="grid grid-cols-[120px_repeat(5,1fr)] gap-1"
@@ -148,8 +206,13 @@ export const WeeklyTimeboxing = () => {
                     <div
                       key={day.toString()}
                       className={`rounded min-h-[40px] p-2 text-sm cursor-pointer transition-colors ${
-                        activity ? 'bg-blue-50 hover:bg-blue-100' : 'bg-gray-50 hover:bg-gray-100'
+                        activity 
+                          ? activity.type === 'todo' 
+                            ? 'bg-blue-50 hover:bg-blue-100'
+                            : 'bg-green-50 hover:bg-green-100'
+                          : 'bg-gray-50 hover:bg-gray-100'
                       }`}
+                      onClick={() => handleSlotClick(slot.time, day)}
                     >
                       {activity && (
                         <div>

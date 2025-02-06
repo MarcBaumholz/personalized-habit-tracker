@@ -49,6 +49,22 @@ const Calendar = () => {
     },
   });
 
+  const { data: todos } = useQuery({
+    queryKey: ["todos", date],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
+
+      const { data } = await supabase
+        .from("todos")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("due_date", format(date || new Date(), "yyyy-MM-dd"));
+
+      return data || [];
+    },
+  });
+
   const scheduleHabitMutation = useMutation({
     mutationFn: async ({ habitId, time }: { habitId: string, time: string }) => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -86,6 +102,18 @@ const Calendar = () => {
     }
   };
 
+  const handleTimeSlotSelect = (time: string) => {
+    setSelectedTime(time);
+  };
+
+  const handleCategorySelect = (category: string) => {
+    // Handle category selection logic here
+    toast({
+      title: "Kategorie ausgewählt",
+      description: `Kategorie ${category} wurde ausgewählt.`,
+    });
+  };
+
   return (
     <div className="min-h-screen bg-white">
       <Navigation />
@@ -113,7 +141,13 @@ const Calendar = () => {
             />
           </Card>
 
-          <ScheduleList date={date} schedules={schedules} />
+          <ScheduleList
+            date={date}
+            schedules={schedules}
+            todos={todos}
+            onTimeSlotSelect={handleTimeSlotSelect}
+            onCategorySelect={handleCategorySelect}
+          />
         </div>
 
         <WeeklyTimeboxing />
