@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Pencil } from "lucide-react";
+import { Pencil, Bell } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,6 +24,8 @@ export const EditHabitDialog = ({ habit }: { habit: any }) => {
     context: habit.context || "",
     effort: habit.effort || "",
     smartGoal: habit.smart_goal || "",
+    reminderTime: habit.reminder_time || "",
+    reminderType: habit.reminder_type || "default",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -42,6 +44,8 @@ export const EditHabitDialog = ({ habit }: { habit: any }) => {
           context: habitData.context,
           effort: habitData.effort,
           smart_goal: habitData.smartGoal,
+          reminder_time: habitData.reminderTime || null,
+          reminder_type: habitData.reminderType,
         })
         .eq("id", habit.id);
 
@@ -135,6 +139,39 @@ export const EditHabitDialog = ({ habit }: { habit: any }) => {
                   <SelectItem value="morning">Morgens</SelectItem>
                   <SelectItem value="afternoon">Mittags</SelectItem>
                   <SelectItem value="evening">Abends</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="reminderTime">Erinnerung</Label>
+              <div className="flex items-center space-x-2">
+                <Input
+                  id="reminderTime"
+                  type="time"
+                  value={habitData.reminderTime}
+                  onChange={(e) => setHabitData({ ...habitData, reminderTime: e.target.value })}
+                  className="flex-1"
+                />
+                <Bell className="h-4 w-4 text-gray-400" />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="reminderType">Erinnerungstyp</Label>
+              <Select
+                value={habitData.reminderType}
+                onValueChange={(value) => setHabitData({ ...habitData, reminderType: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Art der Erinnerung" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="default">Standard</SelectItem>
+                  <SelectItem value="push">Push-Benachrichtigung</SelectItem>
+                  <SelectItem value="email">E-Mail</SelectItem>
                 </SelectContent>
               </Select>
             </div>
