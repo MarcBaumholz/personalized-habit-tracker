@@ -15,7 +15,6 @@ import {
   generateWeeklyData,
   generateCategoryData,
   generateProgressData,
-  generateYearlyActivity 
 } from "@/utils/habitStats";
 
 export const DashboardOverview = () => {
@@ -46,7 +45,6 @@ export const DashboardOverview = () => {
         weeklyData: generateWeeklyData(completionsData),
         categoryData: generateCategoryData(habitsData, completionsData),
         progressData: generateProgressData(completionsData, habitsData),
-        yearlyActivity: generateYearlyActivity(completionsData),
       };
     },
   });
@@ -72,7 +70,7 @@ export const DashboardOverview = () => {
         <TodoList />
       </div>
 
-      <YearlyActivity data={stats?.yearlyActivity || []} />
+      <YearlyActivity />
     </div>
   );
 };

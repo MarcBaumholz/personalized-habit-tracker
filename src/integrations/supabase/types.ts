@@ -244,6 +244,7 @@ export type Database = {
           identity: string | null
           last_completed_at: string | null
           last_motivation_check: string | null
+          life_area: string | null
           monthly_streak: number | null
           name: string
           phase: string | null
@@ -271,6 +272,7 @@ export type Database = {
           identity?: string | null
           last_completed_at?: string | null
           last_motivation_check?: string | null
+          life_area?: string | null
           monthly_streak?: number | null
           name: string
           phase?: string | null
@@ -298,6 +300,7 @@ export type Database = {
           identity?: string | null
           last_completed_at?: string | null
           last_motivation_check?: string | null
+          life_area?: string | null
           monthly_streak?: number | null
           name?: string
           phase?: string | null

@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 
 interface YearlyActivityProps {
-  data: Array<Array<{ date: string; count: number; lifeArea?: string }>>;
+  data: Array<{ date: string; count: number; lifeArea: string }>;
 }
 
 const LIFE_AREA_COLORS = {
@@ -38,11 +38,10 @@ export const YearlyActivity = () => {
         habit.habit_completions?.forEach((completion: any) => {
           const date = completion.completed_date;
           if (!completionMap.has(date)) {
-            completionMap.set(date, { count: 0, areas: new Set() });
+            completionMap.set(date, { count: 0, lifeArea: habit.life_area || 'Persönlichkeit' });
           }
           const dateData = completionMap.get(date);
           dateData.count++;
-          dateData.areas.add(habit.life_area);
           completionMap.set(date, dateData);
         });
       });
@@ -57,12 +56,12 @@ export const YearlyActivity = () => {
           const date = new Date(currentDate);
           date.setDate(date.getDate() - day);
           const dateStr = format(date, 'yyyy-MM-dd');
-          const completionData = completionMap.get(dateStr) || { count: 0, areas: new Set() };
+          const completionData = completionMap.get(dateStr) || { count: 0, lifeArea: 'Persönlichkeit' };
           
           weekData.push({
             date: dateStr,
             count: completionData.count,
-            areas: Array.from(completionData.areas)
+            lifeArea: completionData.lifeArea
           });
         }
         weeks.push(weekData);
@@ -73,10 +72,9 @@ export const YearlyActivity = () => {
     }
   });
 
-  const getBackgroundColor = (count: number, areas: string[]) => {
+  const getBackgroundColor = (count: number, lifeArea: string) => {
     if (count === 0) return 'bg-gray-100 dark:bg-gray-800';
-    const area = areas[0]; // Use the first area as the primary color
-    const color = LIFE_AREA_COLORS[area as keyof typeof LIFE_AREA_COLORS] || '#94A3B8';
+    const color = LIFE_AREA_COLORS[lifeArea as keyof typeof LIFE_AREA_COLORS] || '#94A3B8';
     const opacity = count < 3 ? '30' : count < 5 ? '60' : '';
     return `bg-[${color}${opacity}]`;
   };
@@ -90,7 +88,7 @@ export const YearlyActivity = () => {
             {week.map((day, dayIndex) => (
               <div
                 key={`${weekIndex}-${dayIndex}`}
-                className={`w-3 h-3 rounded-sm ${getBackgroundColor(day.count, day.areas || [])}`}
+                className={`w-3 h-3 rounded-sm ${getBackgroundColor(day.count, day.lifeArea)}`}
                 title={`${day.date}: ${day.count} Abschlüsse`}
               />
             ))}
