@@ -1,5 +1,6 @@
+
 import { Button } from "@/components/ui/button";
-import { Flame, Circle, Check, Smile, ChevronUp, ChevronDown } from "lucide-react";
+import { Flame, Circle, Check, Smile, ChevronUp, ChevronDown, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -13,6 +14,7 @@ import { EditHabitDialog } from "./EditHabitDialog";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface HabitCardProps {
   habit: any;
@@ -32,6 +34,7 @@ export const HabitCard = ({
   const [showEmotionTracker, setShowEmotionTracker] = useState(false);
   const [elasticLevel, setElasticLevel] = useState(habit.elastic_level || "medium");
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   const progress = calculateProgress(habit);
   const totalDays = 66;
@@ -45,6 +48,31 @@ export const HabitCard = ({
   const needsReflection = lastReflection ? 
     (new Date().getTime() - new Date(lastReflection.created_at).getTime()) / (1000 * 60 * 60 * 24) >= 7 
     : false;
+
+  const deleteHabit = async () => {
+    try {
+      const { error } = await supabase
+        .from("habits")
+        .delete()
+        .eq("id", habit.id);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ["habits"] });
+      queryClient.invalidateQueries({ queryKey: ["active-routines"] });
+      
+      toast({
+        title: "Gewohnheit gelöscht",
+        description: "Die Gewohnheit wurde erfolgreich gelöscht.",
+      });
+    } catch (error) {
+      toast({
+        title: "Fehler",
+        description: "Die Gewohnheit konnte nicht gelöscht werden.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const updateElasticLevel = async (newLevel: string) => {
     try {
@@ -143,6 +171,14 @@ export const HabitCard = ({
             )}
           >
             Reflektieren
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={deleteHabit}
+            className="text-red-500 hover:text-red-600 hover:bg-red-50"
+          >
+            <Trash2 className="h-4 w-4" />
           </Button>
         </div>
       </div>
