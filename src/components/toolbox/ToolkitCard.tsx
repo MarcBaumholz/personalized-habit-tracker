@@ -57,7 +57,7 @@ export const ToolkitCard = ({ toolkit, onSelect, onRemove, onAdd }: ToolkitCardP
       </div>
 
       <div className="flex flex-col gap-2 mt-4">
-        {toolkit.id && !toolkit.steps && (
+        {toolkit.id && (
           <div className="flex gap-2">
             <Button 
               variant="outline" 
@@ -79,15 +79,13 @@ export const ToolkitCard = ({ toolkit, onSelect, onRemove, onAdd }: ToolkitCardP
             </Button>
           </div>
         )}
-        {!toolkit.id && (
-          <Button 
-            onClick={() => onAdd?.(toolkit)}
-            className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white shadow-md hover:shadow-lg transition-all duration-300"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Zu meinen Routinen hinzufügen
-          </Button>
-        )}
+        <Button 
+          onClick={() => onAdd?.(toolkit)}
+          className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white shadow-md hover:shadow-lg transition-all duration-300"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          {toolkit.id ? 'Zu Aktiven hinzufügen' : 'Zu meinen Routinen hinzufügen'}
+        </Button>
       </div>
     </div>
   );
