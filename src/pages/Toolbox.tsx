@@ -15,6 +15,7 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { AddHabitDialog } from "@/components/habits/AddHabitDialog";
+import { useQuery } from "@tanstack/react-query";
 import {
   Carousel,
   CarouselContent,
@@ -66,7 +67,6 @@ const Toolbox = () => {
   const [selectedToolkit, setSelectedToolkit] = useState<any>(null);
   const { toast } = useToast();
 
-  // Query for active habits/routines
   const { data: activeRoutines } = useQuery({
     queryKey: ["active-routines"],
     queryFn: async () => {
