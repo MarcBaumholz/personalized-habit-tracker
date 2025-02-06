@@ -202,10 +202,10 @@ const Toolbox = () => {
   const renderToolkit = (toolkit: any) => {
     const Icon = toolkit.icon || Calendar;
     return (
-      <Card className="relative p-4 transition-all duration-300 h-[300px] flex flex-col">
+      <Card className="relative p-4 transition-all duration-300 h-[250px] flex flex-col hover:shadow-lg">
         <div className="flex items-center gap-2 mb-4">
-          <div className="p-2 bg-gray-50 rounded-lg">
-            <Icon className="h-5 w-5 text-gray-900" />
+          <div className="p-2 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg">
+            <Icon className="h-5 w-5 text-purple-700" />
           </div>
           <div>
             <h3 className="text-lg font-medium">{toolkit.name || toolkit.title}</h3>
@@ -228,9 +228,12 @@ const Toolbox = () => {
             <>
               <Dialog>
                 <DialogTrigger asChild>
-                  <Button variant="outline" size="sm" className="flex-1">
-                    <Info className="h-4 w-4 mr-2" />
-                    Details
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1 hover:bg-purple-50"
+                  >
+                    ℹ️
                   </Button>
                 </DialogTrigger>
                 <DialogContent>
@@ -255,20 +258,19 @@ const Toolbox = () => {
                 </DialogContent>
               </Dialog>
               <Button 
-                variant="destructive" 
+                variant="ghost" 
                 size="sm"
-                className="flex-1"
+                className="flex-1 hover:bg-red-50 hover:text-red-600"
                 onClick={() => removeRoutine(toolkit.id)}
               >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Entfernen
+                🗑️
               </Button>
             </>
           )}
           {!toolkit.id && (
             <Button 
               onClick={() => addToolkitToProfile(toolkit)}
-              className="w-full"
+              className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white"
             >
               <Plus className="h-4 w-4 mr-2" />
               Routine hinzufügen
@@ -304,7 +306,7 @@ const Toolbox = () => {
               className={cn(
                 "px-4 py-2 text-sm font-medium transition-colors",
                 activeTab === 'routines' 
-                  ? "border-b-2 border-primary text-primary" 
+                  ? "border-b-2 border-purple-500 text-purple-700" 
                   : "text-gray-600 hover:text-gray-900"
               )}
               onClick={() => setActiveTab('routines')}
@@ -315,7 +317,7 @@ const Toolbox = () => {
               className={cn(
                 "px-4 py-2 text-sm font-medium transition-colors",
                 activeTab === 'community' 
-                  ? "border-b-2 border-primary text-primary" 
+                  ? "border-b-2 border-purple-500 text-purple-700" 
                   : "text-gray-600 hover:text-gray-900"
               )}
               onClick={() => setActiveTab('community')}
@@ -326,7 +328,7 @@ const Toolbox = () => {
               className={cn(
                 "px-4 py-2 text-sm font-medium transition-colors",
                 activeTab === 'inspiration' 
-                  ? "border-b-2 border-primary text-primary" 
+                  ? "border-b-2 border-purple-500 text-purple-700" 
                   : "text-gray-600 hover:text-gray-900"
               )}
               onClick={() => setActiveTab('inspiration')}
@@ -347,7 +349,7 @@ const Toolbox = () => {
             >
               <CarouselContent className="-ml-2 md:-ml-4">
                 {getActiveToolkits().map((toolkit, index) => (
-                  <CarouselItem key={toolkit.id || index} className="pl-2 md:pl-4 md:basis-1/3 lg:basis-1/4">
+                  <CarouselItem key={toolkit.id || index} className="pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3">
                     <div className="p-1">
                       {renderToolkit(toolkit)}
                     </div>
