@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Edit2 } from "lucide-react";
+import { Pencil } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,7 +24,6 @@ export const EditHabitDialog = ({ habit }: { habit: any }) => {
     context: habit.context || "",
     effort: habit.effort || "",
     smartGoal: habit.smart_goal || "",
-    whyDescription: habit.why_description || "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -43,7 +42,6 @@ export const EditHabitDialog = ({ habit }: { habit: any }) => {
           context: habitData.context,
           effort: habitData.effort,
           smart_goal: habitData.smartGoal,
-          why_description: habitData.whyDescription,
         })
         .eq("id", habit.id);
 
@@ -68,9 +66,8 @@ export const EditHabitDialog = ({ habit }: { habit: any }) => {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <Edit2 className="h-4 w-4 mr-2" />
-          Bearbeiten
+        <Button variant="ghost" size="icon" className="h-8 w-8">
+          <Pencil className="h-4 w-4" />
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px]">
@@ -107,13 +104,119 @@ export const EditHabitDialog = ({ habit }: { habit: any }) => {
             </div>
           </div>
 
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="frequency">Häufigkeit</Label>
+              <Select
+                value={habitData.frequency}
+                onValueChange={(value) => setHabitData({ ...habitData, frequency: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Wie oft?" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="daily">Täglich</SelectItem>
+                  <SelectItem value="weekly">Wöchentlich</SelectItem>
+                  <SelectItem value="workdays">Werktags</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="timeOfDay">Tageszeit</Label>
+              <Select
+                value={habitData.timeOfDay}
+                onValueChange={(value) => setHabitData({ ...habitData, timeOfDay: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Wann?" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="morning">Morgens</SelectItem>
+                  <SelectItem value="afternoon">Mittags</SelectItem>
+                  <SelectItem value="evening">Abends</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="difficulty">Schwierigkeitsgrad</Label>
+              <Select
+                value={habitData.difficulty}
+                onValueChange={(value) => setHabitData({ ...habitData, difficulty: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Wie schwierig?" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="easy">Leicht</SelectItem>
+                  <SelectItem value="medium">Mittel</SelectItem>
+                  <SelectItem value="hard">Schwer</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="effort">Geschätzter Aufwand</Label>
+              <Select
+                value={habitData.effort}
+                onValueChange={(value) => setHabitData({ ...habitData, effort: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Wie viel Zeit?" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="5min">5 Minuten</SelectItem>
+                  <SelectItem value="15min">15 Minuten</SelectItem>
+                  <SelectItem value="30min">30 Minuten</SelectItem>
+                  <SelectItem value="60min">1 Stunde</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="smartGoal">SMART Ziel</Label>
+            <Textarea
+              id="smartGoal"
+              value={habitData.smartGoal}
+              onChange={(e) => setHabitData({ ...habitData, smartGoal: e.target.value })}
+              placeholder="Spezifisch, Messbar, Attraktiv, Realistisch, Terminiert"
+              className="h-20"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="context">Kontext & Trigger</Label>
+            <Textarea
+              id="context"
+              value={habitData.context}
+              onChange={(e) => setHabitData({ ...habitData, context: e.target.value })}
+              placeholder="In welcher Situation möchtest du diese Gewohnheit ausführen?"
+              className="h-20"
+            />
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="why">Warum diese Gewohnheit?</Label>
             <Textarea
               id="why"
-              value={habitData.whyDescription}
-              onChange={(e) => setHabitData({ ...habitData, whyDescription: e.target.value })}
+              value={habitData.why}
+              onChange={(e) => setHabitData({ ...habitData, why: e.target.value })}
               placeholder="Was ist deine Motivation?"
+              className="h-20"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="identity">Identität</Label>
+            <Textarea
+              id="identity"
+              value={habitData.identity}
+              onChange={(e) => setHabitData({ ...habitData, identity: e.target.value })}
+              placeholder="Wer möchtest du durch diese Gewohnheit werden?"
               className="h-20"
             />
           </div>

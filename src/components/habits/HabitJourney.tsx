@@ -109,6 +109,7 @@ export const HabitJourney = () => {
                 </div>
               </div>
               <div className="flex items-center gap-2">
+                <EditHabitDialog habit={habit} />
                 <Button
                   variant="ghost"
                   size="icon"
