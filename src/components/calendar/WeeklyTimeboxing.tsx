@@ -1,14 +1,20 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { format, startOfWeek, addDays } from "date-fns";
+import { format, startOfWeek, addDays, parseISO } from "date-fns";
 import { de } from "date-fns/locale";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface TimeSlot {
   time: string;
   activities: {
-    [key: string]: string; // day -> activity
+    [key: string]: {
+      title: string;
+      category?: string;
+    };
   };
 }
 
@@ -26,9 +32,45 @@ const TIME_SLOTS: TimeSlot[] = Array.from({ length: 36 }, (_, i) => {
 
 export const WeeklyTimeboxing = () => {
   const [currentWeek, setCurrentWeek] = useState(new Date());
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   const weekStart = startOfWeek(currentWeek, { weekStartsOn: 1 });
   const weekDays = Array.from({ length: 5 }, (_, i) => addDays(weekStart, i));
+
+  const { data: todos } = useQuery({
+    queryKey: ["todos-weekly"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
+
+      const { data } = await supabase
+        .from("todos")
+        .select("*")
+        .eq("user_id", user.id)
+        .not("scheduled_time", "is", null);
+
+      return data || [];
+    },
+  });
+
+  const updateTodoMutation = useMutation({
+    mutationFn: async ({ id, scheduledTime }: { id: string; scheduledTime: string | null }) => {
+      const { error } = await supabase
+        .from("todos")
+        .update({ scheduled_time: scheduledTime })
+        .eq("id", id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["todos-weekly"] });
+      toast({
+        title: "Zeitplan aktualisiert",
+        description: "Der Zeitplan wurde erfolgreich aktualisiert.",
+      });
+    },
+  });
 
   const previousWeek = () => {
     setCurrentWeek(prev => addDays(prev, -7));
@@ -37,6 +79,29 @@ export const WeeklyTimeboxing = () => {
   const nextWeek = () => {
     setCurrentWeek(prev => addDays(prev, 7));
   };
+
+  // Populate time slots with todos
+  const populatedTimeSlots = TIME_SLOTS.map(slot => {
+    const slotActivities = { ...slot.activities };
+    
+    todos?.forEach(todo => {
+      if (todo.scheduled_time) {
+        const todoTime = todo.scheduled_time.split(":")[0] + ":" + todo.scheduled_time.split(":")[1];
+        if (slot.time.startsWith(todoTime)) {
+          const todoDate = format(parseISO(todo.due_date), "yyyy-MM-dd");
+          slotActivities[todoDate] = {
+            title: todo.title,
+            category: todo.category,
+          };
+        }
+      }
+    });
+
+    return {
+      ...slot,
+      activities: slotActivities,
+    };
+  });
 
   return (
     <Card className="p-6 mt-6">
@@ -67,7 +132,7 @@ export const WeeklyTimeboxing = () => {
           </div>
 
           <div className="space-y-1">
-            {TIME_SLOTS.map((slot) => (
+            {populatedTimeSlots.map((slot) => (
               <div
                 key={slot.time}
                 className="grid grid-cols-[120px_repeat(5,1fr)] gap-1"
@@ -75,17 +140,30 @@ export const WeeklyTimeboxing = () => {
                 <div className="text-sm py-2 px-2 bg-gray-50 rounded">
                   {slot.time}
                 </div>
-                {weekDays.map(day => (
-                  <div
-                    key={day.toString()}
-                    className="bg-gray-50 rounded min-h-[40px] p-1 text-sm cursor-pointer hover:bg-gray-100 transition-colors"
-                    onClick={() => {
-                      // TODO: Implement activity assignment dialog
-                    }}
-                  >
-                    {slot.activities[format(day, "yyyy-MM-dd")] || ""}
-                  </div>
-                ))}
+                {weekDays.map(day => {
+                  const dateKey = format(day, "yyyy-MM-dd");
+                  const activity = slot.activities[dateKey];
+                  
+                  return (
+                    <div
+                      key={day.toString()}
+                      className={`rounded min-h-[40px] p-2 text-sm cursor-pointer transition-colors ${
+                        activity ? 'bg-blue-50 hover:bg-blue-100' : 'bg-gray-50 hover:bg-gray-100'
+                      }`}
+                    >
+                      {activity && (
+                        <div>
+                          <span className="font-medium">{activity.title}</span>
+                          {activity.category && (
+                            <span className="ml-2 text-xs text-gray-500">
+                              {activity.category}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             ))}
           </div>

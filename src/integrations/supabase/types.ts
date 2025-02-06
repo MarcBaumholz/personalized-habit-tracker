@@ -422,29 +422,35 @@ export type Database = {
       }
       todos: {
         Row: {
+          category: string | null
           completed: boolean | null
           created_at: string
           due_date: string | null
           id: string
           priority: number
+          scheduled_time: string | null
           title: string
           user_id: string
         }
         Insert: {
+          category?: string | null
           completed?: boolean | null
           created_at?: string
           due_date?: string | null
           id?: string
           priority: number
+          scheduled_time?: string | null
           title: string
           user_id: string
         }
         Update: {
+          category?: string | null
           completed?: boolean | null
           created_at?: string
           due_date?: string | null
           id?: string
           priority?: number
+          scheduled_time?: string | null
           title?: string
           user_id?: string
         }
@@ -463,7 +469,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      reset_daily_todos: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
