@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, BellDot, Star } from "lucide-react";
+import { CheckCircle, BellDot, Star, Flame } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -53,6 +53,25 @@ export const HabitJourney = () => {
     },
   });
 
+  const updateSatisfactionMutation = useMutation({
+    mutationFn: async (habit: any) => {
+      const { data, error } = await supabase
+        .from("habits")
+        .update({ satisfaction_level: habit.satisfaction_level === 'high' ? 'low' : 'high' })
+        .eq("id", habit.id);
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["habits"] });
+      toast({
+        title: "Zufriedenheit aktualisiert",
+        description: "Die Gewohnheit wurde als zufriedenstellend markiert.",
+      });
+    },
+  });
+
   const calculateProgress = (habit: any) => {
     const completions = habit.habit_completions?.length || 0;
     return Math.round((completions / 66) * 100);
@@ -82,19 +101,19 @@ export const HabitJourney = () => {
         {habits?.map((habit: any) => (
           <div key={habit.id} className="space-y-4">
             <div className="flex items-center justify-between">
-              <div>
+              <div className="flex items-center gap-2">
                 <h3 className="font-medium">{habit.name}</h3>
-                <p className="text-sm text-gray-600">
-                  {getStreakCount(habit)} Tage Streak
-                </p>
+                <div className="flex items-center gap-1">
+                  <span className="text-sm text-gray-600">{getStreakCount(habit)}</span>
+                  <Flame className="h-4 w-4 text-orange-500" />
+                </div>
               </div>
               <div className="flex items-center gap-2">
-                <EditHabitDialog habit={habit} />
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => setSelectedHabit(habit)}
                   className="h-8 w-8"
+                  onClick={() => setSelectedHabit(habit)}
                 >
                   <BellDot className="h-4 w-4" />
                 </Button>
@@ -102,15 +121,7 @@ export const HabitJourney = () => {
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8"
-                  onClick={() => {
-                    if (habit.satisfaction_level !== 'high') {
-                      // Update satisfaction level mutation would go here
-                      toast({
-                        title: "Zufriedenheit markiert",
-                        description: "Die Gewohnheit wurde als zufriedenstellend markiert.",
-                      });
-                    }
-                  }}
+                  onClick={() => updateSatisfactionMutation.mutate(habit)}
                 >
                   <Star className={`h-4 w-4 ${habit.satisfaction_level === 'high' ? 'text-yellow-400' : 'text-gray-400'}`} />
                 </Button>
