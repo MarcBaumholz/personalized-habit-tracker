@@ -23,6 +23,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import { cn } from "@/lib/utils";
 
 const INSPIRATION_TOOLKITS = [
   {
@@ -65,6 +66,7 @@ const INSPIRATION_TOOLKITS = [
 
 const Toolbox = () => {
   const [selectedToolkit, setSelectedToolkit] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState<'routines' | 'community' | 'inspiration'>('routines');
   const { toast } = useToast();
 
   const { data: activeRoutines } = useQuery({
@@ -111,121 +113,142 @@ const Toolbox = () => {
   const renderToolkit = (toolkit: any) => {
     const Icon = toolkit.icon || Calendar;
     return (
-      <Card className="relative p-6 transition-all duration-300 hover:scale-105">
-        <div className="flex items-center gap-4 mb-4">
-          <div className="p-3 bg-gray-50 rounded-lg">
-            <Icon className="h-6 w-6 text-gray-900" />
+      <Card className="relative p-8 transition-all duration-300 h-[500px] flex flex-col">
+        <div className="flex items-center gap-4 mb-6">
+          <div className="p-4 bg-gray-50 rounded-lg">
+            <Icon className="h-8 w-8 text-gray-900" />
           </div>
           <div>
-            <h3 className="font-medium">{toolkit.name || toolkit.title}</h3>
-            <p className="text-sm text-gray-600">
+            <h3 className="text-xl font-medium">{toolkit.name || toolkit.title}</h3>
+            <p className="text-gray-600">
               {toolkit.description || toolkit.category}
             </p>
           </div>
         </div>
+
+        {toolkit.example && (
+          <div className="mb-6">
+            <h4 className="font-medium mb-2">Beispiel:</h4>
+            <p className="text-gray-600">
+              {toolkit.example}
+            </p>
+          </div>
+        )}
         
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button 
-              className="w-full"
-              onClick={() => setSelectedToolkit(toolkit)}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Details anzeigen
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{toolkit.name || toolkit.title}</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              {toolkit.example && (
-                <div>
-                  <h4 className="font-medium mb-2">Beispiel:</h4>
-                  <p className="text-sm text-gray-600">
-                    {toolkit.example}
-                  </p>
-                </div>
-              )}
-              {toolkit.steps && (
-                <div>
-                  <h4 className="font-medium mb-2">Schritte:</h4>
-                  <ul className="list-disc list-inside text-sm text-gray-600">
-                    {toolkit.steps.map((step: string, index: number) => (
-                      <li key={index}>{step}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-            <DialogFooter>
-              <Button 
-                onClick={() => addToolkitToProfile(toolkit)}
-                className="w-full"
-              >
-                Routine hinzufügen
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        {toolkit.steps && (
+          <div className="flex-grow">
+            <h4 className="font-medium mb-2">Schritte:</h4>
+            <ul className="list-disc list-inside text-gray-600 space-y-2">
+              {toolkit.steps.map((step: string, index: number) => (
+                <li key={index}>{step}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <Button 
+          onClick={() => addToolkitToProfile(toolkit)}
+          className="w-full mt-auto"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Routine hinzufügen
+        </Button>
       </Card>
     );
   };
 
-  const renderCarousel = (toolkits: any[]) => (
-    <div className="relative py-10 px-4">
-      <Carousel
-        opts={{
-          align: "center",
-          loop: true,
-        }}
-        className="w-full max-w-4xl mx-auto"
-      >
-        <CarouselContent className="-ml-2 md:-ml-4">
-          {toolkits.map((toolkit, index) => (
-            <CarouselItem key={toolkit.id || index} className="pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3">
-              <div className={`relative transition-opacity duration-300 ${index === 1 ? 'opacity-100' : 'opacity-50'}`}>
-                {renderToolkit(toolkit)}
-              </div>
-            </CarouselItem>
-          ))}
-        </CarouselContent>
-        <div className="absolute -left-4 top-1/2 -translate-y-1/2">
-          <CarouselPrevious />
-        </div>
-        <div className="absolute -right-4 top-1/2 -translate-y-1/2">
-          <CarouselNext />
-        </div>
-      </Carousel>
-    </div>
-  );
+  const getActiveToolkits = () => {
+    switch (activeTab) {
+      case 'routines':
+        return activeRoutines || [];
+      case 'community':
+        return []; // TODO: Implement community routines
+      case 'inspiration':
+        return INSPIRATION_TOOLKITS;
+      default:
+        return [];
+    }
+  };
 
   return (
     <div className="min-h-screen bg-white">
       <Navigation />
       <main className="container py-6">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold">Habit Baukasten</h1>
-          <p className="text-gray-600">Wische nach links oder rechts um weitere Toolboxen zu entdecken</p>
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold mb-4">Habit Baukasten</h1>
+          
+          <div className="flex gap-4 border-b">
+            <button
+              className={cn(
+                "px-4 py-2 text-sm font-medium transition-colors",
+                activeTab === 'routines' 
+                  ? "border-b-2 border-primary text-primary" 
+                  : "text-gray-600 hover:text-gray-900"
+              )}
+              onClick={() => setActiveTab('routines')}
+            >
+              Meine Routinen
+            </button>
+            <button
+              className={cn(
+                "px-4 py-2 text-sm font-medium transition-colors",
+                activeTab === 'community' 
+                  ? "border-b-2 border-primary text-primary" 
+                  : "text-gray-600 hover:text-gray-900"
+              )}
+              onClick={() => setActiveTab('community')}
+            >
+              Community
+            </button>
+            <button
+              className={cn(
+                "px-4 py-2 text-sm font-medium transition-colors",
+                activeTab === 'inspiration' 
+                  ? "border-b-2 border-primary text-primary" 
+                  : "text-gray-600 hover:text-gray-900"
+              )}
+              onClick={() => setActiveTab('inspiration')}
+            >
+              Inspiration
+            </button>
+          </div>
         </div>
         
-        <div className="space-y-10">
-          <section>
-            <h2 className="text-xl font-semibold mb-4">Meine Routinen</h2>
-            {activeRoutines?.length > 0 ? (
-              renderCarousel(activeRoutines)
-            ) : (
-              <div className="text-center py-10">
-                <p className="text-gray-600 mb-4">Du hast noch keine Routinen erstellt</p>
-                <AddHabitDialog />
+        <div className="relative py-10">
+          {getActiveToolkits().length > 0 ? (
+            <Carousel
+              opts={{
+                align: "center",
+                loop: true,
+              }}
+              className="w-full max-w-5xl mx-auto"
+            >
+              <CarouselContent>
+                {getActiveToolkits().map((toolkit, index) => (
+                  <CarouselItem key={toolkit.id || index} className="basis-full">
+                    <div className="px-4">
+                      {renderToolkit(toolkit)}
+                    </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <div className="absolute -left-4 top-1/2 -translate-y-1/2">
+                <CarouselPrevious />
               </div>
-            )}
-          </section>
-
-          <section>
-            <h2 className="text-xl font-semibold mb-4">Inspiration</h2>
-            {renderCarousel(INSPIRATION_TOOLKITS)}
-          </section>
+              <div className="absolute -right-4 top-1/2 -translate-y-1/2">
+                <CarouselNext />
+              </div>
+            </Carousel>
+          ) : (
+            <div className="text-center py-10">
+              <p className="text-gray-600 mb-4">
+                {activeTab === 'routines' 
+                  ? 'Du hast noch keine Routinen erstellt' 
+                  : 'Keine Einträge gefunden'}
+              </p>
+              {activeTab === 'routines' && <AddHabitDialog />}
+            </div>
+          )}
         </div>
       </main>
     </div>
@@ -233,3 +256,4 @@ const Toolbox = () => {
 };
 
 export default Toolbox;
+
