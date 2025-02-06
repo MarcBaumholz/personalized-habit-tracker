@@ -4,10 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 
-interface YearlyActivityProps {
-  data: Array<{ date: string; count: number; lifeArea: string }>;
-}
-
 const LIFE_AREA_COLORS = {
   "Gesundheit": "#F97316",
   "Beziehungen": "#D946EF",
@@ -20,7 +16,7 @@ const LIFE_AREA_COLORS = {
 };
 
 export const YearlyActivity = () => {
-  const { data: habits } = useQuery({
+  const { data: habitsData } = useQuery({
     queryKey: ["habits-activity"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -83,7 +79,7 @@ export const YearlyActivity = () => {
     <Card className="p-6">
       <h2 className="text-lg font-semibold mb-4">Jahresübersicht der Gewohnheiten</h2>
       <div className="grid grid-cols-52 gap-1">
-        {data?.map((week, weekIndex) => (
+        {habitsData?.map((week, weekIndex) => (
           <div key={weekIndex} className="grid grid-rows-7 gap-1">
             {week.map((day, dayIndex) => (
               <div
