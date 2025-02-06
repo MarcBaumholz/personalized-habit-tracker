@@ -65,17 +65,18 @@ const Toolbox = () => {
   const [selectedToolkit, setSelectedToolkit] = useState<any>(null);
   const { toast } = useToast();
 
-  const { data: myRoutines } = useQuery({
-    queryKey: ["my-routines"],
+  // Query for active habits/routines
+  const { data: activeRoutines } = useQuery({
+    queryKey: ["active-routines"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
       const { data } = await supabase
         .from("habits")
-        .select("*")
+        .select("*, habit_completions(*)")
         .eq("user_id", user.id)
-        .eq("category", "routine");
+        .order("created_at", { ascending: false });
 
       return data || [];
     },
@@ -109,7 +110,7 @@ const Toolbox = () => {
   const renderToolkits = (toolkits: any[]) => (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
       {toolkits.map((toolkit) => {
-        const Icon = toolkit.icon;
+        const Icon = toolkit.icon || Calendar;
         return (
           <Card key={toolkit.id} className="p-6">
             <div className="flex items-center gap-4 mb-4">
@@ -117,9 +118,9 @@ const Toolbox = () => {
                 <Icon className="h-6 w-6 text-gray-900" />
               </div>
               <div>
-                <h3 className="font-medium">{toolkit.title}</h3>
+                <h3 className="font-medium">{toolkit.name || toolkit.title}</h3>
                 <p className="text-sm text-gray-600">
-                  {toolkit.description}
+                  {toolkit.description || toolkit.category}
                 </p>
               </div>
             </div>
@@ -131,28 +132,32 @@ const Toolbox = () => {
                   onClick={() => setSelectedToolkit(toolkit)}
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Anwenden
+                  Details anzeigen
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>{toolkit.title}</DialogTitle>
+                  <DialogTitle>{toolkit.name || toolkit.title}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
-                  <div>
-                    <h4 className="font-medium mb-2">Beispiel:</h4>
-                    <p className="text-sm text-gray-600">
-                      {toolkit.example}
-                    </p>
-                  </div>
-                  <div>
-                    <h4 className="font-medium mb-2">Schritte:</h4>
-                    <ul className="list-disc list-inside text-sm text-gray-600">
-                      {toolkit.steps.map((step: string, index: number) => (
-                        <li key={index}>{step}</li>
-                      ))}
-                    </ul>
-                  </div>
+                  {toolkit.example && (
+                    <div>
+                      <h4 className="font-medium mb-2">Beispiel:</h4>
+                      <p className="text-sm text-gray-600">
+                        {toolkit.example}
+                      </p>
+                    </div>
+                  )}
+                  {toolkit.steps && (
+                    <div>
+                      <h4 className="font-medium mb-2">Schritte:</h4>
+                      <ul className="list-disc list-inside text-sm text-gray-600">
+                        {toolkit.steps.map((step: string, index: number) => (
+                          <li key={index}>{step}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
                 <DialogFooter>
                   <Button 
@@ -174,9 +179,8 @@ const Toolbox = () => {
     <div className="min-h-screen bg-white">
       <Navigation />
       <main className="container py-6">
-        <div className="flex justify-between items-center mb-6">
+        <div className="mb-6">
           <h1 className="text-2xl font-bold">Habit Baukasten</h1>
-          <AddHabitDialog />
         </div>
         
         <Tabs defaultValue="my-routines" className="space-y-6">
@@ -186,8 +190,11 @@ const Toolbox = () => {
             <TabsTrigger value="inspiration">Inspiration</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="my-routines">
-            {renderToolkits(myRoutines || [])}
+          <TabsContent value="my-routines" className="space-y-6">
+            {renderToolkits(activeRoutines || [])}
+            <div className="mt-6">
+              <AddHabitDialog />
+            </div>
           </TabsContent>
 
           <TabsContent value="community">
