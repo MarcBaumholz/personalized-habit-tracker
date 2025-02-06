@@ -296,7 +296,6 @@ const Toolbox = () => {
             <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-purple-800">
               Habit Baukasten
             </h1>
-            <AddHabitDialog />
           </div>
           
           <div className="flex gap-4 border-b border-purple-100">
@@ -389,6 +388,10 @@ const Toolbox = () => {
               <AddHabitDialog />
             </div>
           )}
+        </div>
+
+        <div className="mt-8 flex justify-center">
+          <AddHabitDialog />
         </div>
       </main>
     </div>
