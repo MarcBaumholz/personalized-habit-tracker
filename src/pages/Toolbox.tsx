@@ -10,7 +10,7 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Brain, Target, Calendar, Plus, Users, Lightbulb } from "lucide-react";
+import { Brain, Target, Calendar, Plus, Users, Lightbulb, Package, List, BookOpen, Clock } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -48,6 +48,66 @@ const INSPIRATION_TOOLKITS = [
       "Blocke feste Zeiten",
       "Eliminiere Ablenkungen",
       "Setze klare Ziele",
+    ],
+  },
+  {
+    id: "habit-tracking",
+    title: "Habit Tracking",
+    description: "Gewohnheiten systematisch verfolgen",
+    icon: List,
+    example: "Tägliches Tracking in einer Habit-Matrix",
+    steps: [
+      "Definiere messbare Kriterien",
+      "Nutze ein Tracking-System",
+      "Überprüfe regelmäßig deinen Fortschritt",
+    ],
+  },
+  {
+    id: "para-method",
+    title: "PARA Methode",
+    description: "Digitale Organisation",
+    icon: Package,
+    example: "Projekte, Areas, Ressourcen, Archive",
+    steps: [
+      "Kategorisiere deine Informationen",
+      "Erstelle klare Strukturen",
+      "Pflege regelmäßige Reviews",
+    ],
+  },
+  {
+    id: "habit-stacking",
+    title: "Habit Stacking",
+    description: "Gewohnheiten verknüpfen",
+    icon: Package,
+    example: "Nach dem Aufwachen direkt Wasser trinken",
+    steps: [
+      "Identifiziere bestehende Gewohnheiten",
+      "Verknüpfe neue Gewohnheiten",
+      "Starte klein und erweitere schrittweise",
+    ],
+  },
+  {
+    id: "timeboxing",
+    title: "Timeboxing",
+    description: "Zeitblöcke effektiv nutzen",
+    icon: Clock,
+    example: "45 Minuten fokussierte Arbeit + 15 Minuten Pause",
+    steps: [
+      "Plane deine Zeitblöcke im Voraus",
+      "Setze realistische Zeitlimits",
+      "Halte dich an die geplanten Zeiten",
+    ],
+  },
+  {
+    id: "knowledge-management",
+    title: "Wissensmanagement",
+    description: "Systematisches Lernen",
+    icon: BookOpen,
+    example: "Tägliche Lernnotizen in einem Second Brain",
+    steps: [
+      "Erfasse neue Erkenntnisse sofort",
+      "Organisiere dein Wissen strukturiert",
+      "Wende das Gelernte aktiv an",
     ],
   },
   {
@@ -223,10 +283,10 @@ const Toolbox = () => {
               }}
               className="w-full max-w-5xl mx-auto"
             >
-              <CarouselContent>
+              <CarouselContent className="-ml-2 md:-ml-4">
                 {getActiveToolkits().map((toolkit, index) => (
-                  <CarouselItem key={toolkit.id || index} className="basis-full">
-                    <div className="px-4">
+                  <CarouselItem key={toolkit.id || index} className="pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3">
+                    <div className="p-1">
                       {renderToolkit(toolkit)}
                     </div>
                   </CarouselItem>
@@ -256,4 +316,3 @@ const Toolbox = () => {
 };
 
 export default Toolbox;
-
