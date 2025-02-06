@@ -1,3 +1,4 @@
+
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import { Card } from "@/components/ui/card";
@@ -11,6 +12,14 @@ import {
 } from "@/components/ui/select";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 interface Schedule {
   id: string;
@@ -27,40 +36,70 @@ interface Todo {
   scheduled_time: string;
 }
 
+interface Habit {
+  id: string;
+  name: string;
+  category: string;
+}
+
 interface ScheduleListProps {
   date: Date | undefined;
   schedules: Schedule[] | undefined;
   todos: Todo[] | undefined;
-  onTimeSlotSelect: (time: string) => void;
-  onCategorySelect: (category: string) => void;
+  habits: Habit[] | undefined;
+  onAssignTodo: (todoId: string, time: string) => void;
+  onAssignHabit: (habitId: string, time: string) => void;
 }
 
 const CATEGORIES = ["Arbeit", "Persönlich", "Gesundheit", "Einkaufen", "Sonstiges"];
+const TIME_SLOTS = Array.from({ length: 24 }, (_, i) => 
+  `${i.toString().padStart(2, '0')}:00`
+);
 
 export const ScheduleList = ({ 
   date, 
   schedules, 
   todos,
-  onTimeSlotSelect,
-  onCategorySelect
+  habits,
+  onAssignTodo,
+  onAssignHabit,
 }: ScheduleListProps) => {
   const { toast } = useToast();
+  const [selectedTime, setSelectedTime] = useState<string>("");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const handleTimeSelect = (time: string) => {
-    onTimeSlotSelect(time);
+  const handleTimeSlotClick = (time: string) => {
+    setSelectedTime(time);
+    setIsDialogOpen(true);
+  };
+
+  const handleAssignTodo = (todoId: string) => {
+    onAssignTodo(todoId, selectedTime);
+    setIsDialogOpen(false);
     toast({
-      title: "Zeitslot ausgewählt",
-      description: `Zeit ${time} wurde ausgewählt.`,
+      title: "Aufgabe eingeplant",
+      description: `Die Aufgabe wurde für ${selectedTime} Uhr eingeplant.`,
     });
   };
 
-  const handleCategorySelect = (category: string) => {
-    onCategorySelect(category);
+  const handleAssignHabit = (habitId: string) => {
+    onAssignHabit(habitId, selectedTime);
+    setIsDialogOpen(false);
     toast({
-      title: "Kategorie ausgewählt",
-      description: `Kategorie ${category} wurde ausgewählt.`,
+      title: "Gewohnheit eingeplant",
+      description: `Die Gewohnheit wurde für ${selectedTime} Uhr eingeplant.`,
     });
   };
+
+  const timeSlots = TIME_SLOTS.map(time => {
+    const scheduledItems = schedules?.filter(s => s.scheduled_time === time) || [];
+    const todoItems = todos?.filter(t => t.scheduled_time === time) || [];
+    
+    return {
+      time,
+      items: [...scheduledItems, ...todoItems],
+    };
+  });
 
   return (
     <Card className="p-6">
@@ -70,59 +109,65 @@ export const ScheduleList = ({
         </h2>
       </div>
 
-      <div className="space-y-4">
-        {todos?.map((todo) => (
+      <div className="space-y-2">
+        {timeSlots.map(({ time, items }) => (
           <div
-            key={todo.id}
-            className="flex items-center gap-4 p-3 border rounded-lg"
+            key={time}
+            onClick={() => handleTimeSlotClick(time)}
+            className={`flex items-center gap-4 p-3 border rounded-lg cursor-pointer transition-colors
+              ${items.length > 0 ? 'bg-gray-50' : 'hover:bg-gray-50'}`}
           >
+            <span className="font-medium min-w-[60px]">{time}</span>
             <div className="flex-1">
-              <span>{todo.title}</span>
-            </div>
-            <Input
-              type="time"
-              value={todo.scheduled_time || ""}
-              onChange={(e) => handleTimeSelect(e.target.value)}
-              className="w-[150px]"
-            />
-            <Select
-              value={todo.category || ""}
-              onValueChange={handleCategorySelect}
-            >
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Kategorie" />
-              </SelectTrigger>
-              <SelectContent>
-                {CATEGORIES.map((category) => (
-                  <SelectItem key={category} value={category}>
-                    {category}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        ))}
-
-        {schedules?.map((schedule) => (
-          <div
-            key={schedule.id}
-            className="flex items-center gap-4 p-3 border rounded-lg"
-          >
-            <span className="font-medium min-w-[60px]">
-              {schedule.scheduled_time}
-            </span>
-            <div className="flex-1">
-              <span>{schedule.habits?.name}</span>
+              {items.map((item: any, index: number) => (
+                <div key={item.id} className={index > 0 ? 'mt-1' : ''}>
+                  {item.habits?.name || item.title}
+                </div>
+              ))}
             </div>
           </div>
         ))}
-
-        {!schedules?.length && !todos?.length && (
-          <p className="text-center text-gray-500">
-            Keine Einträge für diesen Tag geplant
-          </p>
-        )}
       </div>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Zeitslot {selectedTime} Uhr</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-4">
+            <div>
+              <h3 className="font-medium mb-2">Aufgaben</h3>
+              <div className="space-y-2">
+                {todos?.filter(todo => !todo.scheduled_time).map(todo => (
+                  <Button
+                    key={todo.id}
+                    variant="outline"
+                    className="w-full justify-start"
+                    onClick={() => handleAssignTodo(todo.id)}
+                  >
+                    {todo.title}
+                  </Button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <h3 className="font-medium mb-2">Gewohnheiten</h3>
+              <div className="space-y-2">
+                {habits?.map(habit => (
+                  <Button
+                    key={habit.id}
+                    variant="outline"
+                    className="w-full justify-start"
+                    onClick={() => handleAssignHabit(habit.id)}
+                  >
+                    {habit.name}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };

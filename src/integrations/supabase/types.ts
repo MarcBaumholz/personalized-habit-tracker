@@ -250,6 +250,7 @@ export type Database = {
           phase: string | null
           reminder_time: string | null
           reminder_type: string | null
+          repetition_type: string | null
           satisfaction_level: string | null
           smart_goal: string | null
           streak_count: number | null
@@ -278,6 +279,7 @@ export type Database = {
           phase?: string | null
           reminder_time?: string | null
           reminder_type?: string | null
+          repetition_type?: string | null
           satisfaction_level?: string | null
           smart_goal?: string | null
           streak_count?: number | null
@@ -306,6 +308,7 @@ export type Database = {
           phase?: string | null
           reminder_time?: string | null
           reminder_type?: string | null
+          repetition_type?: string | null
           satisfaction_level?: string | null
           smart_goal?: string | null
           streak_count?: number | null

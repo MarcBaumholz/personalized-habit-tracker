@@ -21,6 +21,7 @@ export const AddHabitDialog = () => {
     context: "",
     effort: "",
     smartGoal: "",
+    repetition_type: "daily",
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -88,6 +89,23 @@ export const AddHabitDialog = () => {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
+              <Label htmlFor="repetition_type">Wiederholung</Label>
+              <Select
+                value={habitData.repetition_type}
+                onValueChange={(value) => setHabitData({ ...habitData, repetition_type: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Art der Wiederholung" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="daily">Täglich</SelectItem>
+                  <SelectItem value="weekly">Wöchentlich</SelectItem>
+                  <SelectItem value="monthly">Monatlich</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="frequency">Häufigkeit</Label>
               <Select
                 value={habitData.frequency}
@@ -100,23 +118,6 @@ export const AddHabitDialog = () => {
                   <SelectItem value="daily">Täglich</SelectItem>
                   <SelectItem value="weekly">Wöchentlich</SelectItem>
                   <SelectItem value="workdays">Werktags</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="timeOfDay">Tageszeit</Label>
-              <Select
-                value={habitData.timeOfDay}
-                onValueChange={(value) => setHabitData({ ...habitData, timeOfDay: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Wann?" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="morning">Morgens</SelectItem>
-                  <SelectItem value="afternoon">Mittags</SelectItem>
-                  <SelectItem value="evening">Abends</SelectItem>
                 </SelectContent>
               </Select>
             </div>

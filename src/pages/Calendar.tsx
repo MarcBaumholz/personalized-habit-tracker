@@ -1,3 +1,4 @@
+
 import { Navigation } from "@/components/layout/Navigation";
 import { Card } from "@/components/ui/card";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
@@ -65,6 +66,25 @@ const Calendar = () => {
     },
   });
 
+  const updateTodoMutation = useMutation({
+    mutationFn: async ({ todoId, time }: { todoId: string, time: string }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
+
+      const { data, error } = await supabase
+        .from("todos")
+        .update({ scheduled_time: time })
+        .eq("id", todoId)
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["todos"] });
+    },
+  });
+
   const scheduleHabitMutation = useMutation({
     mutationFn: async ({ habitId, time }: { habitId: string, time: string }) => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -93,25 +113,12 @@ const Calendar = () => {
     },
   });
 
-  const handleSchedule = () => {
-    if (selectedHabit && selectedTime) {
-      scheduleHabitMutation.mutate({
-        habitId: selectedHabit,
-        time: selectedTime,
-      });
-    }
+  const handleAssignTodo = (todoId: string, time: string) => {
+    updateTodoMutation.mutate({ todoId, time });
   };
 
-  const handleTimeSlotSelect = (time: string) => {
-    setSelectedTime(time);
-  };
-
-  const handleCategorySelect = (category: string) => {
-    // Handle category selection logic here
-    toast({
-      title: "Kategorie ausgewählt",
-      description: `Kategorie ${category} wurde ausgewählt.`,
-    });
+  const handleAssignHabit = (habitId: string, time: string) => {
+    scheduleHabitMutation.mutate({ habitId, time });
   };
 
   return (
@@ -126,7 +133,14 @@ const Calendar = () => {
             selectedTime={selectedTime}
             onHabitChange={setSelectedHabit}
             onTimeChange={setSelectedTime}
-            onSchedule={handleSchedule}
+            onSchedule={() => {
+              if (selectedHabit && selectedTime) {
+                scheduleHabitMutation.mutate({
+                  habitId: selectedHabit,
+                  time: selectedTime,
+                });
+              }
+            }}
           />
         </div>
 
@@ -145,8 +159,9 @@ const Calendar = () => {
             date={date}
             schedules={schedules}
             todos={todos}
-            onTimeSlotSelect={handleTimeSlotSelect}
-            onCategorySelect={handleCategorySelect}
+            habits={habits}
+            onAssignTodo={handleAssignTodo}
+            onAssignHabit={handleAssignHabit}
           />
         </div>
 
