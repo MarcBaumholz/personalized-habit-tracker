@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { MetricCards } from "@/components/dashboard/MetricCards";
 import { CategoryDistribution } from "@/components/dashboard/CategoryDistribution";
 import { WeeklyProgress } from "@/components/dashboard/WeeklyProgress";
-import { YearlyActivity } from "@/components/dashboard/YearlyActivity";
 import { HabitProgress } from "@/components/dashboard/HabitProgress";
 import { TodoList } from "@/components/dashboard/TodoList";
 import { 
@@ -69,8 +68,6 @@ export const DashboardOverview = () => {
         <HabitProgress data={stats?.progressData || []} />
         <TodoList />
       </div>
-
-      <YearlyActivity />
     </div>
   );
 };

@@ -9,12 +9,13 @@ const Dashboard = () => {
     <div className="min-h-screen bg-background">
       <Navigation />
       <main className="container py-6">
-        <YearlyActivity />
-        <div className="mt-6">
+        <div className="space-y-6">
           <HabitJourney />
-        </div>
-        <div className="mt-6">
           <DashboardOverview />
+          <div className="mt-12">
+            <h2 className="text-2xl font-bold mb-6">Jahresübersicht</h2>
+            <YearlyActivity />
+          </div>
         </div>
       </main>
     </div>
