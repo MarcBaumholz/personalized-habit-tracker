@@ -1,4 +1,3 @@
-
 import { Navigation } from "@/components/layout/Navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -237,52 +236,31 @@ const Toolbox = () => {
           )}
         </div>
 
-        <div className="flex gap-2 mt-auto">
+        <div className="flex flex-col gap-2 mt-auto">
           {toolkit.id && !toolkit.steps && (
-            <>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="flex-1 hover:bg-purple-50"
-                  >
-                    ℹ️
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>{toolkit.name || toolkit.title}</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <p className="text-gray-600">{toolkit.description || toolkit.category}</p>
-                    {toolkit.example && (
-                      <div>
-                        <h4 className="font-medium mb-1">Beispiel:</h4>
-                        <p className="text-gray-600">{toolkit.example}</p>
-                      </div>
-                    )}
-                    {toolkit.context && (
-                      <div>
-                        <h4 className="font-medium mb-1">Kontext:</h4>
-                        <p className="text-gray-600">{JSON.parse(toolkit.context).description}</p>
-                      </div>
-                    )}
-                  </div>
-                </DialogContent>
-              </Dialog>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="flex-1 hover:bg-purple-50"
+                onClick={() => setSelectedToolkit(toolkit)}
+              >
+                <Info className="h-4 w-4 mr-2" />
+                Details
+              </Button>
               <Button 
                 variant="ghost" 
                 size="sm"
                 className="flex-1 hover:bg-red-50 hover:text-red-600"
                 onClick={() => removeRoutine(toolkit.id)}
               >
-                🗑️
+                <Trash2 className="h-4 w-4 mr-2" />
+                Entfernen
               </Button>
-            </>
+            </div>
           )}
           {!toolkit.id && (
-            <div className="w-full space-y-2">
+            <div className="space-y-2">
               <Button 
                 onClick={() => addToolkitToProfile(toolkit)}
                 className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white"
