@@ -1,30 +1,12 @@
-
 import { Navigation } from "@/components/layout/Navigation";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Brain, Target, Calendar, Plus, Users, Lightbulb, Package, List, BookOpen, Clock, Trash2, Info, Sparkle, Star } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { AddHabitDialog } from "@/components/habits/AddHabitDialog";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
-import { cn } from "@/lib/utils";
+import { Brain, Target, Calendar, List, BookOpen, Clock, Lightbulb, Package } from "lucide-react";
+import { ToolboxHeader } from "@/components/toolbox/ToolboxHeader";
+import { ToolboxCarousel } from "@/components/toolbox/ToolboxCarousel";
 
 const INSPIRATION_TOOLKITS = [
   {
@@ -212,182 +194,23 @@ const Toolbox = () => {
     }
   };
 
-  const renderToolkit = (toolkit: any) => {
-    const Icon = toolkit.icon || Calendar;
-    return (
-      <Card className="relative p-6 transition-all duration-300 h-[400px] flex flex-col hover:shadow-lg bg-gradient-to-br from-purple-50 to-white border-purple-100">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-3 bg-gradient-to-br from-purple-100 to-purple-200 rounded-lg">
-            <Icon className="h-6 w-6 text-purple-700" />
-          </div>
-          <div>
-            <h3 className="text-xl font-medium">{toolkit.name || toolkit.title}</h3>
-            <p className="text-sm text-gray-600">
-              {toolkit.description || toolkit.category}
-            </p>
-          </div>
-        </div>
-
-        <div className="flex-grow space-y-4">
-          {toolkit.example && (
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-purple-700">Beispiel:</p>
-              <p className="text-sm text-gray-600">
-                {toolkit.example}
-              </p>
-            </div>
-          )}
-          
-          {toolkit.steps && (
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-purple-700">Schritte:</p>
-              <ul className="list-disc list-inside space-y-1">
-                {toolkit.steps.map((step: string, index: number) => (
-                  <li key={index} className="text-sm text-gray-600">{step}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-
-        <div className="flex flex-col gap-2 mt-4">
-          {toolkit.id && !toolkit.steps && (
-            <div className="flex gap-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="flex-1 hover:bg-purple-50"
-                onClick={() => setSelectedToolkit(toolkit)}
-              >
-                <Info className="h-4 w-4 mr-2" />
-                Details
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="sm"
-                className="flex-1 hover:bg-red-50 hover:text-red-600"
-                onClick={() => removeRoutine(toolkit.id)}
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Entfernen
-              </Button>
-            </div>
-          )}
-          {!toolkit.id && (
-            <Button 
-              onClick={() => addToolkitToProfile(toolkit)}
-              className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white shadow-md hover:shadow-lg transition-all duration-300"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Zu meinen Routinen hinzufügen
-            </Button>
-          )}
-        </div>
-      </Card>
-    );
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-purple-50/50 to-white">
       <Navigation />
       <main className="container py-6">
-        <div className="mb-8">
-          <div className="flex justify-between items-center mb-4">
-            <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-purple-800">
-              Habit Baukasten
-            </h1>
-          </div>
-          
-          <div className="flex gap-4 border-b border-purple-100">
-            <button
-              className={cn(
-                "px-4 py-2 text-sm font-medium transition-colors relative",
-                activeTab === 'routines' 
-                  ? "text-purple-700 border-b-2 border-purple-500" 
-                  : "text-gray-600 hover:text-gray-900"
-              )}
-              onClick={() => setActiveTab('routines')}
-            >
-              <div className="flex items-center gap-2">
-                <Star className="h-4 w-4" />
-                Meine Routinen
-              </div>
-              {activeTab === 'routines' && (
-                <span className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-purple-500 to-purple-600" />
-              )}
-            </button>
-            <button
-              className={cn(
-                "px-4 py-2 text-sm font-medium transition-colors relative",
-                activeTab === 'community' 
-                  ? "text-purple-700 border-b-2 border-purple-500" 
-                  : "text-gray-600 hover:text-gray-900"
-              )}
-              onClick={() => setActiveTab('community')}
-            >
-              <div className="flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                Community
-              </div>
-              {activeTab === 'community' && (
-                <span className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-purple-500 to-purple-600" />
-              )}
-            </button>
-            <button
-              className={cn(
-                "px-4 py-2 text-sm font-medium transition-colors relative",
-                activeTab === 'inspiration' 
-                  ? "text-purple-700 border-b-2 border-purple-500" 
-                  : "text-gray-600 hover:text-gray-900"
-              )}
-              onClick={() => setActiveTab('inspiration')}
-            >
-              <div className="flex items-center gap-2">
-                <Sparkle className="h-4 w-4" />
-                Inspiration
-              </div>
-              {activeTab === 'inspiration' && (
-                <span className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-purple-500 to-purple-600" />
-              )}
-            </button>
-          </div>
-        </div>
+        <ToolboxHeader 
+          activeTab={activeTab} 
+          onTabChange={setActiveTab} 
+        />
         
         <div className="relative py-10">
-          {getActiveToolkits().length > 0 ? (
-            <Carousel
-              opts={{
-                align: "center",
-                loop: true,
-              }}
-              className="w-full max-w-6xl mx-auto"
-            >
-              <CarouselContent className="-ml-2 md:-ml-4">
-                {getActiveToolkits().map((toolkit, index) => (
-                  <CarouselItem key={toolkit.id || index} className="pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3">
-                    <div className="p-1">
-                      {renderToolkit(toolkit)}
-                    </div>
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-              <div className="absolute -left-4 top-1/2 -translate-y-1/2">
-                <CarouselPrevious className="bg-white/90 hover:bg-white" />
-              </div>
-              <div className="absolute -right-4 top-1/2 -translate-y-1/2">
-                <CarouselNext className="bg-white/90 hover:bg-white" />
-              </div>
-            </Carousel>
-          ) : (
-            <div className="text-center py-10">
-              <p className="text-gray-600 mb-4">
-                {activeTab === 'routines' 
-                  ? 'Du hast noch keine Routinen erstellt' 
-                  : 'Keine Einträge gefunden'}
-              </p>
-              <AddHabitDialog />
-            </div>
-          )}
+          <ToolboxCarousel
+            toolkits={getActiveToolkits()}
+            onSelect={setSelectedToolkit}
+            onRemove={removeRoutine}
+            onAdd={addToolkitToProfile}
+            activeTab={activeTab}
+          />
         </div>
 
         <div className="mt-8 flex justify-center">
