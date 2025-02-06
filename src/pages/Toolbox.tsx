@@ -1,4 +1,3 @@
-
 import { Navigation } from "@/components/layout/Navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -146,6 +145,19 @@ const Toolbox = () => {
       return data || [];
     },
   });
+
+  const getActiveToolkits = () => {
+    switch (activeTab) {
+      case 'routines':
+        return activeRoutines || [];
+      case 'inspiration':
+        return INSPIRATION_TOOLKITS;
+      case 'community':
+        return []; // This could be populated with community data in the future
+      default:
+        return [];
+    }
+  };
 
   const addToolkitToProfile = async (toolkit: any) => {
     try {
