@@ -1,3 +1,4 @@
+
 import { Navigation } from "@/components/layout/Navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,12 +16,12 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { AddHabitDialog } from "@/components/habits/AddHabitDialog";
 import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
-import { useQuery } from "@tanstack/react-query";
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 const INSPIRATION_TOOLKITS = [
   {
@@ -107,71 +108,95 @@ const Toolbox = () => {
     }
   };
 
-  const renderToolkits = (toolkits: any[]) => (
-    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-      {toolkits.map((toolkit) => {
-        const Icon = toolkit.icon || Calendar;
-        return (
-          <Card key={toolkit.id} className="p-6">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="p-3 bg-gray-50 rounded-lg">
-                <Icon className="h-6 w-6 text-gray-900" />
-              </div>
-              <div>
-                <h3 className="font-medium">{toolkit.name || toolkit.title}</h3>
-                <p className="text-sm text-gray-600">
-                  {toolkit.description || toolkit.category}
-                </p>
-              </div>
-            </div>
-            
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button 
-                  className="w-full"
-                  onClick={() => setSelectedToolkit(toolkit)}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Details anzeigen
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>{toolkit.name || toolkit.title}</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  {toolkit.example && (
-                    <div>
-                      <h4 className="font-medium mb-2">Beispiel:</h4>
-                      <p className="text-sm text-gray-600">
-                        {toolkit.example}
-                      </p>
-                    </div>
-                  )}
-                  {toolkit.steps && (
-                    <div>
-                      <h4 className="font-medium mb-2">Schritte:</h4>
-                      <ul className="list-disc list-inside text-sm text-gray-600">
-                        {toolkit.steps.map((step: string, index: number) => (
-                          <li key={index}>{step}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
+  const renderToolkit = (toolkit: any) => {
+    const Icon = toolkit.icon || Calendar;
+    return (
+      <Card className="relative p-6 transition-all duration-300 hover:scale-105">
+        <div className="flex items-center gap-4 mb-4">
+          <div className="p-3 bg-gray-50 rounded-lg">
+            <Icon className="h-6 w-6 text-gray-900" />
+          </div>
+          <div>
+            <h3 className="font-medium">{toolkit.name || toolkit.title}</h3>
+            <p className="text-sm text-gray-600">
+              {toolkit.description || toolkit.category}
+            </p>
+          </div>
+        </div>
+        
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button 
+              className="w-full"
+              onClick={() => setSelectedToolkit(toolkit)}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Details anzeigen
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{toolkit.name || toolkit.title}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              {toolkit.example && (
+                <div>
+                  <h4 className="font-medium mb-2">Beispiel:</h4>
+                  <p className="text-sm text-gray-600">
+                    {toolkit.example}
+                  </p>
                 </div>
-                <DialogFooter>
-                  <Button 
-                    onClick={() => addToolkitToProfile(toolkit)}
-                    className="w-full"
-                  >
-                    Routine hinzufügen
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          </Card>
-        );
-      })}
+              )}
+              {toolkit.steps && (
+                <div>
+                  <h4 className="font-medium mb-2">Schritte:</h4>
+                  <ul className="list-disc list-inside text-sm text-gray-600">
+                    {toolkit.steps.map((step: string, index: number) => (
+                      <li key={index}>{step}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+            <DialogFooter>
+              <Button 
+                onClick={() => addToolkitToProfile(toolkit)}
+                className="w-full"
+              >
+                Routine hinzufügen
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </Card>
+    );
+  };
+
+  const renderCarousel = (toolkits: any[]) => (
+    <div className="relative py-10 px-4">
+      <Carousel
+        opts={{
+          align: "center",
+          loop: true,
+        }}
+        className="w-full max-w-4xl mx-auto"
+      >
+        <CarouselContent className="-ml-2 md:-ml-4">
+          {toolkits.map((toolkit, index) => (
+            <CarouselItem key={toolkit.id || index} className="pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3">
+              <div className={`relative transition-opacity duration-300 ${index === 1 ? 'opacity-100' : 'opacity-50'}`}>
+                {renderToolkit(toolkit)}
+              </div>
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+        <div className="absolute -left-4 top-1/2 -translate-y-1/2">
+          <CarouselPrevious />
+        </div>
+        <div className="absolute -right-4 top-1/2 -translate-y-1/2">
+          <CarouselNext />
+        </div>
+      </Carousel>
     </div>
   );
 
@@ -181,30 +206,27 @@ const Toolbox = () => {
       <main className="container py-6">
         <div className="mb-6">
           <h1 className="text-2xl font-bold">Habit Baukasten</h1>
+          <p className="text-gray-600">Wische nach links oder rechts um weitere Toolboxen zu entdecken</p>
         </div>
         
-        <Tabs defaultValue="my-routines" className="space-y-6">
-          <TabsList className="bg-gray-100">
-            <TabsTrigger value="my-routines">Meine Routinen</TabsTrigger>
-            <TabsTrigger value="community">Community</TabsTrigger>
-            <TabsTrigger value="inspiration">Inspiration</TabsTrigger>
-          </TabsList>
+        <div className="space-y-10">
+          <section>
+            <h2 className="text-xl font-semibold mb-4">Meine Routinen</h2>
+            {activeRoutines?.length > 0 ? (
+              renderCarousel(activeRoutines)
+            ) : (
+              <div className="text-center py-10">
+                <p className="text-gray-600 mb-4">Du hast noch keine Routinen erstellt</p>
+                <AddHabitDialog />
+              </div>
+            )}
+          </section>
 
-          <TabsContent value="my-routines" className="space-y-6">
-            {renderToolkits(activeRoutines || [])}
-            <div className="mt-6">
-              <AddHabitDialog />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="community">
-            {renderToolkits(INSPIRATION_TOOLKITS.filter(t => t.id === "meditation"))}
-          </TabsContent>
-
-          <TabsContent value="inspiration">
-            {renderToolkits(INSPIRATION_TOOLKITS)}
-          </TabsContent>
-        </Tabs>
+          <section>
+            <h2 className="text-xl font-semibold mb-4">Inspiration</h2>
+            {renderCarousel(INSPIRATION_TOOLKITS)}
+          </section>
+        </div>
       </main>
     </div>
   );
