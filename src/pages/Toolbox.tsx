@@ -5,17 +5,18 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Brain, Target, Calendar, Plus, Users, Lightbulb, Package, List, BookOpen, Clock } from "lucide-react";
+import { Brain, Target, Calendar, Plus, Users, Lightbulb, Package, List, BookOpen, Clock, Trash2, Info } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { AddHabitDialog } from "@/components/habits/AddHabitDialog";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Carousel,
   CarouselContent,
@@ -128,6 +129,7 @@ const Toolbox = () => {
   const [selectedToolkit, setSelectedToolkit] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<'routines' | 'community' | 'inspiration'>('routines');
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: activeRoutines } = useQuery({
     queryKey: ["active-routines"],
@@ -157,6 +159,8 @@ const Toolbox = () => {
         context: JSON.stringify(toolkit),
       });
 
+      queryClient.invalidateQueries({ queryKey: ["active-routines"] });
+
       toast({
         title: "Routine hinzugefügt",
         description: `${toolkit.title} wurde zu deinen Routinen hinzugefügt.`,
@@ -170,49 +174,107 @@ const Toolbox = () => {
     }
   };
 
+  const removeRoutine = async (routineId: string) => {
+    try {
+      const { error } = await supabase
+        .from("habits")
+        .delete()
+        .eq("id", routineId);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ["active-routines"] });
+      queryClient.invalidateQueries({ queryKey: ["habits"] });
+
+      toast({
+        title: "Routine entfernt",
+        description: "Die Routine wurde erfolgreich entfernt.",
+      });
+    } catch (error) {
+      toast({
+        title: "Fehler",
+        description: "Die Routine konnte nicht entfernt werden.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const renderToolkit = (toolkit: any) => {
     const Icon = toolkit.icon || Calendar;
     return (
-      <Card className="relative p-8 transition-all duration-300 h-[500px] flex flex-col">
-        <div className="flex items-center gap-4 mb-6">
-          <div className="p-4 bg-gray-50 rounded-lg">
-            <Icon className="h-8 w-8 text-gray-900" />
+      <Card className="relative p-4 transition-all duration-300 h-[300px] flex flex-col">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="p-2 bg-gray-50 rounded-lg">
+            <Icon className="h-5 w-5 text-gray-900" />
           </div>
           <div>
-            <h3 className="text-xl font-medium">{toolkit.name || toolkit.title}</h3>
-            <p className="text-gray-600">
+            <h3 className="text-lg font-medium">{toolkit.name || toolkit.title}</h3>
+            <p className="text-sm text-gray-600">
               {toolkit.description || toolkit.category}
             </p>
           </div>
         </div>
 
-        {toolkit.example && (
-          <div className="mb-6">
-            <h4 className="font-medium mb-2">Beispiel:</h4>
-            <p className="text-gray-600">
+        <div className="flex-grow overflow-hidden">
+          {toolkit.example && (
+            <p className="text-sm text-gray-600 mb-2 truncate">
               {toolkit.example}
             </p>
-          </div>
-        )}
-        
-        {toolkit.steps && (
-          <div className="flex-grow">
-            <h4 className="font-medium mb-2">Schritte:</h4>
-            <ul className="list-disc list-inside text-gray-600 space-y-2">
-              {toolkit.steps.map((step: string, index: number) => (
-                <li key={index}>{step}</li>
-              ))}
-            </ul>
-          </div>
-        )}
+          )}
+        </div>
 
-        <Button 
-          onClick={() => addToolkitToProfile(toolkit)}
-          className="w-full mt-auto"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Routine hinzufügen
-        </Button>
+        <div className="flex gap-2 mt-auto">
+          {toolkit.id && !toolkit.steps && (
+            <>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="flex-1">
+                    <Info className="h-4 w-4 mr-2" />
+                    Details
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>{toolkit.name || toolkit.title}</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <p className="text-gray-600">{toolkit.description || toolkit.category}</p>
+                    {toolkit.example && (
+                      <div>
+                        <h4 className="font-medium mb-1">Beispiel:</h4>
+                        <p className="text-gray-600">{toolkit.example}</p>
+                      </div>
+                    )}
+                    {toolkit.context && (
+                      <div>
+                        <h4 className="font-medium mb-1">Kontext:</h4>
+                        <p className="text-gray-600">{JSON.parse(toolkit.context).description}</p>
+                      </div>
+                    )}
+                  </div>
+                </DialogContent>
+              </Dialog>
+              <Button 
+                variant="destructive" 
+                size="sm"
+                className="flex-1"
+                onClick={() => removeRoutine(toolkit.id)}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Entfernen
+              </Button>
+            </>
+          )}
+          {!toolkit.id && (
+            <Button 
+              onClick={() => addToolkitToProfile(toolkit)}
+              className="w-full"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Routine hinzufügen
+            </Button>
+          )}
+        </div>
       </Card>
     );
   };
@@ -285,7 +347,7 @@ const Toolbox = () => {
             >
               <CarouselContent className="-ml-2 md:-ml-4">
                 {getActiveToolkits().map((toolkit, index) => (
-                  <CarouselItem key={toolkit.id || index} className="pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3">
+                  <CarouselItem key={toolkit.id || index} className="pl-2 md:pl-4 md:basis-1/3 lg:basis-1/4">
                     <div className="p-1">
                       {renderToolkit(toolkit)}
                     </div>
