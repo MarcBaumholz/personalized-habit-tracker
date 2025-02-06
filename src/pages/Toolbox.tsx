@@ -202,24 +202,38 @@ const Toolbox = () => {
   const renderToolkit = (toolkit: any) => {
     const Icon = toolkit.icon || Calendar;
     return (
-      <Card className="relative p-4 transition-all duration-300 h-[250px] flex flex-col hover:shadow-lg">
-        <div className="flex items-center gap-2 mb-4">
-          <div className="p-2 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg">
-            <Icon className="h-5 w-5 text-purple-700" />
+      <Card className="relative p-6 transition-all duration-300 h-[350px] flex flex-col hover:shadow-lg bg-gradient-to-br from-white to-purple-50">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-3 bg-gradient-to-br from-purple-100 to-purple-200 rounded-lg">
+            <Icon className="h-6 w-6 text-purple-700" />
           </div>
           <div>
-            <h3 className="text-lg font-medium">{toolkit.name || toolkit.title}</h3>
+            <h3 className="text-xl font-medium">{toolkit.name || toolkit.title}</h3>
             <p className="text-sm text-gray-600">
               {toolkit.description || toolkit.category}
             </p>
           </div>
         </div>
 
-        <div className="flex-grow overflow-hidden">
+        <div className="flex-grow space-y-4">
           {toolkit.example && (
-            <p className="text-sm text-gray-600 mb-2 truncate">
-              {toolkit.example}
-            </p>
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-purple-700">Beispiel:</p>
+              <p className="text-sm text-gray-600">
+                {toolkit.example}
+              </p>
+            </div>
+          )}
+          
+          {toolkit.steps && (
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-purple-700">Schritte:</p>
+              <ul className="list-disc list-inside space-y-1">
+                {toolkit.steps.map((step: string, index: number) => (
+                  <li key={index} className="text-sm text-gray-600">{step}</li>
+                ))}
+              </ul>
+            </div>
           )}
         </div>
 
@@ -268,13 +282,16 @@ const Toolbox = () => {
             </>
           )}
           {!toolkit.id && (
-            <Button 
-              onClick={() => addToolkitToProfile(toolkit)}
-              className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Routine hinzufügen
-            </Button>
+            <div className="w-full space-y-2">
+              <Button 
+                onClick={() => addToolkitToProfile(toolkit)}
+                className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Zu meinen Routinen hinzufügen
+              </Button>
+              <AddHabitDialog />
+            </div>
           )}
         </div>
       </Card>
