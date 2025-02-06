@@ -1,3 +1,4 @@
+
 import { Navigation } from "@/components/layout/Navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -201,7 +202,7 @@ const Toolbox = () => {
   const renderToolkit = (toolkit: any) => {
     const Icon = toolkit.icon || Calendar;
     return (
-      <Card className="relative p-6 transition-all duration-300 h-[350px] flex flex-col hover:shadow-lg bg-gradient-to-br from-white to-purple-50">
+      <Card className="relative p-6 transition-all duration-300 h-[400px] flex flex-col hover:shadow-lg bg-gradient-to-br from-white to-purple-50 border-purple-100">
         <div className="flex items-center gap-3 mb-6">
           <div className="p-3 bg-gradient-to-br from-purple-100 to-purple-200 rounded-lg">
             <Icon className="h-6 w-6 text-purple-700" />
@@ -236,7 +237,7 @@ const Toolbox = () => {
           )}
         </div>
 
-        <div className="flex flex-col gap-2 mt-auto">
+        <div className="flex flex-col gap-2 mt-4">
           {toolkit.id && !toolkit.steps && (
             <div className="flex gap-2">
               <Button 
@@ -263,12 +264,11 @@ const Toolbox = () => {
             <div className="space-y-2">
               <Button 
                 onClick={() => addToolkitToProfile(toolkit)}
-                className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white"
+                className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white shadow-md hover:shadow-lg transition-all duration-300"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Zu meinen Routinen hinzufügen
               </Button>
-              <AddHabitDialog />
             </div>
           )}
         </div>
@@ -276,59 +276,57 @@ const Toolbox = () => {
     );
   };
 
-  const getActiveToolkits = () => {
-    switch (activeTab) {
-      case 'routines':
-        return activeRoutines || [];
-      case 'community':
-        return []; // TODO: Implement community routines
-      case 'inspiration':
-        return INSPIRATION_TOOLKITS;
-      default:
-        return [];
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gradient-to-b from-purple-50/50 to-white">
       <Navigation />
       <main className="container py-6">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold mb-4">Habit Baukasten</h1>
+          <h1 className="text-3xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-purple-800">
+            Habit Baukasten
+          </h1>
           
-          <div className="flex gap-4 border-b">
+          <div className="flex gap-4 border-b border-purple-100">
             <button
               className={cn(
-                "px-4 py-2 text-sm font-medium transition-colors",
+                "px-4 py-2 text-sm font-medium transition-colors relative",
                 activeTab === 'routines' 
-                  ? "border-b-2 border-purple-500 text-purple-700" 
+                  ? "text-purple-700 border-b-2 border-purple-500" 
                   : "text-gray-600 hover:text-gray-900"
               )}
               onClick={() => setActiveTab('routines')}
             >
               Meine Routinen
+              {activeTab === 'routines' && (
+                <span className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-purple-500 to-purple-600" />
+              )}
             </button>
             <button
               className={cn(
-                "px-4 py-2 text-sm font-medium transition-colors",
+                "px-4 py-2 text-sm font-medium transition-colors relative",
                 activeTab === 'community' 
-                  ? "border-b-2 border-purple-500 text-purple-700" 
+                  ? "text-purple-700 border-b-2 border-purple-500" 
                   : "text-gray-600 hover:text-gray-900"
               )}
               onClick={() => setActiveTab('community')}
             >
               Community
+              {activeTab === 'community' && (
+                <span className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-purple-500 to-purple-600" />
+              )}
             </button>
             <button
               className={cn(
-                "px-4 py-2 text-sm font-medium transition-colors",
+                "px-4 py-2 text-sm font-medium transition-colors relative",
                 activeTab === 'inspiration' 
-                  ? "border-b-2 border-purple-500 text-purple-700" 
+                  ? "text-purple-700 border-b-2 border-purple-500" 
                   : "text-gray-600 hover:text-gray-900"
               )}
               onClick={() => setActiveTab('inspiration')}
             >
               Inspiration
+              {activeTab === 'inspiration' && (
+                <span className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-purple-500 to-purple-600" />
+              )}
             </button>
           </div>
         </div>
@@ -340,7 +338,7 @@ const Toolbox = () => {
                 align: "center",
                 loop: true,
               }}
-              className="w-full max-w-5xl mx-auto"
+              className="w-full max-w-6xl mx-auto"
             >
               <CarouselContent className="-ml-2 md:-ml-4">
                 {getActiveToolkits().map((toolkit, index) => (
@@ -352,10 +350,10 @@ const Toolbox = () => {
                 ))}
               </CarouselContent>
               <div className="absolute -left-4 top-1/2 -translate-y-1/2">
-                <CarouselPrevious />
+                <CarouselPrevious className="bg-white/90 hover:bg-white" />
               </div>
               <div className="absolute -right-4 top-1/2 -translate-y-1/2">
-                <CarouselNext />
+                <CarouselNext className="bg-white/90 hover:bg-white" />
               </div>
             </Carousel>
           ) : (
@@ -365,9 +363,13 @@ const Toolbox = () => {
                   ? 'Du hast noch keine Routinen erstellt' 
                   : 'Keine Einträge gefunden'}
               </p>
-              {activeTab === 'routines' && <AddHabitDialog />}
+              <AddHabitDialog />
             </div>
           )}
+        </div>
+
+        <div className="mt-8 flex justify-center">
+          <AddHabitDialog />
         </div>
       </main>
     </div>
