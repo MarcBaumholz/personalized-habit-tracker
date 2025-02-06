@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format, startOfYear, eachDayOfInterval, endOfYear } from "date-fns";
 import { de } from "date-fns/locale";
+import { Check } from "lucide-react";
 
 const LIFE_AREA_COLORS = {
   "Gesundheit": "#22C55E",      // Green for health
@@ -13,7 +14,7 @@ const LIFE_AREA_COLORS = {
   "Persönlichkeit": "#F97316",  // Orange for personal development
   "Freizeit": "#EAB308",        // Yellow for leisure
   "Spiritualität": "#14B8A6",   // Teal for spirituality
-  "Umwelt": "#64748B",          // Slate for environment
+  "Umwelt": "#64748B",         // Slate for environment
 };
 
 export const YearlyActivity = () => {
@@ -23,117 +24,81 @@ export const YearlyActivity = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
-      const { data: habitsData } = await supabase
+      const { data: habits } = await supabase
         .from("habits")
         .select("*, habit_completions(completed_date), life_area")
         .eq("user_id", user.id);
 
-      // Create a map of dates to their completion counts and life areas
-      const completionMap = new Map();
-      
-      habitsData?.forEach(habit => {
-        habit.habit_completions?.forEach((completion: any) => {
-          const date = completion.completed_date;
-          if (!completionMap.has(date)) {
-            completionMap.set(date, { count: 0, lifeArea: habit.life_area || 'Persönlichkeit' });
-          }
-          const dateData = completionMap.get(date);
-          dateData.count++;
-          completionMap.set(date, dateData);
-        });
-      });
+      if (!habits) return [];
 
-      // Generate the full year of data
+      // Generate the full year of data for each habit
       const start = startOfYear(new Date());
       const end = endOfYear(new Date());
       const allDays = eachDayOfInterval({ start, end });
-      
-      // Group days into weeks
-      const weeks = [];
-      let currentWeek: any[] = [];
-      
-      allDays.forEach(date => {
-        const dateStr = format(date, 'yyyy-MM-dd');
-        const completionData = completionMap.get(dateStr) || { count: 0, lifeArea: 'Persönlichkeit' };
-        
-        currentWeek.push({
-          date: dateStr,
-          count: completionData.count,
-          lifeArea: completionData.lifeArea,
-          dayName: format(date, 'EEEEEE', { locale: de }).toUpperCase(),
-          month: format(date, 'MMM', { locale: de }),
+
+      return habits.map(habit => {
+        const completionMap = new Map();
+        habit.habit_completions?.forEach((completion: any) => {
+          completionMap.set(completion.completed_date, true);
         });
 
-        if (currentWeek.length === 7) {
-          weeks.push(currentWeek);
-          currentWeek = [];
-        }
+        const days = allDays.map(date => {
+          const dateStr = format(date, 'yyyy-MM-dd');
+          return {
+            date: dateStr,
+            completed: completionMap.has(dateStr),
+            month: format(date, 'MMM', { locale: de }),
+          };
+        });
+
+        return {
+          id: habit.id,
+          name: habit.name,
+          lifeArea: habit.life_area || 'Persönlichkeit',
+          days
+        };
       });
-
-      if (currentWeek.length > 0) {
-        weeks.push(currentWeek);
-      }
-
-      return weeks;
     }
   });
 
-  const getActivityColor = (count: number, lifeArea: string) => {
-    if (count === 0) return 'bg-gray-100 dark:bg-gray-800';
+  const getActivityStyle = (completed: boolean, lifeArea: string) => {
+    if (!completed) return 'bg-gray-800 dark:bg-gray-900';
     const baseColor = LIFE_AREA_COLORS[lifeArea as keyof typeof LIFE_AREA_COLORS] || '#64748B';
     
-    let opacity;
-    if (count === 1) opacity = '33';      // Light
-    else if (count === 2) opacity = '66';  // Medium
-    else opacity = '';                     // Full color
-
-    return opacity ? `bg-[${baseColor}${opacity}]` : `bg-[${baseColor}]`;
+    return `bg-[${baseColor}]`;
   };
 
+  if (!habitsData) return null;
+
   return (
-    <Card className="p-6">
-      <h2 className="text-lg font-semibold mb-4">Jahresübersicht der Gewohnheiten</h2>
-      <div className="flex">
-        <div className="flex flex-col gap-1 text-xs text-gray-400 mr-2">
-          <span>Mo</span>
-          <span>Di</span>
-          <span>Mi</span>
-          <span>Do</span>
-          <span>Fr</span>
-          <span>Sa</span>
-          <span>So</span>
-        </div>
-        <div className="overflow-x-auto">
-          <div className="flex gap-1">
-            {habitsData?.map((week, weekIndex) => (
-              <div key={weekIndex} className="flex flex-col gap-1">
-                {week.map((day, dayIndex) => (
-                  <div
-                    key={`${weekIndex}-${dayIndex}`}
-                    className={`w-3 h-3 rounded-sm ${getActivityColor(day.count, day.lifeArea)}`}
-                    title={`${day.date}: ${day.count} Abschlüsse`}
-                  />
-                ))}
+    <div className="space-y-4">
+      {habitsData.map((habit) => (
+        <Card key={habit.id} className="p-4 bg-gray-950">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full flex items-center justify-center" 
+                   style={{ backgroundColor: LIFE_AREA_COLORS[habit.lifeArea as keyof typeof LIFE_AREA_COLORS] || '#64748B' }}>
+                <span className="text-white text-sm">{habit.name.charAt(0)}</span>
               </div>
+              <h3 className="text-lg font-medium text-white">{habit.name}</h3>
+            </div>
+            {habit.days[habit.days.length - 1]?.completed && (
+              <div className="w-8 h-8 rounded-lg bg-[#EAB308] flex items-center justify-center">
+                <Check className="w-5 h-5 text-black" style={{ strokeWidth: 3 }} />
+              </div>
+            )}
+          </div>
+          <div className="grid grid-cols-[repeat(52,1fr)] gap-1">
+            {habit.days.map((day, index) => (
+              <div
+                key={`${habit.id}-${day.date}`}
+                className={`aspect-square rounded-sm ${getActivityStyle(day.completed, habit.lifeArea)}`}
+                title={`${day.date}: ${day.completed ? 'Completed' : 'Not completed'}`}
+              />
             ))}
           </div>
-          <div className="mt-2 flex text-xs text-gray-400">
-            {habitsData?.[0]?.map((_, monthIndex) => (
-              monthIndex % 4 === 0 && (
-                <span key={monthIndex} className="w-12">{habitsData[0][monthIndex].month}</span>
-              )
-            ))}
-          </div>
-        </div>
-      </div>
-      <div className="mt-4 flex items-center gap-2 text-sm text-gray-600">
-        <span>Weniger</span>
-        <div className="w-3 h-3 rounded-sm bg-gray-100 dark:bg-gray-800" />
-        <div className="w-3 h-3 rounded-sm bg-[#22C55E33]" />
-        <div className="w-3 h-3 rounded-sm bg-[#22C55E66]" />
-        <div className="w-3 h-3 rounded-sm bg-[#22C55E]" />
-        <span>Mehr</span>
-      </div>
-    </Card>
+        </Card>
+      ))}
+    </div>
   );
 };
