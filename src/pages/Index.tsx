@@ -1,3 +1,4 @@
+
 import { Navigation } from "@/components/layout/Navigation";
 import { HabitJourney } from "@/components/habits/HabitJourney";
 import { TodoList } from "@/components/dashboard/TodoList";
@@ -45,7 +46,11 @@ const Index = () => {
   };
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-white flex items-center justify-center">
+        <div className="animate-pulse text-purple-600">Loading...</div>
+      </div>
+    );
   }
 
   if (!hasCompletedOnboarding) {
@@ -53,16 +58,31 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-50 transition-all duration-500">
       <Navigation />
-      <main className="container py-6">
-        <div className="mb-6">
-          <h2 className="text-lg font-medium mb-2">Gesamtfortschritt</h2>
-          <Progress value={calculateOverallProgress()} className="h-2" />
+      <main className="container py-8 px-4 md:px-6 lg:px-8 animate-fade-in">
+        <div className="mb-8 max-w-3xl mx-auto">
+          <h2 className="text-2xl font-semibold mb-4 text-purple-800 bg-gradient-to-r from-purple-700 to-purple-900 bg-clip-text text-transparent">
+            Dein Fortschritt
+          </h2>
+          <div className="p-6 bg-white rounded-2xl shadow-lg backdrop-blur-sm border border-purple-100">
+            <Progress 
+              value={calculateOverallProgress()} 
+              className="h-3 bg-purple-100"
+            />
+            <p className="mt-2 text-sm text-purple-600">
+              {calculateOverallProgress()}% deiner Ziele erreicht
+            </p>
+          </div>
         </div>
-        <div className="grid md:grid-cols-2 gap-6">
-          <HabitJourney />
-          <TodoList />
+
+        <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
+          <div className="bg-white p-6 rounded-2xl shadow-lg border border-purple-100 backdrop-blur-sm transition-all duration-300 hover:shadow-xl animate-slide-in">
+            <HabitJourney />
+          </div>
+          <div className="bg-white p-6 rounded-2xl shadow-lg border border-purple-100 backdrop-blur-sm transition-all duration-300 hover:shadow-xl animate-slide-in">
+            <TodoList />
+          </div>
         </div>
       </main>
     </div>
