@@ -9,6 +9,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { EmotionTracker } from "./EmotionTracker";
+import { EditHabitDialog } from "./EditHabitDialog";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -131,6 +132,7 @@ export const HabitCard = ({
               />
             </DialogContent>
           </Dialog>
+          <EditHabitDialog habit={habit} />
           <Button
             size="sm"
             variant={needsReflection ? "destructive" : "outline"}

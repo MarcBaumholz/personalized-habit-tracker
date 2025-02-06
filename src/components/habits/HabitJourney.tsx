@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ReflectionDialog } from "./ReflectionDialog";
+import { EditHabitDialog } from "./EditHabitDialog";
 import { useState } from "react";
 
 export const HabitJourney = () => {
@@ -101,6 +102,7 @@ export const HabitJourney = () => {
                     className={`h-5 w-5 ${isCompletedToday(habit) ? "text-green-500" : "text-gray-400"}`} 
                   />
                 </Button>
+                <EditHabitDialog habit={habit} />
                 <Button
                   variant="outline"
                   size="sm"
