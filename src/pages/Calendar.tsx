@@ -122,11 +122,13 @@ const Calendar = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-50 transition-all duration-500">
       <Navigation />
-      <main className="container py-6">
+      <main className="container py-8 px-4 md:px-6 lg:px-8 animate-fade-in">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Kalenderansicht</h1>
+          <h1 className="text-2xl font-bold text-purple-800 bg-gradient-to-r from-purple-700 to-purple-900 bg-clip-text text-transparent">
+            Kalenderansicht
+          </h1>
           <ScheduleDialog
             habits={habits}
             selectedHabit={selectedHabit}
@@ -145,7 +147,7 @@ const Calendar = () => {
         </div>
 
         <div className="grid gap-6 md:grid-cols-[300px_1fr]">
-          <Card className="p-4">
+          <Card className="p-4 bg-white rounded-2xl shadow-lg border border-purple-100 backdrop-blur-sm transition-all duration-300 hover:shadow-xl animate-slide-in">
             <CalendarComponent
               mode="single"
               selected={date}
@@ -165,10 +167,13 @@ const Calendar = () => {
           />
         </div>
 
-        <WeeklyTimeboxing />
+        <div className="mt-6">
+          <WeeklyTimeboxing />
+        </div>
       </main>
     </div>
   );
 };
 
 export default Calendar;
+

@@ -1,3 +1,4 @@
+
 import { Navigation } from "@/components/layout/Navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -70,80 +71,82 @@ const Profile = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-50 transition-all duration-500">
       <Navigation />
-      <main className="container py-6">
+      <main className="container py-8 px-4 md:px-6 lg:px-8 animate-fade-in">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Dein Persönlichkeitsprofil</h1>
-          <Button onClick={handleRestartOnboarding} variant="outline">
+          <h1 className="text-2xl font-bold text-purple-800 bg-gradient-to-r from-purple-700 to-purple-900 bg-clip-text text-transparent">
+            Dein Persönlichkeitsprofil
+          </h1>
+          <Button onClick={handleRestartOnboarding} variant="outline" className="hover:bg-purple-50">
             <RefreshCw className="h-4 w-4 mr-2" />
             Reflexion neustarten
           </Button>
         </div>
         
         <div className="grid gap-6">
-          <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Deine Antworten aus dem Onboarding</h2>
+          <Card className="p-6 bg-white rounded-2xl shadow-lg border border-purple-100 backdrop-blur-sm transition-all duration-300 hover:shadow-xl animate-slide-in">
+            <h2 className="text-xl font-semibold mb-4 text-purple-800">Deine Antworten aus dem Onboarding</h2>
             <div className="space-y-4">
-              <div className="p-4 border rounded-lg">
-                <h3 className="font-medium mb-2">Motivation</h3>
-                <p className="text-muted-foreground">{getResponse("motivation")}</p>
+              <div className="p-4 border rounded-lg bg-purple-50/50">
+                <h3 className="font-medium mb-2 text-purple-700">Motivation</h3>
+                <p className="text-purple-600">{getResponse("motivation")}</p>
               </div>
-              <div className="p-4 border rounded-lg">
-                <h3 className="font-medium mb-2">Herausforderungen</h3>
-                <p className="text-muted-foreground">{getResponse("challenges")}</p>
+              <div className="p-4 border rounded-lg bg-purple-50/50">
+                <h3 className="font-medium mb-2 text-purple-700">Herausforderungen</h3>
+                <p className="text-purple-600">{getResponse("challenges")}</p>
               </div>
-              <div className="p-4 border rounded-lg">
-                <h3 className="font-medium mb-2">Gewünschte Überzeugungen</h3>
-                <p className="text-muted-foreground">{getResponse("beliefs")}</p>
+              <div className="p-4 border rounded-lg bg-purple-50/50">
+                <h3 className="font-medium mb-2 text-purple-700">Gewünschte Überzeugungen</h3>
+                <p className="text-purple-600">{getResponse("beliefs")}</p>
               </div>
             </div>
           </Card>
 
-          <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Big Five Persönlichkeitsmerkmale</h2>
+          <Card className="p-6 bg-white rounded-2xl shadow-lg border border-purple-100 backdrop-blur-sm transition-all duration-300 hover:shadow-xl animate-slide-in">
+            <h2 className="text-xl font-semibold mb-4 text-purple-800">Big Five Persönlichkeitsmerkmale</h2>
             <div className="space-y-4">
               {personalityTraits.map(({ trait, score, icon: Icon }) => (
                 <div key={trait} className="space-y-2">
                   <div className="flex items-center gap-2">
-                    <Icon className="h-5 w-5 text-primary" />
-                    <span className="font-medium">{trait}</span>
-                    <span className="ml-auto">{score}%</span>
+                    <Icon className="h-5 w-5 text-purple-600" />
+                    <span className="font-medium text-purple-700">{trait}</span>
+                    <span className="ml-auto text-purple-600">{score}%</span>
                   </div>
-                  <Progress value={score} className="h-2" />
+                  <Progress value={score} className="h-3 bg-purple-100" />
                 </div>
               ))}
             </div>
           </Card>
 
-          <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Persönliche Stärken</h2>
+          <Card className="p-6 bg-white rounded-2xl shadow-lg border border-purple-100 backdrop-blur-sm transition-all duration-300 hover:shadow-xl animate-slide-in">
+            <h2 className="text-xl font-semibold mb-4 text-purple-800">Persönliche Stärken</h2>
             <div className="grid gap-4 md:grid-cols-2">
               {keystoneHabits.map((habit) => (
-                <Card key={habit.name} className="p-4 bg-muted">
-                  <h3 className="font-medium mb-2">{habit.name}</h3>
-                  <p className="text-sm text-muted-foreground">{habit.description}</p>
+                <Card key={habit.name} className="p-4 bg-purple-50/50">
+                  <h3 className="font-medium mb-2 text-purple-700">{habit.name}</h3>
+                  <p className="text-sm text-purple-600">{habit.description}</p>
                 </Card>
               ))}
             </div>
           </Card>
 
-          <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-4">ZRM-Entwicklungsbereiche</h2>
+          <Card className="p-6 bg-white rounded-2xl shadow-lg border border-purple-100 backdrop-blur-sm transition-all duration-300 hover:shadow-xl animate-slide-in">
+            <h2 className="text-xl font-semibold mb-4 text-purple-800">ZRM-Entwicklungsbereiche</h2>
             <div className="space-y-6">
               <div className="space-y-2">
-                <h3 className="font-medium">Aktuelles Haltungsziel</h3>
-                <p className="text-muted-foreground italic">
+                <h3 className="font-medium text-purple-700">Aktuelles Haltungsziel</h3>
+                <p className="text-purple-600 italic">
                   "Ich bin wie ein ruhiger Berg, der gelassen neue Herausforderungen meistert"
                 </p>
               </div>
               <div className="space-y-2">
-                <h3 className="font-medium">Ressourcenpool</h3>
+                <h3 className="font-medium text-purple-700">Ressourcenpool</h3>
                 <div className="flex gap-2 flex-wrap">
                   {["Meditation", "Sport", "Natur", "Musik"].map((resource) => (
                     <span
                       key={resource}
-                      className="px-3 py-1 bg-secondary text-secondary-foreground rounded-full text-sm"
+                      className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm"
                     >
                       {resource}
                     </span>
@@ -159,3 +162,4 @@ const Profile = () => {
 };
 
 export default Profile;
+
