@@ -1,3 +1,4 @@
+
 import { Navigation } from "@/components/layout/Navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,7 +11,7 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Brain, Target, Calendar, Plus, Users, Lightbulb, Package, List, BookOpen, Clock, Trash2, Info } from "lucide-react";
+import { Brain, Target, Calendar, Plus, Users, Lightbulb, Package, List, BookOpen, Clock, Trash2, Info, Sparkle, Star } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -214,7 +215,7 @@ const Toolbox = () => {
   const renderToolkit = (toolkit: any) => {
     const Icon = toolkit.icon || Calendar;
     return (
-      <Card className="relative p-6 transition-all duration-300 h-[400px] flex flex-col hover:shadow-lg bg-gradient-to-br from-white to-purple-50 border-purple-100">
+      <Card className="relative p-6 transition-all duration-300 h-[400px] flex flex-col hover:shadow-lg bg-gradient-to-br from-purple-50 to-white border-purple-100">
         <div className="flex items-center gap-3 mb-6">
           <div className="p-3 bg-gradient-to-br from-purple-100 to-purple-200 rounded-lg">
             <Icon className="h-6 w-6 text-purple-700" />
@@ -273,15 +274,13 @@ const Toolbox = () => {
             </div>
           )}
           {!toolkit.id && (
-            <div className="space-y-2">
-              <Button 
-                onClick={() => addToolkitToProfile(toolkit)}
-                className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white shadow-md hover:shadow-lg transition-all duration-300"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Zu meinen Routinen hinzufügen
-              </Button>
-            </div>
+            <Button 
+              onClick={() => addToolkitToProfile(toolkit)}
+              className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white shadow-md hover:shadow-lg transition-all duration-300"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Zu meinen Routinen hinzufügen
+            </Button>
           )}
         </div>
       </Card>
@@ -293,9 +292,12 @@ const Toolbox = () => {
       <Navigation />
       <main className="container py-6">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-purple-800">
-            Habit Baukasten
-          </h1>
+          <div className="flex justify-between items-center mb-4">
+            <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-purple-800">
+              Habit Baukasten
+            </h1>
+            <AddHabitDialog />
+          </div>
           
           <div className="flex gap-4 border-b border-purple-100">
             <button
@@ -307,7 +309,10 @@ const Toolbox = () => {
               )}
               onClick={() => setActiveTab('routines')}
             >
-              Meine Routinen
+              <div className="flex items-center gap-2">
+                <Star className="h-4 w-4" />
+                Meine Routinen
+              </div>
               {activeTab === 'routines' && (
                 <span className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-purple-500 to-purple-600" />
               )}
@@ -321,7 +326,10 @@ const Toolbox = () => {
               )}
               onClick={() => setActiveTab('community')}
             >
-              Community
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Community
+              </div>
               {activeTab === 'community' && (
                 <span className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-purple-500 to-purple-600" />
               )}
@@ -335,7 +343,10 @@ const Toolbox = () => {
               )}
               onClick={() => setActiveTab('inspiration')}
             >
-              Inspiration
+              <div className="flex items-center gap-2">
+                <Sparkle className="h-4 w-4" />
+                Inspiration
+              </div>
               {activeTab === 'inspiration' && (
                 <span className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-purple-500 to-purple-600" />
               )}
@@ -378,10 +389,6 @@ const Toolbox = () => {
               <AddHabitDialog />
             </div>
           )}
-        </div>
-
-        <div className="mt-8 flex justify-center">
-          <AddHabitDialog />
         </div>
       </main>
     </div>
