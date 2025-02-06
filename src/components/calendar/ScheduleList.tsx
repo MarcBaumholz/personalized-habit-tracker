@@ -1,6 +1,7 @@
 
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
@@ -54,6 +55,7 @@ export const ScheduleList = ({
   const { toast } = useToast();
   const [selectedTime, setSelectedTime] = useState<string>("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedTodo, setSelectedTodo] = useState<Todo | null>(null);
 
   // Fetch daily todos
   const { data: dailyTodos } = useQuery({
@@ -73,7 +75,8 @@ export const ScheduleList = ({
     },
   });
 
-  const handleTimeSelect = (todo: any) => {
+  const handleTimeSelect = (todo: Todo) => {
+    setSelectedTodo(todo);
     setSelectedTime("");
     setIsDialogOpen(true);
   };
@@ -145,7 +148,10 @@ export const ScheduleList = ({
             ))}
           </div>
           <div className="mt-4 flex justify-end">
-            <Button onClick={() => handleAssignTodo(selectedTodo?.id)} disabled={!selectedTime}>
+            <Button 
+              onClick={() => selectedTodo && handleAssignTodo(selectedTodo.id)} 
+              disabled={!selectedTime || !selectedTodo}
+            >
               Zeit bestätigen
             </Button>
           </div>
