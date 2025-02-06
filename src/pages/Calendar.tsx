@@ -9,6 +9,7 @@ import { de } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import { ScheduleDialog } from "@/components/calendar/ScheduleDialog";
 import { ScheduleList } from "@/components/calendar/ScheduleList";
+import { WeeklyTimeboxing } from "@/components/calendar/WeeklyTimeboxing";
 
 const Calendar = () => {
   const [date, setDate] = useState<Date | undefined>(new Date());
@@ -114,6 +115,8 @@ const Calendar = () => {
 
           <ScheduleList date={date} schedules={schedules} />
         </div>
+
+        <WeeklyTimeboxing />
       </main>
     </div>
   );

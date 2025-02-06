@@ -1,70 +1,44 @@
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { Card } from "@/components/ui/card";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from "recharts";
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
-const RADIAN = Math.PI / 180;
+interface CategoryData {
+  name: string;
+  value: number;
+}
 
-const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) => {
-  const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-  const x = cx + radius * Math.cos(-midAngle * RADIAN);
-  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+interface CategoryDistributionProps {
+  data: CategoryData[];
+}
 
-  return (
-    <text x={x} y={y} fill="white" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central">
-      {`${(percent * 100).toFixed(0)}%`}
-    </text>
-  );
-};
-
-export const CategoryDistribution = () => {
-  const { data: categoryData } = useQuery({
-    queryKey: ["category-distribution"],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("No user found");
-
-      const { data: habits } = await supabase
-        .from("habits")
-        .select("category")
-        .eq("user_id", user.id);
-
-      if (!habits) return [];
-
-      const categories = habits.reduce((acc: Record<string, number>, habit) => {
-        acc[habit.category] = (acc[habit.category] || 0) + 1;
-        return acc;
-      }, {});
-
-      return Object.entries(categories).map(([name, value]) => ({
-        name,
-        value
-      }));
-    }
-  });
+export const CategoryDistribution = ({ data }: CategoryDistributionProps) => {
+  const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8"];
 
   return (
     <Card className="p-6">
-      <h2 className="text-lg font-semibold mb-4">Kategorien Verteilung</h2>
+      <h3 className="text-lg font-semibold mb-4">Kategorienverteilung</h3>
       <div className="h-[300px]">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
-              data={categoryData || []}
+              data={data}
               cx="50%"
               cy="50%"
               labelLine={false}
-              label={renderCustomizedLabel}
-              outerRadius={100}
+              outerRadius={80}
               fill="#8884d8"
               dataKey="value"
+              label={({ name, percent }) =>
+                `${name} ${(percent * 100).toFixed(0)}%`
+              }
             >
-              {(categoryData || []).map((entry: any, index: number) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              {data.map((entry, index) => (
+                <Cell
+                  key={`cell-${index}`}
+                  fill={COLORS[index % COLORS.length]}
+                />
               ))}
             </Pie>
-            <Tooltip />
+            <Legend />
           </PieChart>
         </ResponsiveContainer>
       </div>
