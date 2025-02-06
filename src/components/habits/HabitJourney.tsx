@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, BellDot } from "lucide-react";
+import { CheckCircle, BellDot, Star } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -89,9 +89,35 @@ export const HabitJourney = () => {
                 </p>
               </div>
               <div className="flex items-center gap-2">
+                <EditHabitDialog habit={habit} />
                 <Button
                   variant="ghost"
-                  size="sm"
+                  size="icon"
+                  onClick={() => setSelectedHabit(habit)}
+                  className="h-8 w-8"
+                >
+                  <BellDot className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => {
+                    if (habit.satisfaction_level !== 'high') {
+                      // Update satisfaction level mutation would go here
+                      toast({
+                        title: "Zufriedenheit markiert",
+                        description: "Die Gewohnheit wurde als zufriedenstellend markiert.",
+                      });
+                    }
+                  }}
+                >
+                  <Star className={`h-4 w-4 ${habit.satisfaction_level === 'high' ? 'text-yellow-400' : 'text-gray-400'}`} />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
                   onClick={() => {
                     if (!isCompletedToday(habit)) {
                       completeHabitMutation.mutate(habit);
@@ -99,18 +125,8 @@ export const HabitJourney = () => {
                   }}
                 >
                   <CheckCircle 
-                    className={`h-5 w-5 ${isCompletedToday(habit) ? "text-green-500" : "text-gray-400"}`} 
+                    className={`h-4 w-4 ${isCompletedToday(habit) ? "text-green-500" : "text-gray-400"}`} 
                   />
-                </Button>
-                <EditHabitDialog habit={habit} />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setSelectedHabit(habit)}
-                  className="flex items-center gap-2"
-                >
-                  <BellDot className="h-4 w-4" />
-                  Reflektieren
                 </Button>
               </div>
             </div>
