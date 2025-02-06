@@ -6,6 +6,7 @@ import { WeeklyProgress } from "@/components/dashboard/WeeklyProgress";
 import { YearlyActivity } from "@/components/dashboard/YearlyActivity";
 import { HabitProgress } from "@/components/dashboard/HabitProgress";
 import { TodoList } from "@/components/dashboard/TodoList";
+import { LifeAreasGrid } from "@/components/dashboard/LifeAreasGrid";
 import { 
   calculateStreak, 
   calculateSuccessRate, 
@@ -60,6 +61,8 @@ export const DashboardOverview = () => {
         activeDays={stats?.activeDays || 0}
         totalProgress={stats?.totalProgress || 0}
       />
+
+      <LifeAreasGrid />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <CategoryDistribution data={stats?.categoryData || []} />

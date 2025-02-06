@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Check, Trash2, Clock } from "lucide-react";
+import { Plus, Check, Trash2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -113,22 +113,34 @@ export const TodoList = () => {
       
       <div className="space-y-4">
         <div className="flex flex-col gap-2">
-          <Input
-            value={newTodo}
-            onChange={(e) => setNewTodo(e.target.value)}
-            placeholder="Neues Todo hinzufügen..."
-            onKeyPress={(e) => {
-              if (e.key === "Enter" && newTodo.trim()) {
-                addTodoMutation.mutate(newTodo.trim());
-              }
-            }}
-          />
           <div className="flex gap-2">
+            <Input
+              value={newTodo}
+              onChange={(e) => setNewTodo(e.target.value)}
+              placeholder="Neues Todo hinzufügen..."
+              className="flex-1"
+              onKeyPress={(e) => {
+                if (e.key === "Enter" && newTodo.trim()) {
+                  addTodoMutation.mutate(newTodo.trim());
+                }
+              }}
+            />
+            <Button
+              onClick={() => {
+                if (newTodo.trim()) {
+                  addTodoMutation.mutate(newTodo.trim());
+                }
+              }}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="hidden">
             <Select
               value={selectedCategory}
               onValueChange={setSelectedCategory}
             >
-              <SelectTrigger className="w-[200px]">
+              <SelectTrigger>
                 <SelectValue placeholder="Kategorie" />
               </SelectTrigger>
               <SelectContent>
@@ -143,17 +155,7 @@ export const TodoList = () => {
               type="time"
               value={selectedTime}
               onChange={(e) => setSelectedTime(e.target.value)}
-              className="w-[150px]"
             />
-            <Button
-              onClick={() => {
-                if (newTodo.trim()) {
-                  addTodoMutation.mutate(newTodo.trim());
-                }
-              }}
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
           </div>
         </div>
 
@@ -163,24 +165,9 @@ export const TodoList = () => {
               key={todo.id}
               className="flex items-center justify-between p-2 rounded-lg hover:bg-secondary/20"
             >
-              <div className="flex flex-col">
-                <span className={todo.completed ? "line-through text-muted-foreground" : ""}>
-                  {todo.title}
-                </span>
-                <div className="flex gap-2 text-xs text-gray-500">
-                  {todo.category && (
-                    <span className="bg-gray-100 px-2 py-0.5 rounded">
-                      {todo.category}
-                    </span>
-                  )}
-                  {todo.scheduled_time && (
-                    <span className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      {todo.scheduled_time}
-                    </span>
-                  )}
-                </div>
-              </div>
+              <span className={todo.completed ? "line-through text-muted-foreground" : ""}>
+                {todo.title}
+              </span>
               <div className="flex items-center gap-2">
                 <Button
                   variant="ghost"
