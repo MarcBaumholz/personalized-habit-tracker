@@ -1,0 +1,144 @@
+
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Card } from "@/components/ui/card";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, LineChart, Line } from 'recharts';
+import { format, startOfMonth, eachDayOfInterval, endOfMonth } from "date-fns";
+import { de } from "date-fns/locale";
+
+export const AdvancedAnalytics = () => {
+  const { data: analyticsData } = useQuery({
+    queryKey: ["habit-analytics"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
+
+      const { data: completions } = await supabase
+        .from("habit_completions")
+        .select("*, habits(name, life_area)")
+        .eq("user_id", user.id);
+
+      const { data: emotions } = await supabase
+        .from("habit_emotions")
+        .select("*")
+        .eq("user_id", user.id);
+
+      const { data: reflections } = await supabase
+        .from("habit_reflections")
+        .select("*")
+        .eq("user_id", user.id);
+
+      return {
+        completions: completions || [],
+        emotions: emotions || [],
+        reflections: reflections || []
+      };
+    }
+  });
+
+  const monthlyData = analyticsData?.completions.reduce((acc: any[], completion) => {
+    const month = format(new Date(completion.completed_date), 'MMM', { locale: de });
+    const existingMonth = acc.find(item => item.month === month);
+    
+    if (existingMonth) {
+      existingMonth.count += 1;
+    } else {
+      acc.push({ month, count: 1 });
+    }
+    
+    return acc;
+  }, []) || [];
+
+  const emotionDistribution = analyticsData?.emotions.reduce((acc: any, emotion) => {
+    acc[emotion.emotion] = (acc[emotion.emotion] || 0) + 1;
+    return acc;
+  }, {});
+
+  const emotionData = Object.entries(emotionDistribution || {}).map(([emotion, count]) => ({
+    emotion,
+    count
+  }));
+
+  const progressData = analyticsData?.reflections.map(reflection => ({
+    date: format(new Date(reflection.created_at), 'dd.MM'),
+    score: reflection.srhi_score
+  })).slice(-10) || [];
+
+  return (
+    <div className="space-y-6">
+      <h1 className="text-2xl font-bold">Erweiterte Analyse</h1>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold mb-4">Monatliche Aktivität</h3>
+          <div className="h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={monthlyData}>
+                <defs>
+                  <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#8884d8" stopOpacity={0.1}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis />
+                <Tooltip />
+                <Area 
+                  type="monotone" 
+                  dataKey="count" 
+                  stroke="#8884d8" 
+                  fillOpacity={1} 
+                  fill="url(#colorCount)" 
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold mb-4">Emotions-Verteilung</h3>
+          <div className="h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={emotionData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="emotion" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="count" fill="#82ca9d" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold mb-4">Gewohnheits-Stärke (SRHI)</h3>
+          <div className="h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={progressData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis domain={[0, 100]} />
+                <Tooltip />
+                <Line 
+                  type="monotone" 
+                  dataKey="score" 
+                  stroke="#8884d8" 
+                  strokeWidth={2}
+                  dot={{ r: 4 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold mb-4">Lebensbereiche Aktivität</h3>
+          <div className="h-[300px]">
+            {/* Hier kommt ein weiterer Graph für die Verteilung der Aktivitäten nach Lebensbereichen */}
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
+};
