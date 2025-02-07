@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 interface KeystoneHabit {
   name: string;
-  description: string;
+  why_description: string;
   lifeArea: string;
   guideline: string;
   frequency: string;
@@ -25,7 +25,7 @@ export const KeystoneHabitsSetup = ({ onComplete }: { onComplete: () => void }) 
   const [habits, setHabits] = useState<KeystoneHabit[]>([
     { 
       name: "", 
-      description: "", 
+      why_description: "", 
       lifeArea: "", 
       guideline: "",
       frequency: "daily",
@@ -35,7 +35,7 @@ export const KeystoneHabitsSetup = ({ onComplete }: { onComplete: () => void }) 
     },
     { 
       name: "", 
-      description: "", 
+      why_description: "", 
       lifeArea: "", 
       guideline: "",
       frequency: "daily",
@@ -55,7 +55,7 @@ export const KeystoneHabitsSetup = ({ onComplete }: { onComplete: () => void }) 
   };
 
   const handleSubmit = async () => {
-    if (habits.some(h => !h.name || !h.description)) {
+    if (habits.some(h => !h.name || !h.why_description)) {
       toast({
         title: "Unvollständige Eingabe",
         description: "Bitte fülle alle Pflichtfelder aus",
@@ -76,11 +76,11 @@ export const KeystoneHabitsSetup = ({ onComplete }: { onComplete: () => void }) 
             user_id: user.id,
             name: habit.name,
             category: habit.lifeArea,
-            description: habit.description,
             frequency: habit.frequency,
             time_of_day: habit.timeOfDay,
             difficulty: habit.difficulty,
-            why_description: habit.why,
+            why_description: habit.why_description,
+            why: habit.why,
             phase: "implementation",
           })
           .select()
@@ -95,7 +95,7 @@ export const KeystoneHabitsSetup = ({ onComplete }: { onComplete: () => void }) 
             user_id: user.id,
             habit_name: habit.name,
             life_area: habit.lifeArea,
-            description: habit.description,
+            description: habit.why_description,
             guideline: habit.guideline,
             habit_id: habitData.id,
           });
@@ -235,8 +235,8 @@ export const KeystoneHabitsSetup = ({ onComplete }: { onComplete: () => void }) 
           <div className="space-y-2">
             <Label>Beschreibung & Ziel</Label>
             <Textarea
-              value={habit.description}
-              onChange={(e) => updateHabit(index, "description", e.target.value)}
+              value={habit.why_description}
+              onChange={(e) => updateHabit(index, "why_description", e.target.value)}
               placeholder="Beschreibe, warum diese Gewohnheit wichtig für dich ist"
               className="bg-white"
             />
