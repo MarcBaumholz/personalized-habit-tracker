@@ -28,6 +28,22 @@ const Profile = () => {
     },
   });
 
+  const { data: keystoneHabits } = useQuery({
+    queryKey: ["keystone-habits"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
+
+      const { data } = await supabase
+        .from("keystone_habits")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("is_active", true);
+
+      return data || [];
+    },
+  });
+
   const getResponse = (key: string) => {
     return responses?.find(r => r.question_key === key)?.response || "";
   };
@@ -65,11 +81,6 @@ const Profile = () => {
     { trait: "Neurotizismus", score: 45, icon: Coffee },
   ];
 
-  const keystoneHabits = [
-    { name: "Fokussierte Arbeit", description: "Deine hohe Gewissenhaftigkeit unterstützt dich bei konzentrierter Arbeit." },
-    { name: "Soziale Interaktion", description: "Deine Verträglichkeit hilft dir bei der Zusammenarbeit mit anderen." },
-  ];
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-50 transition-all duration-500">
       <Navigation />
@@ -85,6 +96,26 @@ const Profile = () => {
         </div>
         
         <div className="grid gap-6">
+          <Card className="p-6 bg-white rounded-2xl shadow-lg border border-purple-100 backdrop-blur-sm transition-all duration-300 hover:shadow-xl animate-slide-in">
+            <h2 className="text-xl font-semibold mb-4 text-purple-800">Deine Keystone Habits</h2>
+            <div className="grid gap-4 md:grid-cols-2">
+              {keystoneHabits?.map((habit) => (
+                <Card key={habit.id} className="p-4 bg-purple-50/50">
+                  <h3 className="font-medium mb-2 text-purple-700">{habit.habit_name}</h3>
+                  <p className="text-sm text-purple-600 mb-2">{habit.description}</p>
+                  <div className="text-xs text-purple-500">
+                    <span className="font-medium">Lebensbereich:</span> {habit.life_area}
+                  </div>
+                  {habit.guideline && (
+                    <div className="mt-2 text-xs text-purple-500">
+                      <span className="font-medium">Leitfaden:</span> {habit.guideline}
+                    </div>
+                  )}
+                </Card>
+              ))}
+            </div>
+          </Card>
+
           <Card className="p-6 bg-white rounded-2xl shadow-lg border border-purple-100 backdrop-blur-sm transition-all duration-300 hover:shadow-xl animate-slide-in">
             <h2 className="text-xl font-semibold mb-4 text-purple-800">Deine Antworten aus dem Onboarding</h2>
             <div className="space-y-4">
@@ -162,4 +193,3 @@ const Profile = () => {
 };
 
 export default Profile;
-

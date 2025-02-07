@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Label } from "@/components/ui/label";
+import { useNavigate } from "react-router-dom";
 
 interface KeystoneHabit {
   name: string;
@@ -20,7 +21,9 @@ export const KeystoneHabitsSetup = ({ onComplete }: { onComplete: () => void }) 
     { name: "", description: "", lifeArea: "", guideline: "" },
     { name: "", description: "", lifeArea: "", guideline: "" },
   ]);
+  const [showWiseImage, setShowWiseImage] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const updateHabit = (index: number, field: keyof KeystoneHabit, value: string) => {
     const newHabits = [...habits];
@@ -59,7 +62,11 @@ export const KeystoneHabitsSetup = ({ onComplete }: { onComplete: () => void }) 
         description: "Deine Keystone Habits wurden erfolgreich gespeichert",
       });
       
-      onComplete();
+      setShowWiseImage(true);
+      setTimeout(() => {
+        onComplete();
+        navigate("/");
+      }, 3000);
     } catch (error) {
       toast({
         title: "Fehler",
@@ -68,6 +75,24 @@ export const KeystoneHabitsSetup = ({ onComplete }: { onComplete: () => void }) 
       });
     }
   };
+
+  if (showWiseImage) {
+    return (
+      <div className="max-w-2xl mx-auto text-center space-y-6">
+        <img
+          src="/photo-1485827404703-89b55fcc595e"
+          alt="Wise completion image"
+          className="mx-auto rounded-lg shadow-xl"
+        />
+        <h2 className="text-2xl font-bold text-purple-800">
+          Glückwunsch! Du hast den Onboarding-Prozess abgeschlossen.
+        </h2>
+        <p className="text-purple-600">
+          Du wirst in wenigen Sekunden zu deiner personalisierten Startseite weitergeleitet...
+        </p>
+      </div>
+    );
+  }
 
   return (
     <Card className="max-w-2xl mx-auto p-6 space-y-6 bg-white/80 backdrop-blur-sm">
