@@ -1,19 +1,13 @@
 
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Plus, Check, Trash2, Sparkles, Clock } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { TodoHeader } from "./TodoHeader";
+import { TodoInput } from "./TodoInput";
+import { TodoItem } from "./TodoItem";
+import { EmptyTodoState } from "./EmptyTodoState";
 
 const CATEGORIES = [
   "Arbeit",
@@ -61,8 +55,7 @@ export const TodoList = () => {
     };
 
     updateTimeUntilMidnight();
-    const interval = setInterval(updateTimeUntilMidnight, 60000); // Update every minute
-
+    const interval = setInterval(updateTimeUntilMidnight, 60000);
     return () => clearInterval(interval);
   }, []);
 
@@ -151,108 +144,38 @@ export const TodoList = () => {
 
   return (
     <Card className="p-6 bg-gradient-to-br from-white to-gray-50 shadow-lg">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-2">
-          <Sparkles className="h-6 w-6 text-yellow-400" />
-          <h2 className="text-xl font-bold">Todos für heute</h2>
-        </div>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Clock className="h-4 w-4" />
-          <span>Noch {timeUntilMidnight} bis Mitternacht</span>
-        </div>
-      </div>
+      <TodoHeader timeUntilMidnight={timeUntilMidnight} />
       
       <div className="space-y-4">
-        <div className="flex flex-col gap-2">
-          <div className="flex gap-2">
-            <Input
-              value={newTodo}
-              onChange={(e) => setNewTodo(e.target.value)}
-              placeholder="Neues Todo hinzufügen..."
-              className="flex-1 border-2 border-gray-200 focus:border-primary/50 transition-colors"
-              onKeyPress={(e) => {
-                if (e.key === "Enter" && newTodo.trim()) {
-                  addTodoMutation.mutate(newTodo.trim());
-                }
-              }}
-            />
-            <Button
-              onClick={() => {
-                if (newTodo.trim()) {
-                  addTodoMutation.mutate(newTodo.trim());
-                }
-              }}
-              className="bg-primary hover:bg-primary/90 text-white"
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
-          </div>
-          <div className="hidden">
-            <Select
-              value={selectedCategory}
-              onValueChange={setSelectedCategory}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Kategorie" />
-              </SelectTrigger>
-              <SelectContent>
-                {CATEGORIES.map((category) => (
-                  <SelectItem key={category} value={category}>
-                    {CATEGORY_EMOJIS[category]} {category}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Input
-              type="time"
-              value={selectedTime}
-              onChange={(e) => setSelectedTime(e.target.value)}
-            />
-          </div>
-        </div>
+        <TodoInput
+          newTodo={newTodo}
+          setNewTodo={setNewTodo}
+          selectedCategory={selectedCategory}
+          setSelectedCategory={setSelectedCategory}
+          selectedTime={selectedTime}
+          setSelectedTime={setSelectedTime}
+          onAddTodo={() => {
+            if (newTodo.trim()) {
+              addTodoMutation.mutate(newTodo.trim());
+            }
+          }}
+          categories={CATEGORIES}
+          categoryEmojis={CATEGORY_EMOJIS}
+        />
 
         <div className="space-y-2">
           {todos?.map((todo: any) => (
-            <div
+            <TodoItem
               key={todo.id}
-              className={`flex items-center justify-between p-3 rounded-lg transition-all duration-200 ${
-                todo.completed 
-                  ? "bg-gray-50 opacity-75" 
-                  : "bg-white hover:shadow-md hover:scale-[1.01]"
-              } border border-gray-100`}
-            >
-              <div className="flex items-center gap-2">
-                <span className={`${todo.completed ? "line-through text-muted-foreground" : ""}`}>
-                  {CATEGORY_EMOJIS[todo.category || "Sonstiges"]} {todo.title}
-                </span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => toggleTodoMutation.mutate(todo)}
-                  className={`hover:bg-green-50 ${todo.completed ? "text-green-500" : ""}`}
-                >
-                  <Check className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => deleteTodoMutation.mutate(todo.id)}
-                  className="text-destructive hover:text-destructive/90 hover:bg-red-50"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
+              todo={todo}
+              categoryEmojis={CATEGORY_EMOJIS}
+              onToggle={toggleTodoMutation.mutate}
+              onDelete={deleteTodoMutation.mutate}
+            />
           ))}
           
           {(!todos || todos.length === 0) && (
-            <div className="text-center py-8 text-muted-foreground">
-              <p className="text-4xl mb-4">✨</p>
-              <p className="text-lg font-medium mb-2">{getRandomMessage()}</p>
-              <p className="text-sm">Die perfekte Zeit, um deine Ziele für heute zu setzen!</p>
-            </div>
+            <EmptyTodoState getMessage={getRandomMessage} />
           )}
         </div>
       </div>
