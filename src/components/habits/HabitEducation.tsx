@@ -12,8 +12,6 @@ const HABIT_TOOLKITS = [
     category: "GRUNDLAGEN",
     rating: 4.7,
     users: 2341,
-    gradient: "from-gray-100 to-gray-50",
-    hover: "group-hover:from-gray-200 group-hover:to-gray-100",
   },
   {
     id: "stacking",
@@ -22,8 +20,6 @@ const HABIT_TOOLKITS = [
     category: "FORTGESCHRITTEN",
     rating: 4.9,
     users: 1892,
-    gradient: "from-gray-100 to-gray-50",
-    hover: "group-hover:from-gray-200 group-hover:to-gray-100",
   },
   {
     id: "environment",
@@ -32,21 +28,19 @@ const HABIT_TOOLKITS = [
     category: "ADVANCED",
     rating: 4.5,
     users: 1567,
-    gradient: "from-gray-100 to-gray-50",
-    hover: "group-hover:from-gray-200 group-hover:to-gray-100",
   },
 ];
 
 export const HabitEducation = () => {
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
-      <div className="flex items-center justify-between border-b border-gray-200 pb-6">
+      <div className="flex items-center justify-between border-b border-gray-800/10 pb-6">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-gray-100">
+          <div className="p-2.5 rounded-xl bg-gray-900/5 backdrop-blur-sm border border-gray-200/10">
             <BookOpen className="h-6 w-6 text-gray-700" />
           </div>
           <div className="space-y-1">
-            <h2 className="text-2xl font-semibold text-gray-900">
+            <h2 className="text-2xl font-semibold text-gray-800">
               Habit Baukasten
             </h2>
             <p className="text-sm text-gray-500">
@@ -55,8 +49,8 @@ export const HabitEducation = () => {
           </div>
         </div>
         <Button 
-          variant="outline" 
-          className="text-gray-700 border-gray-200 hover:bg-gray-50 font-medium"
+          variant="secondary" 
+          className="text-gray-700 bg-gray-100 hover:bg-gray-200 font-medium rounded-xl"
         >
           <span>Alle Kategorien</span>
           <ArrowRight className="ml-2 h-4 w-4" />
@@ -68,21 +62,17 @@ export const HabitEducation = () => {
           {HABIT_TOOLKITS.map((toolkit) => (
             <Card
               key={toolkit.id}
-              className="group relative overflow-hidden border-gray-200 bg-white shadow-sm transition-all duration-300 hover:shadow-md"
+              className="group relative overflow-hidden border-0 bg-gradient-to-br from-gray-50 to-white shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.2)] transition-all duration-300"
             >
-              <div 
-                className={`absolute inset-0 bg-gradient-to-br ${toolkit.gradient} transition-colors duration-300 ${toolkit.hover}`} 
-              />
-              
               <div className="relative p-8 space-y-6">
                 <div className="flex items-center justify-between">
-                  <span className="px-4 py-1.5 text-xs font-medium rounded-full bg-gray-100 text-gray-700 uppercase tracking-wider">
+                  <span className="px-4 py-1.5 text-xs font-medium rounded-full bg-gray-900/5 text-gray-700 uppercase tracking-wider backdrop-blur-sm border border-gray-200/10">
                     {toolkit.category}
                   </span>
                   <div className="flex items-center gap-6">
                     <div className="flex items-center gap-2">
                       <Star className="h-5 w-5 text-amber-500" />
-                      <span className="text-sm font-semibold text-gray-900">
+                      <span className="text-sm font-semibold text-gray-700">
                         {toolkit.rating}
                       </span>
                     </div>
@@ -96,7 +86,7 @@ export const HabitEducation = () => {
                 </div>
 
                 <div className="space-y-3">
-                  <h3 className="text-xl font-semibold text-gray-900">
+                  <h3 className="text-xl font-semibold text-gray-800">
                     {toolkit.title}
                   </h3>
                   <p className="text-base text-gray-600 leading-relaxed">
@@ -105,7 +95,7 @@ export const HabitEducation = () => {
                 </div>
 
                 <Button 
-                  className="w-full bg-gray-900 hover:bg-gray-800 text-white font-medium"
+                  className="w-full bg-gray-900 hover:bg-gray-800 text-white font-medium rounded-xl"
                   size="lg"
                 >
                   Methode anwenden

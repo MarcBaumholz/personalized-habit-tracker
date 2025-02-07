@@ -1,3 +1,4 @@
+
 import { Navigation } from "@/components/layout/Navigation";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -195,9 +196,9 @@ const Toolbox = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-purple-50/50 to-white">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       <Navigation />
-      <main className="container py-6">
+      <main className="container max-w-7xl mx-auto px-6 py-8">
         <ToolboxHeader 
           activeTab={activeTab} 
           onTabChange={setActiveTab} 
