@@ -153,9 +153,9 @@ const Profile = () => {
           <Card className="p-6 bg-white rounded-2xl shadow-lg border border-purple-100 backdrop-blur-sm transition-all duration-300 hover:shadow-xl animate-slide-in">
             <h2 className="text-xl font-semibold mb-4 text-purple-800">Persönliche Stärken</h2>
             <div className="grid gap-4 md:grid-cols-2">
-              {keystoneHabits.map((habit) => (
-                <Card key={habit.name} className="p-4 bg-purple-50/50">
-                  <h3 className="font-medium mb-2 text-purple-700">{habit.name}</h3>
+              {keystoneHabits?.map((habit) => (
+                <Card key={habit.id} className="p-4 bg-purple-50/50">
+                  <h3 className="font-medium mb-2 text-purple-700">{habit.habit_name}</h3>
                   <p className="text-sm text-purple-600">{habit.description}</p>
                 </Card>
               ))}
@@ -193,3 +193,4 @@ const Profile = () => {
 };
 
 export default Profile;
+
