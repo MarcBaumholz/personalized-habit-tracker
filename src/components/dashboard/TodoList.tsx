@@ -1,9 +1,8 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Check, Trash2, Sparkles } from "lucide-react";
+import { Plus, Check, Trash2, Sparkles, Clock } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -35,8 +34,28 @@ export const TodoList = () => {
   const [newTodo, setNewTodo] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [selectedTime, setSelectedTime] = useState<string>("");
+  const [timeUntilMidnight, setTimeUntilMidnight] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const updateTimeUntilMidnight = () => {
+      const now = new Date();
+      const midnight = new Date();
+      midnight.setHours(24, 0, 0, 0);
+      const diff = midnight.getTime() - now.getTime();
+      
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      
+      setTimeUntilMidnight(`${hours}h ${minutes}m`);
+    };
+
+    updateTimeUntilMidnight();
+    const interval = setInterval(updateTimeUntilMidnight, 60000); // Update every minute
+
+    return () => clearInterval(interval);
+  }, []);
 
   const { data: todos } = useQuery({
     queryKey: ["todos"],
@@ -118,9 +137,15 @@ export const TodoList = () => {
 
   return (
     <Card className="p-6 bg-gradient-to-br from-white to-gray-50 shadow-lg">
-      <div className="flex items-center gap-2 mb-6">
-        <Sparkles className="h-6 w-6 text-yellow-400" />
-        <h2 className="text-xl font-bold">Todos für heute</h2>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-2">
+          <Sparkles className="h-6 w-6 text-yellow-400" />
+          <h2 className="text-xl font-bold">Todos für heute</h2>
+        </div>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Clock className="h-4 w-4" />
+          <span>Noch {timeUntilMidnight}</span>
+        </div>
       </div>
       
       <div className="space-y-4">
