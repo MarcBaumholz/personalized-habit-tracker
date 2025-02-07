@@ -12,8 +12,8 @@ const HABIT_TOOLKITS = [
     category: "GRUNDLAGEN",
     rating: 4.7,
     users: 2341,
-    gradient: "from-blue-500/20 to-indigo-500/20",
-    hover: "group-hover:from-blue-500/30 group-hover:to-indigo-500/30",
+    gradient: "from-zinc-500/10 to-zinc-700/10",
+    hover: "group-hover:from-zinc-500/20 group-hover:to-zinc-700/20",
   },
   {
     id: "stacking",
@@ -22,8 +22,8 @@ const HABIT_TOOLKITS = [
     category: "FORTGESCHRITTEN",
     rating: 4.9,
     users: 1892,
-    gradient: "from-purple-500/20 to-pink-500/20",
-    hover: "group-hover:from-purple-500/30 group-hover:to-pink-500/30",
+    gradient: "from-zinc-600/10 to-zinc-800/10",
+    hover: "group-hover:from-zinc-600/20 group-hover:to-zinc-800/20",
   },
   {
     id: "environment",
@@ -32,8 +32,8 @@ const HABIT_TOOLKITS = [
     category: "ADVANCED",
     rating: 4.5,
     users: 1567,
-    gradient: "from-emerald-500/20 to-teal-500/20",
-    hover: "group-hover:from-emerald-500/30 group-hover:to-teal-500/30",
+    gradient: "from-zinc-700/10 to-zinc-900/10",
+    hover: "group-hover:from-zinc-700/20 group-hover:to-zinc-900/20",
   },
 ];
 
@@ -42,12 +42,15 @@ export const HabitEducation = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <BookOpen className="h-6 w-6 text-purple-400" />
-          <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-blue-400">
+          <BookOpen className="h-6 w-6 text-zinc-400" />
+          <h2 className="text-2xl font-bold text-zinc-800">
             Habit Baukasten
           </h2>
         </div>
-        <Button variant="outline" className="text-zinc-400 border-zinc-800">
+        <Button 
+          variant="outline" 
+          className="text-zinc-600 border-zinc-200 hover:bg-zinc-50"
+        >
           Alle Kategorien
         </Button>
       </div>
@@ -57,23 +60,25 @@ export const HabitEducation = () => {
           {HABIT_TOOLKITS.map((toolkit) => (
             <Card
               key={toolkit.id}
-              className="group relative overflow-hidden border-zinc-800/50 bg-zinc-900/50 backdrop-blur-sm transition-all duration-300 hover:border-purple-500/30 hover:shadow-lg hover:shadow-purple-500/10"
+              className="group relative overflow-hidden border-zinc-200/50 bg-white/80 backdrop-blur-sm transition-all duration-300 hover:border-zinc-300 hover:shadow-lg"
             >
-              <div className={`absolute inset-0 bg-gradient-to-br ${toolkit.gradient} transition-colors duration-300 ${toolkit.hover}`} />
+              <div 
+                className={`absolute inset-0 bg-gradient-to-br ${toolkit.gradient} transition-colors duration-300 ${toolkit.hover}`} 
+              />
               
               <div className="relative p-6 space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="px-3 py-1 text-xs font-medium rounded-full bg-zinc-800/50 text-zinc-400">
+                  <span className="px-3 py-1 text-xs font-medium rounded-full bg-zinc-100/80 text-zinc-600">
                     {toolkit.category}
                   </span>
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-1.5">
                       <Star className="h-4 w-4 text-yellow-500" />
-                      <span className="text-sm font-medium text-zinc-300">
+                      <span className="text-sm font-medium text-zinc-700">
                         {toolkit.rating}
                       </span>
                     </div>
-                    <div className="flex items-center gap-1.5 text-zinc-400">
+                    <div className="flex items-center gap-1.5 text-zinc-500">
                       <Users className="h-4 w-4" />
                       <span className="text-sm">
                         {toolkit.users.toLocaleString()}
@@ -83,16 +88,16 @@ export const HabitEducation = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <h3 className="text-lg font-semibold text-zinc-100">
+                  <h3 className="text-lg font-semibold text-zinc-800">
                     {toolkit.title}
                   </h3>
-                  <p className="text-sm text-zinc-400 line-clamp-2">
+                  <p className="text-sm text-zinc-600 line-clamp-2">
                     {toolkit.description}
                   </p>
                 </div>
 
                 <Button 
-                  className="w-full bg-gradient-to-r from-purple-500/80 to-blue-500/80 hover:from-purple-500 hover:to-blue-500 text-white border-0"
+                  className="w-full bg-zinc-900 hover:bg-zinc-800 text-white"
                   size="sm"
                 >
                   Methode anwenden
