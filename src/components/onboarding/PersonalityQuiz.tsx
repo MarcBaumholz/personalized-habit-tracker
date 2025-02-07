@@ -1,74 +1,200 @@
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 
-const questions = [
+import { useState } from "react";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { Input } from "@/components/ui/input";
+
+const BIG_FIVE_QUESTIONS = [
   {
-    question: "Wie würdest du deinen idealen Morgen beschreiben?",
-    options: [
-      "Früh aufstehen und aktiv sein",
-      "Langsam und entspannt starten",
-      "Flexibel je nach Tagesplan",
+    category: "openness",
+    questions: [
+      "Ich bin offen für neue Erfahrungen",
+      "Ich bin kreativ und habe viele Ideen",
+      "Ich interessiere mich für abstrakte Konzepte",
     ],
   },
   {
-    question: "Wie gehst du am besten neue Herausforderungen an?",
-    options: [
-      "Strukturiert mit klarem Plan",
-      "Spontan und intuitiv",
-      "Mit Unterstützung von anderen",
+    category: "conscientiousness",
+    questions: [
+      "Ich plane sorgfältig und halte mich an Pläne",
+      "Ich achte auf Details",
+      "Ich bin organisiert und ordentlich",
     ],
   },
   {
-    question: "Was motiviert dich am meisten?",
-    options: [
-      "Persönliche Entwicklung",
-      "Konkrete Ziele erreichen",
-      "Anderen helfen",
+    category: "extraversion",
+    questions: [
+      "Ich gehe gerne auf andere Menschen zu",
+      "Ich fühle mich in Gruppen wohl",
+      "Ich bin gesprächig und kontaktfreudig",
+    ],
+  },
+  {
+    category: "agreeableness",
+    questions: [
+      "Ich bin hilfsbereit und selbstlos",
+      "Ich vertraue anderen Menschen",
+      "Ich bin einfühlsam und warmherzig",
+    ],
+  },
+  {
+    category: "neuroticism",
+    questions: [
+      "Ich mache mir oft Sorgen",
+      "Ich werde leicht nervös und unsicher",
+      "Ich reagiere empfindlich auf Stress",
     ],
   },
 ];
 
-export const PersonalityQuiz = () => {
-  const navigate = useNavigate();
-  const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [answers, setAnswers] = useState<string[]>([]);
+export const PersonalityQuiz = ({ onComplete }: { onComplete: () => void }) => {
+  const [answers, setAnswers] = useState<Record<string, Record<number, string>>>({});
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const { toast } = useToast();
 
-  const handleAnswer = (answer: string) => {
-    const newAnswers = [...answers];
-    newAnswers[currentQuestion] = answer;
-    setAnswers(newAnswers);
+  const handleAnswer = (category: string, questionIndex: number, value: string) => {
+    setAnswers({
+      ...answers,
+      [category]: { ...(answers[category] || {}), [questionIndex]: value },
+    });
+  };
 
-    if (currentQuestion < questions.length - 1) {
-      setCurrentQuestion(currentQuestion + 1);
-    } else {
-      navigate("/dashboard");
+  const calculateScores = () => {
+    const scores: Record<string, number> = {};
+    
+    Object.entries(answers).forEach(([category, categoryAnswers]) => {
+      const sum = Object.values(categoryAnswers).reduce((acc, value) => acc + parseInt(value), 0);
+      scores[category] = (sum / (3 * 5)) * 100; // Normalize to 0-100 scale
+    });
+    
+    return scores;
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setPdfFile(e.target.files[0]);
     }
   };
 
+  const handleSubmit = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
+
+      let pdfUrl = null;
+      if (pdfFile) {
+        const fileExt = pdfFile.name.split('.').pop();
+        const fileName = `${user.id}-${Math.random()}.${fileExt}`;
+        
+        const { error: uploadError, data } = await supabase.storage
+          .from('personality_assessments')
+          .upload(fileName, pdfFile);
+
+        if (uploadError) throw uploadError;
+        
+        if (data) {
+          const { data: { publicUrl } } = supabase.storage
+            .from('personality_assessments')
+            .getPublicUrl(fileName);
+          
+          pdfUrl = publicUrl;
+        }
+      }
+
+      const scores = calculateScores();
+      
+      const { error } = await supabase.from("big_five_results").insert({
+        user_id: user.id,
+        openness: scores.openness,
+        conscientiousness: scores.conscientiousness,
+        extraversion: scores.extraversion,
+        agreeableness: scores.agreeableness,
+        neuroticism: scores.neuroticism,
+        pdf_url: pdfUrl,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Test abgeschlossen",
+        description: "Deine Persönlichkeitsanalyse wurde erfolgreich gespeichert",
+      });
+      
+      onComplete();
+    } catch (error) {
+      toast({
+        title: "Fehler",
+        description: "Deine Antworten konnten nicht gespeichert werden",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const isComplete = Object.values(answers).every(
+    categoryAnswers => Object.keys(categoryAnswers).length === 3
+  );
+
   return (
-    <div className="container max-w-2xl mx-auto py-12">
-      <Card className="p-6 space-y-6 animate-fade-in">
-        <div className="space-y-4">
-          <h2 className="text-2xl font-bold text-primary">
-            {questions[currentQuestion].question}
-          </h2>
-          <RadioGroup
-            onValueChange={handleAnswer}
-            className="space-y-4"
-          >
-            {questions[currentQuestion].options.map((option, index) => (
-              <div key={index} className="flex items-center space-x-2">
-                <RadioGroupItem value={option} id={`option-${index}`} />
-                <Label htmlFor={`option-${index}`}>{option}</Label>
-              </div>
-            ))}
-          </RadioGroup>
+    <Card className="max-w-2xl mx-auto p-6 space-y-6 bg-white/80 backdrop-blur-sm">
+      <div className="space-y-2">
+        <h2 className="text-2xl font-bold text-purple-800">Big Five Persönlichkeitstest</h2>
+        <p className="text-purple-600">
+          Beantworte die folgenden Fragen, um dein Persönlichkeitsprofil zu erstellen
+        </p>
+      </div>
+
+      {BIG_FIVE_QUESTIONS.map((category) => (
+        <div key={category.category} className="space-y-4 p-4 border rounded-lg bg-purple-50">
+          <h3 className="font-semibold text-purple-800 capitalize">
+            {category.category}
+          </h3>
+          
+          {category.questions.map((question, index) => (
+            <div key={index} className="space-y-2">
+              <Label>{question}</Label>
+              <RadioGroup
+                value={answers[category.category]?.[index]}
+                onValueChange={(value) => handleAnswer(category.category, index, value)}
+                className="flex justify-between"
+              >
+                {[1, 2, 3, 4, 5].map((value) => (
+                  <div key={value} className="flex items-center space-x-2">
+                    <RadioGroupItem value={value.toString()} id={`${category.category}-${index}-${value}`} />
+                    <Label htmlFor={`${category.category}-${index}-${value}`}>{value}</Label>
+                  </div>
+                ))}
+              </RadioGroup>
+            </div>
+          ))}
         </div>
-      </Card>
-    </div>
+      ))}
+
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label>Alternativ: PDF hochladen</Label>
+          <Input
+            type="file"
+            accept=".pdf"
+            onChange={handleFileChange}
+            className="bg-white"
+          />
+          <p className="text-sm text-purple-600">
+            Falls du bereits einen Big Five Test gemacht hast, kannst du hier das Ergebnis als PDF hochladen
+          </p>
+        </div>
+      </div>
+
+      <Button
+        onClick={handleSubmit}
+        disabled={!isComplete && !pdfFile}
+        className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+      >
+        Persönlichkeitstest abschließen
+      </Button>
+    </Card>
   );
 };

@@ -51,6 +51,50 @@ export type Database = {
           },
         ]
       }
+      big_five_results: {
+        Row: {
+          agreeableness: number | null
+          conscientiousness: number | null
+          created_at: string
+          extraversion: number | null
+          id: string
+          neuroticism: number | null
+          openness: number | null
+          pdf_url: string | null
+          user_id: string
+        }
+        Insert: {
+          agreeableness?: number | null
+          conscientiousness?: number | null
+          created_at?: string
+          extraversion?: number | null
+          id?: string
+          neuroticism?: number | null
+          openness?: number | null
+          pdf_url?: string | null
+          user_id: string
+        }
+        Update: {
+          agreeableness?: number | null
+          conscientiousness?: number | null
+          created_at?: string
+          extraversion?: number | null
+          id?: string
+          neuroticism?: number | null
+          openness?: number | null
+          pdf_url?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "big_five_results_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       habit_completions: {
         Row: {
           completed_date: string
@@ -321,6 +365,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "habits_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      keystone_habits: {
+        Row: {
+          created_at: string
+          description: string | null
+          guideline: string | null
+          habit_name: string
+          id: string
+          is_active: boolean | null
+          life_area: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          guideline?: string | null
+          habit_name: string
+          id?: string
+          is_active?: boolean | null
+          life_area: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          guideline?: string | null
+          habit_name?: string
+          id?: string
+          is_active?: boolean | null
+          life_area?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "keystone_habits_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
