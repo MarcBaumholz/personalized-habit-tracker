@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Navigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
+import { ChevronRight } from "lucide-react";
 
 const Index = () => {
   const { data: hasCompletedOnboarding, isLoading } = useQuery({
@@ -48,8 +49,8 @@ const Index = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-white flex items-center justify-center">
-        <div className="animate-pulse text-purple-600">Loading...</div>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white flex items-center justify-center">
+        <div className="animate-pulse text-gray-600">Loading...</div>
       </div>
     );
   }
@@ -59,31 +60,45 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-50 transition-all duration-500">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white transition-all duration-500">
       <Navigation />
-      <main className="container py-8 px-4 md:px-6 lg:px-8 animate-fade-in">
-        <div className="mb-8 max-w-3xl mx-auto">
-          <h2 className="text-2xl font-semibold mb-4 text-purple-800 bg-gradient-to-r from-purple-700 to-purple-900 bg-clip-text text-transparent">
-            Dein Fortschritt
-          </h2>
-          <div className="p-6 bg-white rounded-2xl shadow-lg backdrop-blur-sm border border-purple-100">
-            <Progress 
-              value={calculateOverallProgress()} 
-              className="h-3 bg-purple-100"
-            />
-            <p className="mt-2 text-sm text-purple-600">
-              {calculateOverallProgress()}% deiner Ziele erreicht
+      <main className="container max-w-7xl mx-auto py-12 px-6 animate-fade-in">
+        <div className="mb-12 max-w-3xl mx-auto">
+          <div className="space-y-2 mb-6">
+            <h2 className="text-3xl font-semibold text-gray-800">
+              Dein Fortschritt
+            </h2>
+            <p className="text-gray-600">
+              Verfolge deine Entwicklung und erreiche deine Ziele
             </p>
           </div>
+          <Card className="p-8 bg-white shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] border-0">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-gray-600">Gesamtfortschritt</span>
+                <span className="text-sm font-medium text-gray-800">
+                  {calculateOverallProgress()}%
+                </span>
+              </div>
+              <Progress 
+                value={calculateOverallProgress()} 
+                className="h-2 bg-gray-100"
+              />
+              <p className="text-sm text-gray-600 flex items-center gap-2">
+                Du bist auf einem guten Weg
+                <ChevronRight className="h-4 w-4" />
+              </p>
+            </div>
+          </Card>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
-          <div className="bg-white p-6 rounded-2xl shadow-lg border border-purple-100 backdrop-blur-sm transition-all duration-300 hover:shadow-xl animate-slide-in">
+        <div className="grid md:grid-cols-2 gap-8 max-w-7xl mx-auto">
+          <Card className="p-8 bg-white shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] border-0 transition-all duration-300 hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.2)]">
             <HabitJourney />
-          </div>
-          <div className="bg-white p-6 rounded-2xl shadow-lg border border-purple-100 backdrop-blur-sm transition-all duration-300 hover:shadow-xl animate-slide-in">
+          </Card>
+          <Card className="p-8 bg-white shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] border-0 transition-all duration-300 hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.2)]">
             <TodoList />
-          </div>
+          </Card>
         </div>
       </main>
     </div>
