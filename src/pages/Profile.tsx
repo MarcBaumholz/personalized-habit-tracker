@@ -53,10 +53,11 @@ const Profile = () => {
         .from("onboarding_responses")
         .select("*")
         .eq("user_id", user.id)
-        .eq("question_key", "life_areas")
-        .single();
+        .eq("question_key", "life_areas");
 
-      return data ? JSON.parse(data.response) : [];
+      // Get the first response if there are multiple, or return empty array
+      const firstResponse = data?.[0]?.response;
+      return firstResponse ? JSON.parse(firstResponse) : [];
     },
   });
 
@@ -276,3 +277,4 @@ const Profile = () => {
 };
 
 export default Profile;
+
