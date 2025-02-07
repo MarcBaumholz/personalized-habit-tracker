@@ -418,6 +418,7 @@ export type Database = {
           created_at: string
           description: string | null
           guideline: string | null
+          habit_id: string | null
           habit_name: string
           id: string
           is_active: boolean | null
@@ -428,6 +429,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           guideline?: string | null
+          habit_id?: string | null
           habit_name: string
           id?: string
           is_active?: boolean | null
@@ -438,6 +440,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           guideline?: string | null
+          habit_id?: string | null
           habit_name?: string
           id?: string
           is_active?: boolean | null
@@ -445,6 +448,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "keystone_habits_habit_id_fkey"
+            columns: ["habit_id"]
+            isOneToOne: false
+            referencedRelation: "habits"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "keystone_habits_user_id_fkey"
             columns: ["user_id"]

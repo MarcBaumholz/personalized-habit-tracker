@@ -8,18 +8,41 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface KeystoneHabit {
   name: string;
   description: string;
   lifeArea: string;
   guideline: string;
+  frequency: string;
+  timeOfDay: string;
+  difficulty: string;
+  why: string;
 }
 
 export const KeystoneHabitsSetup = ({ onComplete }: { onComplete: () => void }) => {
   const [habits, setHabits] = useState<KeystoneHabit[]>([
-    { name: "", description: "", lifeArea: "", guideline: "" },
-    { name: "", description: "", lifeArea: "", guideline: "" },
+    { 
+      name: "", 
+      description: "", 
+      lifeArea: "", 
+      guideline: "",
+      frequency: "daily",
+      timeOfDay: "morning",
+      difficulty: "medium",
+      why: ""
+    },
+    { 
+      name: "", 
+      description: "", 
+      lifeArea: "", 
+      guideline: "",
+      frequency: "daily",
+      timeOfDay: "morning",
+      difficulty: "medium",
+      why: ""
+    },
   ]);
   const [showWiseImage, setShowWiseImage] = useState(false);
   const { toast } = useToast();
@@ -45,21 +68,44 @@ export const KeystoneHabitsSetup = ({ onComplete }: { onComplete: () => void }) 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
-      const { error } = await supabase.from("keystone_habits").insert(
-        habits.map(habit => ({
-          user_id: user.id,
-          habit_name: habit.name,
-          life_area: habit.lifeArea,
-          description: habit.description,
-          guideline: habit.guideline,
-        }))
-      );
+      for (const habit of habits) {
+        // First create the normal habit
+        const { data: habitData, error: habitError } = await supabase
+          .from("habits")
+          .insert({
+            user_id: user.id,
+            name: habit.name,
+            category: habit.lifeArea,
+            description: habit.description,
+            frequency: habit.frequency,
+            time_of_day: habit.timeOfDay,
+            difficulty: habit.difficulty,
+            why_description: habit.why,
+            phase: "implementation",
+          })
+          .select()
+          .single();
 
-      if (error) throw error;
+        if (habitError) throw habitError;
+
+        // Then create the keystone habit linked to the normal habit
+        const { error: keystoneError } = await supabase
+          .from("keystone_habits")
+          .insert({
+            user_id: user.id,
+            habit_name: habit.name,
+            life_area: habit.lifeArea,
+            description: habit.description,
+            guideline: habit.guideline,
+            habit_id: habitData.id,
+          });
+
+        if (keystoneError) throw keystoneError;
+      }
 
       toast({
         title: "Gespeichert",
-        description: "Deine Keystone Habits wurden erfolgreich gespeichert",
+        description: "Deine Keystone Habits wurden erfolgreich angelegt",
       });
       
       setShowWiseImage(true);
@@ -119,12 +165,71 @@ export const KeystoneHabitsSetup = ({ onComplete }: { onComplete: () => void }) 
 
           <div className="space-y-2">
             <Label>Lebensbereich</Label>
-            <Input
+            <Select
               value={habit.lifeArea}
-              onChange={(e) => updateHabit(index, "lifeArea", e.target.value)}
-              placeholder="z.B. Gesundheit"
-              className="bg-white"
-            />
+              onValueChange={(value) => updateHabit(index, "lifeArea", value)}
+            >
+              <SelectTrigger className="bg-white">
+                <SelectValue placeholder="Wähle einen Bereich" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="health">Gesundheit</SelectItem>
+                <SelectItem value="career">Karriere</SelectItem>
+                <SelectItem value="relationships">Beziehungen</SelectItem>
+                <SelectItem value="personal">Persönliche Entwicklung</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Häufigkeit</Label>
+            <Select
+              value={habit.frequency}
+              onValueChange={(value) => updateHabit(index, "frequency", value)}
+            >
+              <SelectTrigger className="bg-white">
+                <SelectValue placeholder="Wie oft?" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="daily">Täglich</SelectItem>
+                <SelectItem value="weekly">Wöchentlich</SelectItem>
+                <SelectItem value="workdays">Werktags</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Tageszeit</Label>
+            <Select
+              value={habit.timeOfDay}
+              onValueChange={(value) => updateHabit(index, "timeOfDay", value)}
+            >
+              <SelectTrigger className="bg-white">
+                <SelectValue placeholder="Wann?" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="morning">Morgens</SelectItem>
+                <SelectItem value="afternoon">Mittags</SelectItem>
+                <SelectItem value="evening">Abends</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Schwierigkeitsgrad</Label>
+            <Select
+              value={habit.difficulty}
+              onValueChange={(value) => updateHabit(index, "difficulty", value)}
+            >
+              <SelectTrigger className="bg-white">
+                <SelectValue placeholder="Wie schwierig?" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="easy">Leicht</SelectItem>
+                <SelectItem value="medium">Mittel</SelectItem>
+                <SelectItem value="hard">Schwer</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">
@@ -133,6 +238,16 @@ export const KeystoneHabitsSetup = ({ onComplete }: { onComplete: () => void }) 
               value={habit.description}
               onChange={(e) => updateHabit(index, "description", e.target.value)}
               placeholder="Beschreibe, warum diese Gewohnheit wichtig für dich ist"
+              className="bg-white"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Warum diese Gewohnheit?</Label>
+            <Textarea
+              value={habit.why}
+              onChange={(e) => updateHabit(index, "why", e.target.value)}
+              placeholder="Was ist deine Motivation?"
               className="bg-white"
             />
           </div>
