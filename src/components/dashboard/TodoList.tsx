@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,14 @@ const CATEGORY_EMOJIS: { [key: string]: string } = {
   "Einkaufen": "🛍️",
   "Sonstiges": "✨",
 };
+
+const INSPIRATIONAL_MESSAGES = [
+  "Starte deinen Tag mit 3-5 wichtigen Todos! 🌟",
+  "Plane deine Erfolge für heute - setze dir 3-5 Ziele! 🎯",
+  "Ein produktiver Tag beginnt mit klaren Zielen. Definiere 3-5 Todos! ✨",
+  "Welche 3-5 Aufgaben würden deinen Tag erfolgreich machen? 💫",
+  "Zeit, deine Top-Prioritäten für heute festzulegen! 🚀",
+];
 
 export const TodoList = () => {
   const [newTodo, setNewTodo] = useState("");
@@ -135,6 +144,11 @@ export const TodoList = () => {
     },
   });
 
+  const getRandomMessage = () => {
+    const randomIndex = Math.floor(Math.random() * INSPIRATIONAL_MESSAGES.length);
+    return INSPIRATIONAL_MESSAGES[randomIndex];
+  };
+
   return (
     <Card className="p-6 bg-gradient-to-br from-white to-gray-50 shadow-lg">
       <div className="flex items-center justify-between mb-6">
@@ -144,7 +158,7 @@ export const TodoList = () => {
         </div>
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Clock className="h-4 w-4" />
-          <span>Noch {timeUntilMidnight}</span>
+          <span>Noch {timeUntilMidnight} bis Mitternacht</span>
         </div>
       </div>
       
@@ -235,9 +249,9 @@ export const TodoList = () => {
           
           {(!todos || todos.length === 0) && (
             <div className="text-center py-8 text-muted-foreground">
-              <p className="text-4xl mb-2">✨</p>
-              <p>Keine Todos für heute</p>
-              <p className="text-sm">Füge ein neues Todo hinzu, um produktiv zu sein!</p>
+              <p className="text-4xl mb-4">✨</p>
+              <p className="text-lg font-medium mb-2">{getRandomMessage()}</p>
+              <p className="text-sm">Die perfekte Zeit, um deine Ziele für heute zu setzen!</p>
             </div>
           )}
         </div>

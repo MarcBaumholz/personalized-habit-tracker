@@ -9,6 +9,47 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      archived_todos: {
+        Row: {
+          archived_at: string | null
+          category: string | null
+          completed: boolean | null
+          completion_date: string | null
+          id: string
+          original_todo_id: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          archived_at?: string | null
+          category?: string | null
+          completed?: boolean | null
+          completion_date?: string | null
+          id?: string
+          original_todo_id?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          archived_at?: string | null
+          category?: string | null
+          completed?: boolean | null
+          completion_date?: string | null
+          id?: string
+          original_todo_id?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "archived_todos_original_todo_id_fkey"
+            columns: ["original_todo_id"]
+            isOneToOne: false
+            referencedRelation: "todos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       badges: {
         Row: {
           achieved_at: string
