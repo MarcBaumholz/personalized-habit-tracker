@@ -1,7 +1,6 @@
 
 import { Navigation } from "@/components/layout/Navigation";
 import { DashboardOverview } from "@/components/habits/DashboardOverview";
-import { HabitJourney } from "@/components/habits/HabitJourney";
 import { YearlyActivity } from "@/components/dashboard/YearlyActivity";
 import { AdvancedAnalytics } from "@/components/dashboard/AdvancedAnalytics";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -18,7 +17,6 @@ const Dashboard = () => {
           </TabsList>
           
           <TabsContent value="overview" className="space-y-6">
-            <HabitJourney />
             <DashboardOverview />
             <div className="mt-12">
               <h2 className="text-2xl font-bold mb-6">Jahresübersicht</h2>
