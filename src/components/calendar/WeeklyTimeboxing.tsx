@@ -8,6 +8,7 @@ import { de } from "date-fns/locale";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Dialog,
   DialogContent,
@@ -41,6 +42,7 @@ export const WeeklyTimeboxing = () => {
   const [selectedSlot, setSelectedSlot] = useState<{ time: string; date: Date } | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const isMobile = useIsMobile();
   
   const weekStart = startOfWeek(currentWeek, { weekStartsOn: 1 });
   const weekDays = Array.from({ length: 5 }, (_, i) => addDays(weekStart, i));
@@ -201,14 +203,14 @@ export const WeeklyTimeboxing = () => {
   };
 
   return (
-    <Card className="p-6 mt-6">
-      <div className="flex justify-between items-center mb-6">
+    <Card className="p-4 md:p-6 mt-6">
+      <div className={`flex ${isMobile ? 'flex-col space-y-4' : 'justify-between'} items-center mb-6`}>
         <h2 className="text-xl font-semibold">Wochenplan</h2>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="icon" onClick={previousWeek}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <span className="font-medium">
+          <span className="font-medium text-sm md:text-base">
             {format(weekStart, "dd. MMMM yyyy", { locale: de })}
           </span>
           <Button variant="outline" size="icon" onClick={nextWeek}>
@@ -217,13 +219,13 @@ export const WeeklyTimeboxing = () => {
         </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <div className="min-w-[800px]">
-          <div className="grid grid-cols-[120px_repeat(5,1fr)] gap-1 mb-2">
-            <div className="font-medium">Zeit</div>
+      <div className="overflow-x-auto -mx-4 md:mx-0">
+        <div className={`min-w-[${isMobile ? '600px' : '800px'}] px-4 md:px-0`}>
+          <div className="grid grid-cols-[80px_repeat(5,1fr)] md:grid-cols-[120px_repeat(5,1fr)] gap-1 mb-2">
+            <div className="font-medium text-sm md:text-base">Zeit</div>
             {weekDays.map(day => (
-              <div key={day.toString()} className="font-medium text-center">
-                {format(day, "EEE", { locale: de })}
+              <div key={day.toString()} className="font-medium text-center text-sm md:text-base">
+                {format(day, isMobile ? "E" : "EEE", { locale: de })}
               </div>
             ))}
           </div>
@@ -232,10 +234,10 @@ export const WeeklyTimeboxing = () => {
             {TIME_SLOTS.map((slot) => (
               <div
                 key={slot.time}
-                className="grid grid-cols-[120px_repeat(5,1fr)] gap-1"
+                className="grid grid-cols-[80px_repeat(5,1fr)] md:grid-cols-[120px_repeat(5,1fr)] gap-1"
               >
-                <div className="text-sm py-2 px-2 bg-gray-50 rounded">
-                  {slot.time}
+                <div className="text-xs md:text-sm py-2 px-2 bg-gray-50 rounded truncate">
+                  {isMobile ? slot.time.split(" - ")[0] : slot.time}
                 </div>
                 {weekDays.map(day => {
                   const activity = getActivityForSlot(slot.time, day);
@@ -243,7 +245,7 @@ export const WeeklyTimeboxing = () => {
                   return (
                     <div
                       key={day.toString()}
-                      className={`rounded min-h-[40px] p-2 text-sm cursor-pointer transition-colors ${
+                      className={`rounded min-h-[32px] md:min-h-[40px] p-1 md:p-2 text-xs md:text-sm cursor-pointer transition-colors ${
                         activity 
                           ? activity.type === 'todo' 
                             ? 'bg-blue-50 hover:bg-blue-100'
@@ -259,9 +261,9 @@ export const WeeklyTimeboxing = () => {
                       }}
                     >
                       {activity && (
-                        <div>
+                        <div className="truncate">
                           <span className="font-medium">{activity.title}</span>
-                          {activity.category && (
+                          {activity.category && !isMobile && (
                             <span className="ml-2 text-xs text-gray-500">
                               {activity.category}
                             </span>
