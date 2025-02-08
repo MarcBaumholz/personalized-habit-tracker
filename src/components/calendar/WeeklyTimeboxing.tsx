@@ -221,155 +221,149 @@ export const WeeklyTimeboxing = () => {
   };
 
   return (
-    <Card className="p-4 md:p-6 mt-6">
+    <Card className="p-4 md:p-6 mt-6 bg-white/50 backdrop-blur-sm shadow-lg">
       <div className="flex flex-col space-y-4">
         <div className="flex items-center justify-between">
           <Tabs value={view} onValueChange={(v) => setView(v as ViewType)} className="w-full sm:w-auto">
-            <TabsList>
-              <TabsTrigger value="day">Tag</TabsTrigger>
-              <TabsTrigger value="workweek">Mo-Fr</TabsTrigger>
+            <TabsList className="bg-purple-100/50">
+              <TabsTrigger value="day" className="data-[state=active]:bg-purple-500 data-[state=active]:text-white">
+                Tag
+              </TabsTrigger>
+              <TabsTrigger value="workweek" className="data-[state=active]:bg-purple-500 data-[state=active]:text-white">
+                Mo-Fr
+              </TabsTrigger>
             </TabsList>
           </Tabs>
-          <span className="text-sm text-muted-foreground">
+          <span className="text-sm text-purple-700 font-medium">
             KW {getISOWeek(weekStart)}
           </span>
         </div>
         
         <div className="flex items-center justify-between">
-          <Button variant="outline" size="icon" onClick={previousPeriod}>
+          <Button variant="outline" size="icon" onClick={previousPeriod} className="hover:bg-purple-50">
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <span className="font-medium text-sm md:text-base">
+          <span className="font-medium text-sm md:text-base text-purple-800">
             {format(weekStart, view === 'day' ? "dd. MMMM yyyy" : "dd. MMMM yyyy", { locale: de })}
           </span>
-          <Button variant="outline" size="icon" onClick={nextPeriod}>
+          <Button variant="outline" size="icon" onClick={nextPeriod} className="hover:bg-purple-50">
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
       </div>
 
-      <div className="overflow-x-auto -mx-4 md:mx-0 mt-6">
-        <div className="min-w-full px-4 md:px-0">
-          <div className={`grid ${
-            view === 'day' 
-              ? 'grid-cols-[80px_1fr]' 
-              : `grid-cols-[80px_repeat(${weekDays.length},1fr)]`
-          } gap-1 mb-2`}>
-            <div className="font-medium text-sm">Zeit</div>
-            {view !== 'day' && weekDays.map(day => (
-              <div key={day.toString()} className="font-medium text-center text-sm">
-                {format(day, isMobile ? "E" : "EEE", { locale: de })}
-              </div>
-            ))}
-          </div>
+      <div className="mt-6 rounded-lg overflow-hidden border border-purple-100 bg-white">
+        <div className="grid grid-cols-[80px_repeat(auto-fit,minmax(0,1fr))] bg-purple-50">
+          <div className="p-3 font-medium text-sm text-purple-700 border-r border-purple-100">Zeit</div>
+          {view !== 'day' && weekDays.map(day => (
+            <div key={day.toString()} className="p-3 font-medium text-sm text-center text-purple-700 border-r border-purple-100 last:border-r-0">
+              {format(day, isMobile ? "E" : "EEE", { locale: de })}
+            </div>
+          ))}
+        </div>
 
-          <div className="space-y-1">
-            {TIME_SLOTS.map((slot) => (
-              <div
-                key={slot.time}
-                className={`grid ${
-                  view === 'day' 
-                    ? 'grid-cols-[80px_1fr]' 
-                    : `grid-cols-[80px_repeat(${weekDays.length},1fr)]`
-                } gap-1`}
-              >
-                <div className="text-xs py-2 px-1 bg-gray-50 rounded truncate">
-                  {isMobile ? slot.time.split(" - ")[0] : slot.time}
-                </div>
-                {view === 'day' ? (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div
-                          className={`rounded min-h-[40px] p-1 text-xs cursor-pointer transition-colors ${
-                            getActivityForSlot(slot.time, weekStart)
-                              ? getActivityForSlot(slot.time, weekStart)?.type === 'todo'
-                                ? 'bg-blue-50 hover:bg-blue-100'
-                                : 'bg-green-50 hover:bg-green-100'
-                              : 'bg-gray-50 hover:bg-gray-100'
-                          }`}
-                          onClick={() => {
-                            const activity = getActivityForSlot(slot.time, weekStart);
-                            if (activity) {
-                              setSelectedActivity(activity);
-                            } else {
-                              setSelectedSlot({ time: slot.time, date: weekStart });
-                            }
-                          }}
-                        >
-                          {getActivityForSlot(slot.time, weekStart) && (
-                            <div className="flex items-center space-x-1">
-                              <span className="font-medium truncate max-w-[calc(100%-20px)]">
-                                {getActivityForSlot(slot.time, weekStart)?.title}
-                              </span>
-                              <MoreHorizontal className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                            </div>
-                          )}
-                        </div>
-                      </TooltipTrigger>
-                      {getActivityForSlot(slot.time, weekStart) && (
-                        <TooltipContent>
-                          <p className="font-medium">
-                            {getActivityForSlot(slot.time, weekStart)?.title}
-                          </p>
-                          {getActivityForSlot(slot.time, weekStart)?.category && (
-                            <p className="text-xs text-gray-500">
-                              {getActivityForSlot(slot.time, weekStart)?.category}
-                            </p>
-                          )}
-                        </TooltipContent>
-                      )}
-                    </Tooltip>
-                  </TooltipProvider>
-                ) : (
-                  weekDays.map(day => {
-                    const activity = getActivityForSlot(slot.time, day);
-                    return (
-                      <TooltipProvider key={day.toString()}>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div
-                              className={`rounded min-h-[40px] p-1 text-xs cursor-pointer transition-colors ${
-                                activity 
-                                  ? activity.type === 'todo' 
-                                    ? 'bg-blue-50 hover:bg-blue-100'
-                                    : 'bg-green-50 hover:bg-green-100'
-                                  : 'bg-gray-50 hover:bg-gray-100'
-                              }`}
-                              onClick={() => {
-                                if (activity) {
-                                  setSelectedActivity(activity);
-                                } else {
-                                  setSelectedSlot({ time: slot.time, date: day });
-                                }
-                              }}
-                            >
-                              {activity && (
-                                <div className="flex items-center space-x-1">
-                                  <span className="font-medium truncate max-w-[calc(100%-20px)]">
-                                    {activity.title}
-                                  </span>
-                                  <MoreHorizontal className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                                </div>
-                              )}
-                            </div>
-                          </TooltipTrigger>
-                          {activity && (
-                            <TooltipContent>
-                              <p className="font-medium">{activity.title}</p>
-                              {activity.category && (
-                                <p className="text-xs text-gray-500">{activity.category}</p>
-                              )}
-                            </TooltipContent>
-                          )}
-                        </Tooltip>
-                      </TooltipProvider>
-                    );
-                  })
-                )}
+        <div className="divide-y divide-purple-100">
+          {TIME_SLOTS.map((slot) => (
+            <div
+              key={slot.time}
+              className="grid grid-cols-[80px_repeat(auto-fit,minmax(0,1fr))]"
+            >
+              <div className="p-2 text-xs text-purple-600 bg-purple-50/50 border-r border-purple-100">
+                {isMobile ? slot.time.split(" - ")[0] : slot.time}
               </div>
-            ))}
-          </div>
+              {view === 'day' ? (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div
+                        className={`min-h-[60px] p-2 cursor-pointer transition-all hover:bg-purple-50 border-l border-purple-100 group ${
+                          getActivityForSlot(slot.time, weekStart)
+                            ? getActivityForSlot(slot.time, weekStart)?.type === 'todo'
+                              ? 'bg-blue-50/80'
+                              : 'bg-green-50/80'
+                            : 'bg-white'
+                        }`}
+                        onClick={() => {
+                          const activity = getActivityForSlot(slot.time, weekStart);
+                          if (activity) {
+                            setSelectedActivity(activity);
+                          } else {
+                            setSelectedSlot({ time: slot.time, date: weekStart });
+                          }
+                        }}
+                      >
+                        {getActivityForSlot(slot.time, weekStart) && (
+                          <div className="flex items-center justify-between space-x-2">
+                            <span className="font-medium text-sm truncate">
+                              {getActivityForSlot(slot.time, weekStart)?.title}
+                            </span>
+                            <MoreHorizontal className="h-4 w-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </div>
+                        )}
+                      </div>
+                    </TooltipTrigger>
+                    {getActivityForSlot(slot.time, weekStart) && (
+                      <TooltipContent>
+                        <p className="font-medium">
+                          {getActivityForSlot(slot.time, weekStart)?.title}
+                        </p>
+                        {getActivityForSlot(slot.time, weekStart)?.category && (
+                          <p className="text-xs text-gray-500">
+                            {getActivityForSlot(slot.time, weekStart)?.category}
+                          </p>
+                        )}
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </TooltipProvider>
+              ) : (
+                weekDays.map(day => {
+                  const activity = getActivityForSlot(slot.time, day);
+                  return (
+                    <TooltipProvider key={day.toString()}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div
+                            className={`min-h-[60px] p-2 cursor-pointer transition-all hover:bg-purple-50 border-l border-purple-100 group ${
+                              activity 
+                                ? activity.type === 'todo' 
+                                  ? 'bg-blue-50/80'
+                                  : 'bg-green-50/80'
+                                : 'bg-white'
+                            }`}
+                            onClick={() => {
+                              if (activity) {
+                                setSelectedActivity(activity);
+                              } else {
+                                setSelectedSlot({ time: slot.time, date: day });
+                              }
+                            }}
+                          >
+                            {activity && (
+                              <div className="flex items-center justify-between space-x-2">
+                                <span className="font-medium text-sm truncate">
+                                  {activity.title}
+                                </span>
+                                <MoreHorizontal className="h-4 w-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                              </div>
+                            )}
+                          </div>
+                        </TooltipTrigger>
+                        {activity && (
+                          <TooltipContent>
+                            <p className="font-medium">{activity.title}</p>
+                            {activity.category && (
+                              <p className="text-xs text-gray-500">{activity.category}</p>
+                            )}
+                          </TooltipContent>
+                        )}
+                      </Tooltip>
+                    </TooltipProvider>
+                  );
+                })
+              )}
+            </div>
+          ))}
         </div>
       </div>
 
