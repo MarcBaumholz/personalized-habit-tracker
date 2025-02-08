@@ -36,13 +36,13 @@ export const ToolboxCarousel = ({ toolkits, onSelect, onRemove, onAdd, activeTab
   }
 
   return (
-    <div className="relative group">
+    <div className="relative group max-w-full overflow-hidden px-10">
       <Carousel
         opts={{
           align: "start",
           loop: true,
         }}
-        className="w-full max-w-7xl mx-auto"
+        className="w-full mx-auto"
       >
         <CarouselContent>
           {toolkits.map((toolkit, index) => (
@@ -59,18 +59,18 @@ export const ToolboxCarousel = ({ toolkits, onSelect, onRemove, onAdd, activeTab
           ))}
         </CarouselContent>
 
-        <div className="absolute -left-12 top-1/2 -translate-y-1/2">
+        <div className="absolute left-0 top-1/2 -translate-y-1/2 z-10">
           <CarouselPrevious 
-            className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white/90 hover:bg-white shadow-lg"
+            className="bg-white/90 hover:bg-white shadow-lg relative !static flex"
             variant="outline"
             size="lg"
           >
             <ArrowLeft className="w-6 h-6" />
           </CarouselPrevious>
         </div>
-        <div className="absolute -right-12 top-1/2 -translate-y-1/2">
+        <div className="absolute right-0 top-1/2 -translate-y-1/2 z-10">
           <CarouselNext 
-            className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white/90 hover:bg-white shadow-lg"
+            className="bg-white/90 hover:bg-white shadow-lg relative !static flex"
             variant="outline"
             size="lg"
           >
@@ -81,3 +81,4 @@ export const ToolboxCarousel = ({ toolkits, onSelect, onRemove, onAdd, activeTab
     </div>
   );
 };
+
