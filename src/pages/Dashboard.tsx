@@ -9,17 +9,17 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-      <main className="container py-6">
+      <main className="container px-4 py-6">
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="w-full grid grid-cols-2">
             <TabsTrigger value="overview">Übersicht</TabsTrigger>
             <TabsTrigger value="analytics">Erweiterte Analyse</TabsTrigger>
           </TabsList>
           
           <TabsContent value="overview" className="space-y-6">
             <DashboardOverview />
-            <div className="mt-12">
-              <h2 className="text-2xl font-bold mb-6">Jahresübersicht</h2>
+            <div className="mt-8">
+              <h2 className="text-xl md:text-2xl font-bold mb-4">Jahresübersicht</h2>
               <YearlyActivity />
             </div>
           </TabsContent>

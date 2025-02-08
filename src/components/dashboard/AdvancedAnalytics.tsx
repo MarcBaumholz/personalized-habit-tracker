@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -66,14 +65,17 @@ export const AdvancedAnalytics = () => {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Erweiterte Analyse</h1>
+      <h1 className="text-xl md:text-2xl font-bold">Erweiterte Analyse</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="p-6">
+        <Card className="p-4 md:p-6">
           <h3 className="text-lg font-semibold mb-4">Monatliche Aktivität</h3>
-          <div className="h-[300px]">
+          <div className="h-[250px] md:h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={monthlyData}>
+              <AreaChart 
+                data={monthlyData}
+                margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+              >
                 <defs>
                   <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8}/>
@@ -81,8 +83,15 @@ export const AdvancedAnalytics = () => {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
+                <XAxis 
+                  dataKey="month" 
+                  tick={{ fontSize: 12 }}
+                  interval={0}
+                />
+                <YAxis 
+                  tick={{ fontSize: 12 }}
+                  width={30}
+                />
                 <Tooltip />
                 <Area 
                   type="monotone" 
@@ -96,14 +105,24 @@ export const AdvancedAnalytics = () => {
           </div>
         </Card>
 
-        <Card className="p-6">
+        <Card className="p-4 md:p-6">
           <h3 className="text-lg font-semibold mb-4">Emotions-Verteilung</h3>
-          <div className="h-[300px]">
+          <div className="h-[250px] md:h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={emotionData}>
+              <BarChart 
+                data={emotionData}
+                margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+              >
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="emotion" />
-                <YAxis />
+                <XAxis 
+                  dataKey="emotion" 
+                  tick={{ fontSize: 12 }}
+                  interval={0}
+                />
+                <YAxis 
+                  tick={{ fontSize: 12 }}
+                  width={30}
+                />
                 <Tooltip />
                 <Bar dataKey="count" fill="#82ca9d" />
               </BarChart>
@@ -111,14 +130,25 @@ export const AdvancedAnalytics = () => {
           </div>
         </Card>
 
-        <Card className="p-6">
+        <Card className="p-4 md:p-6">
           <h3 className="text-lg font-semibold mb-4">Gewohnheits-Stärke (SRHI)</h3>
-          <div className="h-[300px]">
+          <div className="h-[250px] md:h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={progressData}>
+              <LineChart 
+                data={progressData}
+                margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+              >
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis domain={[0, 100]} />
+                <XAxis 
+                  dataKey="date" 
+                  tick={{ fontSize: 12 }}
+                  interval={0}
+                />
+                <YAxis 
+                  domain={[0, 100]} 
+                  tick={{ fontSize: 12 }}
+                  width={30}
+                />
                 <Tooltip />
                 <Line 
                   type="monotone" 
@@ -132,9 +162,9 @@ export const AdvancedAnalytics = () => {
           </div>
         </Card>
 
-        <Card className="p-6">
+        <Card className="p-4 md:p-6">
           <h3 className="text-lg font-semibold mb-4">Lebensbereiche Aktivität</h3>
-          <div className="h-[300px]">
+          <div className="h-[250px] md:h-[300px]">
             {/* Hier kommt ein weiterer Graph für die Verteilung der Aktivitäten nach Lebensbereichen */}
           </div>
         </Card>

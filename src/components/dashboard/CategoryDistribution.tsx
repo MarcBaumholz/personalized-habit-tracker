@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from "recharts";
 
@@ -14,11 +15,11 @@ export const CategoryDistribution = ({ data }: CategoryDistributionProps) => {
   const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8"];
 
   return (
-    <Card className="p-6">
+    <Card className="p-4 md:p-6">
       <h3 className="text-lg font-semibold mb-4">Kategorienverteilung</h3>
-      <div className="h-[300px]">
+      <div className="h-[250px] md:h-[300px]">
         <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
+          <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
             <Pie
               data={data}
               cx="50%"
@@ -38,7 +39,12 @@ export const CategoryDistribution = ({ data }: CategoryDistributionProps) => {
                 />
               ))}
             </Pie>
-            <Legend />
+            <Legend 
+              layout="horizontal"
+              verticalAlign="bottom"
+              align="center"
+              wrapperStyle={{ fontSize: '12px' }}
+            />
           </PieChart>
         </ResponsiveContainer>
       </div>
