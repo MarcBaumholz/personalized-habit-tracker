@@ -10,6 +10,7 @@ import { ToolkitCard } from "./ToolkitCard";
 import { AddHabitDialog } from "@/components/habits/AddHabitDialog";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ArrowLeft, ArrowRight } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface ToolboxCarouselProps {
   toolkits: any[];
@@ -36,13 +37,14 @@ export const ToolboxCarousel = ({ toolkits, onSelect, onRemove, onAdd, activeTab
   }
 
   return (
-    <div className="relative w-full max-w-full px-12 lg:px-16">
+    <div className="w-full relative">
       <Carousel
         opts={{
           align: "start",
           loop: true,
+          dragFree: true,
         }}
-        className="w-full mx-auto"
+        className="w-full"
       >
         <div className="flex items-center">
           <CarouselPrevious 
@@ -51,11 +53,18 @@ export const ToolboxCarousel = ({ toolkits, onSelect, onRemove, onAdd, activeTab
             <ArrowLeft className="w-4 h-4 md:w-6 md:h-6" />
           </CarouselPrevious>
 
-          <CarouselContent className="px-2 md:px-4">
+          <CarouselContent className="-ml-1">
             {toolkits.map((toolkit, index) => (
               <CarouselItem 
                 key={toolkit.id || index} 
-                className={`${isMobile ? 'basis-full' : 'basis-1/3'} pl-4`}
+                className={cn(
+                  "pl-1 basis-full",
+                  {
+                    "sm:basis-1/2": !isMobile,
+                    "lg:basis-1/3": !isMobile,
+                    "xl:basis-1/4": !isMobile
+                  }
+                )}
               >
                 <div className="p-1">
                   <ToolkitCard
@@ -79,4 +88,3 @@ export const ToolboxCarousel = ({ toolkits, onSelect, onRemove, onAdd, activeTab
     </div>
   );
 };
-
