@@ -9,6 +9,7 @@ import {
 import { ToolkitCard } from "./ToolkitCard";
 import { AddHabitDialog } from "@/components/habits/AddHabitDialog";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 
 interface ToolboxCarouselProps {
   toolkits: any[];
@@ -35,33 +36,48 @@ export const ToolboxCarousel = ({ toolkits, onSelect, onRemove, onAdd, activeTab
   }
 
   return (
-    <Carousel
-      opts={{
-        align: "start",
-        loop: true,
-      }}
-      className="w-full max-w-7xl mx-auto relative"
-    >
-      <CarouselContent>
-        {toolkits.map((toolkit, index) => (
-          <CarouselItem key={toolkit.id || index} className={`${isMobile ? 'basis-full' : 'basis-1/3'} pl-4`}>
-            <div className="p-1">
-              <ToolkitCard
-                toolkit={toolkit}
-                onSelect={onSelect}
-                onRemove={onRemove}
-                onAdd={onAdd}
-              />
-            </div>
-          </CarouselItem>
-        ))}
-      </CarouselContent>
-      <div className="hidden sm:block absolute -left-12 top-1/2 -translate-y-1/2">
-        <CarouselPrevious className="bg-white/90 hover:bg-white shadow-lg" />
-      </div>
-      <div className="hidden sm:block absolute -right-12 top-1/2 -translate-y-1/2">
-        <CarouselNext className="bg-white/90 hover:bg-white shadow-lg" />
-      </div>
-    </Carousel>
+    <div className="relative group">
+      <Carousel
+        opts={{
+          align: "start",
+          loop: true,
+        }}
+        className="w-full max-w-7xl mx-auto"
+      >
+        <CarouselContent>
+          {toolkits.map((toolkit, index) => (
+            <CarouselItem key={toolkit.id || index} className={`${isMobile ? 'basis-full' : 'basis-1/3'} pl-4`}>
+              <div className="p-1">
+                <ToolkitCard
+                  toolkit={toolkit}
+                  onSelect={onSelect}
+                  onRemove={onRemove}
+                  onAdd={onAdd}
+                />
+              </div>
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+
+        <div className="hidden sm:block absolute -left-12 top-1/2 -translate-y-1/2">
+          <CarouselPrevious 
+            className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white/90 hover:bg-white shadow-lg"
+            variant="outline"
+            size="lg"
+          >
+            <ArrowLeft className="w-6 h-6" />
+          </CarouselPrevious>
+        </div>
+        <div className="hidden sm:block absolute -right-12 top-1/2 -translate-y-1/2">
+          <CarouselNext 
+            className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white/90 hover:bg-white shadow-lg"
+            variant="outline"
+            size="lg"
+          >
+            <ArrowRight className="w-6 h-6" />
+          </CarouselNext>
+        </div>
+      </Carousel>
+    </div>
   );
 };
