@@ -76,18 +76,28 @@ export const EditHabitDialog = ({ habit }: { habit: any }) => {
 
   const handleDelete = async () => {
     try {
-      const { error } = await supabase
+      // First delete any associated keystone habits
+      const { error: keystoneError } = await supabase
+        .from("keystone_habits")
+        .delete()
+        .eq("habit_id", habit.id);
+
+      if (keystoneError) throw keystoneError;
+
+      // Then delete the habit itself
+      const { error: habitError } = await supabase
         .from("habits")
         .delete()
         .eq("id", habit.id);
 
-      if (error) throw error;
+      if (habitError) throw habitError;
 
       // Invalidate all relevant queries
       queryClient.invalidateQueries({ queryKey: ["habits"] });
       queryClient.invalidateQueries({ queryKey: ["active-routines"] });
       queryClient.invalidateQueries({ queryKey: ["habit-schedules"] });
       queryClient.invalidateQueries({ queryKey: ["timebox-entries"] });
+      queryClient.invalidateQueries({ queryKey: ["keystone-habits"] });
       
       setOpen(false);
       toast({
@@ -311,3 +321,4 @@ export const EditHabitDialog = ({ habit }: { habit: any }) => {
     </Dialog>
   );
 };
+
