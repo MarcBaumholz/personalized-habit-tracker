@@ -1,45 +1,19 @@
 
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import { TodoHeader } from "./TodoHeader";
 import { TodoInput } from "./TodoInput";
 import { TodoItem } from "./TodoItem";
 import { EmptyTodoState } from "./EmptyTodoState";
-
-const CATEGORIES = [
-  "Arbeit",
-  "Persönlich",
-  "Gesundheit",
-  "Einkaufen",
-  "Sonstiges",
-];
-
-const CATEGORY_EMOJIS: { [key: string]: string } = {
-  "Arbeit": "💼",
-  "Persönlich": "🎯",
-  "Gesundheit": "🏃‍♂️",
-  "Einkaufen": "🛍️",
-  "Sonstiges": "✨",
-};
-
-const INSPIRATIONAL_MESSAGES = [
-  "Starte deinen Tag mit 3-5 wichtigen Todos! 🌟",
-  "Plane deine Erfolge für heute - setze dir 3-5 Ziele! 🎯",
-  "Ein produktiver Tag beginnt mit klaren Zielen. Definiere 3-5 Todos! ✨",
-  "Welche 3-5 Aufgaben würden deinen Tag erfolgreich machen? 💫",
-  "Zeit, deine Top-Prioritäten für heute festzulegen! 🚀",
-];
+import { useTodos } from "@/hooks/useTodos";
+import { CATEGORIES, CATEGORY_EMOJIS, INSPIRATIONAL_MESSAGES } from "@/constants/todoConstants";
 
 export const TodoList = () => {
   const [newTodo, setNewTodo] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [selectedTime, setSelectedTime] = useState<string>("");
   const [timeUntilMidnight, setTimeUntilMidnight] = useState("");
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const { todos, addTodo, toggleTodo, deleteTodo } = useTodos();
 
   useEffect(() => {
     const updateTimeUntilMidnight = () => {
@@ -59,83 +33,18 @@ export const TodoList = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const { data: todos } = useQuery({
-    queryKey: ["todos"],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("No user found");
-
-      const { data } = await supabase
-        .from("todos")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("priority", { ascending: true })
-        .limit(5);
-
-      return data;
-    },
-  });
-
-  const addTodoMutation = useMutation({
-    mutationFn: async (title: string) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("No user found");
-
-      const { data, error } = await supabase.from("todos").insert({
-        user_id: user.id,
-        title,
+  const handleAddTodo = () => {
+    if (newTodo.trim()) {
+      addTodo({
+        title: newTodo.trim(),
         category: selectedCategory,
         scheduled_time: selectedTime || null,
-        priority: (todos?.length || 0) + 1,
       });
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["todos"] });
       setNewTodo("");
       setSelectedCategory("");
       setSelectedTime("");
-      toast({
-        title: "Todo hinzugefügt",
-        description: "Dein neues Todo wurde erfolgreich erstellt.",
-      });
-    },
-  });
-
-  const toggleTodoMutation = useMutation({
-    mutationFn: async (todo: any) => {
-      const { data, error } = await supabase
-        .from("todos")
-        .update({ completed: !todo.completed })
-        .eq("id", todo.id);
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["todos"] });
-    },
-  });
-
-  const deleteTodoMutation = useMutation({
-    mutationFn: async (todoId: string) => {
-      const { error } = await supabase
-        .from("todos")
-        .delete()
-        .eq("id", todoId);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["todos"] });
-      toast({
-        title: "Todo gelöscht",
-        description: "Das Todo wurde erfolgreich gelöscht.",
-      });
-    },
-  });
+    }
+  };
 
   const getRandomMessage = () => {
     const randomIndex = Math.floor(Math.random() * INSPIRATIONAL_MESSAGES.length);
@@ -154,11 +63,7 @@ export const TodoList = () => {
           setSelectedCategory={setSelectedCategory}
           selectedTime={selectedTime}
           setSelectedTime={setSelectedTime}
-          onAddTodo={() => {
-            if (newTodo.trim()) {
-              addTodoMutation.mutate(newTodo.trim());
-            }
-          }}
+          onAddTodo={handleAddTodo}
           categories={CATEGORIES}
           categoryEmojis={CATEGORY_EMOJIS}
         />
@@ -169,8 +74,8 @@ export const TodoList = () => {
               key={todo.id}
               todo={todo}
               categoryEmojis={CATEGORY_EMOJIS}
-              onToggle={toggleTodoMutation.mutate}
-              onDelete={deleteTodoMutation.mutate}
+              onToggle={toggleTodo}
+              onDelete={deleteTodo}
             />
           ))}
           
