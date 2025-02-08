@@ -40,11 +40,11 @@ export const ToolboxCarousel = ({ toolkits, onSelect, onRemove, onAdd, activeTab
         align: "start",
         loop: true,
       }}
-      className="w-full max-w-7xl mx-auto"
+      className="w-full max-w-7xl mx-auto relative"
     >
-      <CarouselContent className="flex flex-wrap gap-4">
+      <CarouselContent>
         {toolkits.map((toolkit, index) => (
-          <CarouselItem key={toolkit.id || index} className={`${isMobile ? 'basis-full' : 'basis-1/3'} min-w-0`}>
+          <CarouselItem key={toolkit.id || index} className={`${isMobile ? 'basis-full' : 'basis-1/3'} pl-4`}>
             <div className="p-1">
               <ToolkitCard
                 toolkit={toolkit}
