@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/carousel";
 import { ToolkitCard } from "./ToolkitCard";
 import { AddHabitDialog } from "@/components/habits/AddHabitDialog";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ToolboxCarouselProps {
   toolkits: any[];
@@ -18,6 +19,8 @@ interface ToolboxCarouselProps {
 }
 
 export const ToolboxCarousel = ({ toolkits, onSelect, onRemove, onAdd, activeTab }: ToolboxCarouselProps) => {
+  const isMobile = useIsMobile();
+
   if (toolkits.length === 0) {
     return (
       <div className="text-center py-10">
@@ -37,11 +40,11 @@ export const ToolboxCarousel = ({ toolkits, onSelect, onRemove, onAdd, activeTab
         align: "start",
         loop: true,
       }}
-      className="w-full max-w-7xl mx-auto px-4"
+      className="w-full max-w-7xl mx-auto"
     >
-      <CarouselContent className="-ml-4">
+      <CarouselContent className="flex flex-wrap gap-4">
         {toolkits.map((toolkit, index) => (
-          <CarouselItem key={toolkit.id || index} className="pl-4 sm:basis-1/2 lg:basis-1/3 xl:basis-1/4">
+          <CarouselItem key={toolkit.id || index} className={`${isMobile ? 'basis-full' : 'basis-1/3'} min-w-0`}>
             <div className="p-1">
               <ToolkitCard
                 toolkit={toolkit}

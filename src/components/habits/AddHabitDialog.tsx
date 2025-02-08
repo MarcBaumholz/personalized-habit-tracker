@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Plus, AlertCircle } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export const AddHabitDialog = () => {
   const { toast } = useToast();
@@ -44,168 +45,169 @@ export const AddHabitDialog = () => {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button className="w-full" variant="outline">
-          <Plus className="h-4 w-4 mr-2" />
-          Neue Gewohnheit hinzufügen
+        <Button size="icon">
+          <Plus className="h-4 w-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[600px] h-[90vh]">
         <DialogHeader>
           <DialogTitle>Neue Gewohnheit erstellen</DialogTitle>
           <DialogDescription>
             Definiere deine neue Gewohnheit im Detail, um sie erfolgreich zu etablieren.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+        <ScrollArea className="flex-1 px-1">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Name der Gewohnheit</Label>
+                <Input
+                  id="name"
+                  value={habitData.name}
+                  onChange={(e) => setHabitData({ ...habitData, name: e.target.value })}
+                  placeholder="z.B. Deep Work"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="category">Lebensbereich</Label>
+                <Select
+                  value={habitData.category}
+                  onValueChange={(value) => setHabitData({ ...habitData, category: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Wähle einen Bereich" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="career">Karriere</SelectItem>
+                    <SelectItem value="health">Gesundheit</SelectItem>
+                    <SelectItem value="relationships">Beziehungen</SelectItem>
+                    <SelectItem value="personal">Persönliche Entwicklung</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="repetition_type">Wiederholung</Label>
+                <Select
+                  value={habitData.repetition_type}
+                  onValueChange={(value) => setHabitData({ ...habitData, repetition_type: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Art der Wiederholung" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="daily">Täglich</SelectItem>
+                    <SelectItem value="weekly">Wöchentlich</SelectItem>
+                    <SelectItem value="monthly">Monatlich</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="frequency">Häufigkeit</Label>
+                <Select
+                  value={habitData.frequency}
+                  onValueChange={(value) => setHabitData({ ...habitData, frequency: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Wie oft?" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="daily">Täglich</SelectItem>
+                    <SelectItem value="weekly">Wöchentlich</SelectItem>
+                    <SelectItem value="workdays">Werktags</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
             <div className="space-y-2">
-              <Label htmlFor="name">Name der Gewohnheit</Label>
-              <Input
-                id="name"
-                value={habitData.name}
-                onChange={(e) => setHabitData({ ...habitData, name: e.target.value })}
-                placeholder="z.B. Deep Work"
+              <Label htmlFor="smartGoal">SMART Ziel</Label>
+              <Textarea
+                id="smartGoal"
+                value={habitData.smartGoal}
+                onChange={(e) => setHabitData({ ...habitData, smartGoal: e.target.value })}
+                placeholder="Spezifisch, Messbar, Attraktiv, Realistisch, Terminiert"
+                className="h-20"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="difficulty">Schwierigkeitsgrad</Label>
+                <Select
+                  value={habitData.difficulty}
+                  onValueChange={(value) => setHabitData({ ...habitData, difficulty: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Wie schwierig?" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="easy">Leicht</SelectItem>
+                    <SelectItem value="medium">Mittel</SelectItem>
+                    <SelectItem value="hard">Schwer</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="effort">Geschätzter Aufwand</Label>
+                <Select
+                  value={habitData.effort}
+                  onValueChange={(value) => setHabitData({ ...habitData, effort: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Wie viel Zeit?" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5min">5 Minuten</SelectItem>
+                    <SelectItem value="15min">15 Minuten</SelectItem>
+                    <SelectItem value="30min">30 Minuten</SelectItem>
+                    <SelectItem value="60min">1 Stunde</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="context">Kontext & Trigger</Label>
+              <Textarea
+                id="context"
+                value={habitData.context}
+                onChange={(e) => setHabitData({ ...habitData, context: e.target.value })}
+                placeholder="In welcher Situation möchtest du diese Gewohnheit ausführen?"
+                className="h-20"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="category">Lebensbereich</Label>
-              <Select
-                value={habitData.category}
-                onValueChange={(value) => setHabitData({ ...habitData, category: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Wähle einen Bereich" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="career">Karriere</SelectItem>
-                  <SelectItem value="health">Gesundheit</SelectItem>
-                  <SelectItem value="relationships">Beziehungen</SelectItem>
-                  <SelectItem value="personal">Persönliche Entwicklung</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="repetition_type">Wiederholung</Label>
-              <Select
-                value={habitData.repetition_type}
-                onValueChange={(value) => setHabitData({ ...habitData, repetition_type: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Art der Wiederholung" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="daily">Täglich</SelectItem>
-                  <SelectItem value="weekly">Wöchentlich</SelectItem>
-                  <SelectItem value="monthly">Monatlich</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label htmlFor="why">Warum diese Gewohnheit?</Label>
+              <Textarea
+                id="why"
+                value={habitData.why}
+                onChange={(e) => setHabitData({ ...habitData, why: e.target.value })}
+                placeholder="Was ist deine Motivation?"
+                className="h-20"
+              />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="frequency">Häufigkeit</Label>
-              <Select
-                value={habitData.frequency}
-                onValueChange={(value) => setHabitData({ ...habitData, frequency: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Wie oft?" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="daily">Täglich</SelectItem>
-                  <SelectItem value="weekly">Wöchentlich</SelectItem>
-                  <SelectItem value="workdays">Werktags</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="smartGoal">SMART Ziel</Label>
-            <Textarea
-              id="smartGoal"
-              value={habitData.smartGoal}
-              onChange={(e) => setHabitData({ ...habitData, smartGoal: e.target.value })}
-              placeholder="Spezifisch, Messbar, Attraktiv, Realistisch, Terminiert"
-              className="h-20"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="difficulty">Schwierigkeitsgrad</Label>
-              <Select
-                value={habitData.difficulty}
-                onValueChange={(value) => setHabitData({ ...habitData, difficulty: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Wie schwierig?" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="easy">Leicht</SelectItem>
-                  <SelectItem value="medium">Mittel</SelectItem>
-                  <SelectItem value="hard">Schwer</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label htmlFor="identity">Identität</Label>
+              <Textarea
+                id="identity"
+                value={habitData.identity}
+                onChange={(e) => setHabitData({ ...habitData, identity: e.target.value })}
+                placeholder="Wer möchtest du durch diese Gewohnheit werden?"
+                className="h-20"
+              />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="effort">Geschätzter Aufwand</Label>
-              <Select
-                value={habitData.effort}
-                onValueChange={(value) => setHabitData({ ...habitData, effort: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Wie viel Zeit?" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="5min">5 Minuten</SelectItem>
-                  <SelectItem value="15min">15 Minuten</SelectItem>
-                  <SelectItem value="30min">30 Minuten</SelectItem>
-                  <SelectItem value="60min">1 Stunde</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="context">Kontext & Trigger</Label>
-            <Textarea
-              id="context"
-              value={habitData.context}
-              onChange={(e) => setHabitData({ ...habitData, context: e.target.value })}
-              placeholder="In welcher Situation möchtest du diese Gewohnheit ausführen?"
-              className="h-20"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="why">Warum diese Gewohnheit?</Label>
-            <Textarea
-              id="why"
-              value={habitData.why}
-              onChange={(e) => setHabitData({ ...habitData, why: e.target.value })}
-              placeholder="Was ist deine Motivation?"
-              className="h-20"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="identity">Identität</Label>
-            <Textarea
-              id="identity"
-              value={habitData.identity}
-              onChange={(e) => setHabitData({ ...habitData, identity: e.target.value })}
-              placeholder="Wer möchtest du durch diese Gewohnheit werden?"
-              className="h-20"
-            />
-          </div>
-
-          <Button type="submit" className="w-full">Gewohnheit erstellen</Button>
-        </form>
+            <Button type="submit" className="w-full">Gewohnheit erstellen</Button>
+          </form>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );

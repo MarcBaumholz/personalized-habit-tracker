@@ -3,6 +3,7 @@ import { Calendar, Plus, Users, Settings2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Tooltip,
   TooltipContent,
@@ -98,39 +99,41 @@ export const ToolkitCard = ({ toolkit, onSelect, onRemove, onAdd }: ToolkitCardP
         </div>
       </div>
 
-      <div className="mt-12 mb-6">
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/80 text-sm font-medium text-gray-700">
-          <Icon className="h-4 w-4" />
-          <span>{toolkit.category || "INSPIRATION"}</span>
+      <ScrollArea className="h-[280px] pr-4">
+        <div className="mt-12 mb-6">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/80 text-sm font-medium text-gray-700">
+            <Icon className="h-4 w-4" />
+            <span>{toolkit.category || "INSPIRATION"}</span>
+          </div>
         </div>
-      </div>
 
-      <div className="space-y-3">
-        <h3 className="text-2xl font-semibold text-gray-900">
-          {toolkit.name || toolkit.title}
-        </h3>
-        <p className="text-gray-600 text-sm">
-          {toolkit.description}
-        </p>
-      </div>
-
-      {toolkit.example && (
-        <div className="mt-4">
-          <p className="text-sm text-gray-700 font-medium">Beispiel:</p>
-          <p className="text-sm text-gray-600">{toolkit.example}</p>
+        <div className="space-y-3">
+          <h3 className="text-2xl font-semibold text-gray-900">
+            {toolkit.name || toolkit.title}
+          </h3>
+          <p className="text-gray-600 text-sm">
+            {toolkit.description}
+          </p>
         </div>
-      )}
 
-      {toolkit.steps && toolkit.steps.length > 0 && (
-        <div className="mt-4">
-          <p className="text-sm text-gray-700 font-medium">Schritte:</p>
-          <ul className="text-sm text-gray-600 list-disc list-inside">
-            {toolkit.steps.map((step, index) => (
-              <li key={index} className="line-clamp-1">{step}</li>
-            ))}
-          </ul>
-        </div>
-      )}
+        {toolkit.example && (
+          <div className="mt-4">
+            <p className="text-sm text-gray-700 font-medium">Beispiel:</p>
+            <p className="text-sm text-gray-600">{toolkit.example}</p>
+          </div>
+        )}
+
+        {toolkit.steps && toolkit.steps.length > 0 && (
+          <div className="mt-4">
+            <p className="text-sm text-gray-700 font-medium">Schritte:</p>
+            <ul className="text-sm text-gray-600 list-disc list-inside">
+              {toolkit.steps.map((step, index) => (
+                <li key={index}>{step}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </ScrollArea>
 
       <div className="absolute bottom-6 left-6 right-6">
         <Button 
