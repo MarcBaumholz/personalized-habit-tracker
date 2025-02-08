@@ -59,7 +59,7 @@ export const ToolboxCarousel = ({ toolkits, onSelect, onRemove, onAdd, activeTab
           ))}
         </CarouselContent>
 
-        <div className="hidden sm:block absolute -left-12 top-1/2 -translate-y-1/2">
+        <div className="absolute -left-12 top-1/2 -translate-y-1/2">
           <CarouselPrevious 
             className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white/90 hover:bg-white shadow-lg"
             variant="outline"
@@ -68,7 +68,7 @@ export const ToolboxCarousel = ({ toolkits, onSelect, onRemove, onAdd, activeTab
             <ArrowLeft className="w-6 h-6" />
           </CarouselPrevious>
         </div>
-        <div className="hidden sm:block absolute -right-12 top-1/2 -translate-y-1/2">
+        <div className="absolute -right-12 top-1/2 -translate-y-1/2">
           <CarouselNext 
             className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white/90 hover:bg-white shadow-lg"
             variant="outline"
