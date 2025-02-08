@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,7 +22,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-type ViewType = 'day' | 'workweek' | 'week';
+type ViewType = 'day' | 'workweek';
 
 interface TimeSlot {
   time: string;
@@ -56,7 +55,7 @@ export const WeeklyTimeboxing = () => {
   
   const weekStart = startOfWeek(currentWeek, { weekStartsOn: 1 });
   const weekDays = Array.from(
-    { length: view === 'week' ? 7 : view === 'workweek' ? 5 : 1 }, 
+    { length: view === 'workweek' ? 5 : 1 }, 
     (_, i) => addDays(weekStart, i)
   );
 
@@ -77,7 +76,7 @@ export const WeeklyTimeboxing = () => {
         `)
         .eq("user_id", user.id)
         .gte("date", format(weekStart, "yyyy-MM-dd"))
-        .lte("date", format(addDays(weekStart, view === 'week' ? 6 : 4), "yyyy-MM-dd"));
+        .lte("date", format(addDays(weekStart, view === 'workweek' ? 4 : 0), "yyyy-MM-dd"));
 
       return data || [];
     },
@@ -229,7 +228,6 @@ export const WeeklyTimeboxing = () => {
             <TabsList>
               <TabsTrigger value="day">Tag</TabsTrigger>
               <TabsTrigger value="workweek">Mo-Fr</TabsTrigger>
-              <TabsTrigger value="week">Woche</TabsTrigger>
             </TabsList>
           </Tabs>
           <span className="text-sm text-muted-foreground">
