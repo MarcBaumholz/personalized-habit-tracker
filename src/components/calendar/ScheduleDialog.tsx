@@ -1,3 +1,4 @@
+
 import {
   Dialog,
   DialogContent,
@@ -41,9 +42,8 @@ export const ScheduleDialog = ({
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Gewohnheit planen
+        <Button size="icon">
+          <Plus className="h-4 w-4" />
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
