@@ -15,6 +15,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 export const EditHabitDialog = ({ habit }: { habit: any }) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [open, setOpen] = useState(false);
   const [habitData, setHabitData] = useState({
     name: habit.name,
     category: habit.category,
@@ -53,9 +54,13 @@ export const EditHabitDialog = ({ habit }: { habit: any }) => {
 
       if (error) throw error;
 
+      // Invalidate all relevant queries
       queryClient.invalidateQueries({ queryKey: ["habits"] });
       queryClient.invalidateQueries({ queryKey: ["active-routines"] });
+      queryClient.invalidateQueries({ queryKey: ["habit-schedules"] });
+      queryClient.invalidateQueries({ queryKey: ["timebox-entries"] });
       
+      setOpen(false);
       toast({
         title: "Gewohnheit aktualisiert",
         description: "Deine Änderungen wurden erfolgreich gespeichert.",
@@ -78,9 +83,13 @@ export const EditHabitDialog = ({ habit }: { habit: any }) => {
 
       if (error) throw error;
 
+      // Invalidate all relevant queries
       queryClient.invalidateQueries({ queryKey: ["habits"] });
       queryClient.invalidateQueries({ queryKey: ["active-routines"] });
+      queryClient.invalidateQueries({ queryKey: ["habit-schedules"] });
+      queryClient.invalidateQueries({ queryKey: ["timebox-entries"] });
       
+      setOpen(false);
       toast({
         title: "Gewohnheit gelöscht",
         description: "Die Gewohnheit wurde erfolgreich gelöscht.",
@@ -95,7 +104,7 @@ export const EditHabitDialog = ({ habit }: { habit: any }) => {
   };
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="ghost" size="icon" className="h-8 w-8">
           <Pencil className="h-4 w-4" />
