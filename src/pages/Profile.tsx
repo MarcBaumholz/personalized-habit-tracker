@@ -1,4 +1,3 @@
-
 import { Navigation } from "@/components/layout/Navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -133,8 +132,7 @@ const Profile = () => {
           </h1>
           <div className="flex gap-2">
             <Button onClick={handleEdit} variant="outline" className="hover:bg-purple-50">
-              <Pencil className="h-4 w-4 mr-2" />
-              Bearbeiten
+              <Pencil className="h-4 w-4" />
             </Button>
             <Button onClick={handleRestartOnboarding} variant="outline" className="hover:bg-purple-50">
               <RefreshCw className="h-4 w-4 mr-2" />
@@ -277,4 +275,3 @@ const Profile = () => {
 };
 
 export default Profile;
-
