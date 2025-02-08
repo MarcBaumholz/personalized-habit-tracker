@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Star, Users, ArrowRight } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const HABIT_TOOLKITS = [
   {
@@ -32,15 +33,17 @@ const HABIT_TOOLKITS = [
 ];
 
 export const HabitEducation = () => {
+  const isMobile = useIsMobile();
+
   return (
-    <div className="space-y-8 max-w-7xl mx-auto">
-      <div className="flex items-center justify-between border-b border-gray-800/10 pb-6">
-        <div className="flex items-center gap-3">
+    <div className="space-y-6 max-w-7xl mx-auto">
+      <div className={`flex flex-col ${!isMobile && 'items-center justify-between'} border-b border-gray-800/10 pb-6`}>
+        <div className="flex items-center gap-3 mb-4">
           <div className="p-2.5 rounded-xl bg-gray-900/5 backdrop-blur-sm border border-gray-200/10">
             <BookOpen className="h-6 w-6 text-gray-700" />
           </div>
           <div className="space-y-1">
-            <h2 className="text-2xl font-semibold text-gray-800">
+            <h2 className={`${isMobile ? 'text-xl' : 'text-2xl'} font-semibold text-gray-800`}>
               Habit Baukasten
             </h2>
             <p className="text-sm text-gray-500">
@@ -50,26 +53,26 @@ export const HabitEducation = () => {
         </div>
         <Button 
           variant="secondary" 
-          className="text-gray-700 bg-gray-100 hover:bg-gray-200 font-medium rounded-xl"
+          className="text-gray-700 bg-gray-100 hover:bg-gray-200 font-medium rounded-xl w-full md:w-auto"
         >
           <span>Alle Kategorien</span>
           <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
       </div>
 
-      <ScrollArea className="h-[580px] pr-4">
-        <div className="grid gap-6">
+      <ScrollArea className={`h-[${isMobile ? '480px' : '580px'}] pr-4`}>
+        <div className="grid gap-4">
           {HABIT_TOOLKITS.map((toolkit) => (
             <Card
               key={toolkit.id}
               className="group relative overflow-hidden border-0 bg-gradient-to-br from-gray-50 to-white shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.2)] transition-all duration-300"
             >
-              <div className="relative p-8 space-y-6">
-                <div className="flex items-center justify-between">
-                  <span className="px-4 py-1.5 text-xs font-medium rounded-full bg-gray-900/5 text-gray-700 uppercase tracking-wider backdrop-blur-sm border border-gray-200/10">
+              <div className="relative p-6 space-y-4">
+                <div className={`flex ${isMobile ? 'flex-col gap-3' : 'items-center justify-between'}`}>
+                  <span className="px-4 py-1.5 text-xs font-medium rounded-full bg-gray-900/5 text-gray-700 uppercase tracking-wider backdrop-blur-sm border border-gray-200/10 w-fit">
                     {toolkit.category}
                   </span>
-                  <div className="flex items-center gap-6">
+                  <div className={`flex ${isMobile ? 'justify-between' : ''} items-center gap-6`}>
                     <div className="flex items-center gap-2">
                       <Star className="h-5 w-5 text-amber-500" />
                       <span className="text-sm font-semibold text-gray-700">
@@ -86,7 +89,7 @@ export const HabitEducation = () => {
                 </div>
 
                 <div className="space-y-3">
-                  <h3 className="text-xl font-semibold text-gray-800">
+                  <h3 className={`${isMobile ? 'text-lg' : 'text-xl'} font-semibold text-gray-800`}>
                     {toolkit.title}
                   </h3>
                   <p className="text-base text-gray-600 leading-relaxed">
@@ -96,7 +99,7 @@ export const HabitEducation = () => {
 
                 <Button 
                   className="w-full bg-gray-900 hover:bg-gray-800 text-white font-medium rounded-xl"
-                  size="lg"
+                  size={isMobile ? "default" : "lg"}
                 >
                   Methode anwenden
                   <ArrowRight className="ml-2 h-4 w-4" />

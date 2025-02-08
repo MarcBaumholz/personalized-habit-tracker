@@ -8,8 +8,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Navigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { ChevronRight } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const Index = () => {
+  const isMobile = useIsMobile();
+  
   const { data: hasCompletedOnboarding, isLoading } = useQuery({
     queryKey: ["onboarding-status"],
     queryFn: async () => {
@@ -62,17 +65,17 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white transition-all duration-500">
       <Navigation />
-      <main className="container max-w-7xl mx-auto py-12 px-6 animate-fade-in">
-        <div className="mb-12 max-w-3xl mx-auto">
+      <main className={`container max-w-7xl mx-auto ${isMobile ? 'py-6 px-4' : 'py-12 px-6'} animate-fade-in`}>
+        <div className={`mb-${isMobile ? '6' : '12'} max-w-3xl mx-auto`}>
           <div className="space-y-2 mb-6">
-            <h2 className="text-3xl font-semibold text-gray-800">
+            <h2 className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-semibold text-gray-800`}>
               Dein Fortschritt
             </h2>
-            <p className="text-gray-600">
+            <p className="text-gray-600 text-sm">
               Verfolge deine Entwicklung und erreiche deine Ziele
             </p>
           </div>
-          <Card className="p-8 bg-white shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] border-0">
+          <Card className={`p-${isMobile ? '6' : '8'} bg-white shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] border-0`}>
             <div className="space-y-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium text-gray-600">Gesamtfortschritt</span>
@@ -92,11 +95,11 @@ const Index = () => {
           </Card>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8 max-w-7xl mx-auto">
-          <Card className="p-8 bg-white shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] border-0 transition-all duration-300 hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.2)]">
+        <div className={`grid ${isMobile ? 'grid-cols-1' : 'md:grid-cols-2'} gap-6 max-w-7xl mx-auto`}>
+          <Card className={`p-${isMobile ? '6' : '8'} bg-white shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] border-0 transition-all duration-300 hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.2)]`}>
             <HabitJourney />
           </Card>
-          <Card className="p-8 bg-white shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] border-0 transition-all duration-300 hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.2)]">
+          <Card className={`p-${isMobile ? '6' : '8'} bg-white shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] border-0 transition-all duration-300 hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.2)]`}>
             <TodoList />
           </Card>
         </div>
