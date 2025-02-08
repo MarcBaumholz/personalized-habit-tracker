@@ -37,7 +37,7 @@ export const ToolboxCarousel = ({ toolkits, onSelect, onRemove, onAdd, activeTab
   }
 
   return (
-    <div className="w-full max-w-[1400px] mx-auto relative px-4">
+    <div className="w-full max-w-[1400px] mx-auto px-4">
       <Carousel
         opts={{
           align: "start",
@@ -48,7 +48,7 @@ export const ToolboxCarousel = ({ toolkits, onSelect, onRemove, onAdd, activeTab
       >
         <div className="flex items-center">
           <CarouselPrevious 
-            className="relative left-0 translate-x-0 h-8 w-8 rounded-full bg-white/90 hover:bg-white shadow-lg"
+            className="hidden md:flex relative left-0 translate-x-0 h-8 w-8 rounded-full bg-white/90 hover:bg-white shadow-lg"
           >
             <ArrowLeft className="w-4 h-4 md:w-6 md:h-6" />
           </CarouselPrevious>
@@ -58,12 +58,8 @@ export const ToolboxCarousel = ({ toolkits, onSelect, onRemove, onAdd, activeTab
               <CarouselItem 
                 key={toolkit.id || index} 
                 className={cn(
-                  "pl-2 md:pl-4 basis-full",
-                  {
-                    "sm:basis-1/2": !isMobile,
-                    "lg:basis-1/3": !isMobile,
-                    "xl:basis-1/4": !isMobile
-                  }
+                  "pl-2 md:pl-4",
+                  isMobile ? "basis-full" : "basis-full sm:basis-1/2 lg:basis-1/3 xl:basis-1/4"
                 )}
               >
                 <div className="p-1">
@@ -79,7 +75,7 @@ export const ToolboxCarousel = ({ toolkits, onSelect, onRemove, onAdd, activeTab
           </CarouselContent>
 
           <CarouselNext 
-            className="relative right-0 translate-x-0 h-8 w-8 rounded-full bg-white/90 hover:bg-white shadow-lg"
+            className="hidden md:flex relative right-0 translate-x-0 h-8 w-8 rounded-full bg-white/90 hover:bg-white shadow-lg"
           >
             <ArrowRight className="w-4 h-4 md:w-6 md:h-6" />
           </CarouselNext>

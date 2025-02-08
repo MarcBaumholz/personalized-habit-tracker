@@ -40,15 +40,15 @@ export const ToolkitCard = ({ toolkit, onSelect, onRemove, onAdd }: ToolkitCardP
     <div 
       onClick={() => onSelect?.(toolkit)}
       className={cn(
-        "group relative h-[280px] md:h-[340px] rounded-3xl p-4 md:p-6 cursor-pointer transition-all duration-300",
+        "group relative h-[280px] rounded-3xl p-6 cursor-pointer transition-all duration-300",
         "bg-gradient-to-br",
         randomGradient,
         "hover:shadow-lg hover:-translate-y-1"
       )}
     >
-      <div className="absolute top-2 md:top-4 right-2 md:right-4 flex items-center gap-2">
+      <div className="absolute top-4 right-4 flex items-center gap-2">
         {toolkit.id && (
-          <div className="flex items-center gap-1 md:gap-2">
+          <div className="flex items-center gap-2">
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -59,9 +59,9 @@ export const ToolkitCard = ({ toolkit, onSelect, onRemove, onAdd }: ToolkitCardP
                     }}
                     variant="ghost"
                     size="sm"
-                    className="h-6 w-6 md:h-8 md:w-8 p-0"
+                    className="h-8 w-8 p-0"
                   >
-                    <Trash2 className="h-3 w-3 md:h-4 md:w-4 text-gray-600 hover:text-red-600" />
+                    <Trash2 className="h-4 w-4 text-gray-600 hover:text-red-600" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -80,9 +80,9 @@ export const ToolkitCard = ({ toolkit, onSelect, onRemove, onAdd }: ToolkitCardP
                     }}
                     variant="ghost"
                     size="sm"
-                    className="h-6 w-6 md:h-8 md:w-8 p-0"
+                    className="h-8 w-8 p-0"
                   >
-                    <Settings2 className="h-3 w-3 md:h-4 md:w-4 text-gray-600 hover:text-blue-600" />
+                    <Settings2 className="h-4 w-4 text-gray-600 hover:text-blue-600" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -93,40 +93,40 @@ export const ToolkitCard = ({ toolkit, onSelect, onRemove, onAdd }: ToolkitCardP
           </div>
         )}
         
-        <div className="flex items-center gap-1 text-xs md:text-sm text-gray-600 bg-white/80 px-1.5 md:px-2 py-0.5 md:py-1 rounded-full">
-          <Users className="h-3 w-3 md:h-4 md:w-4" />
+        <div className="flex items-center gap-1 text-sm text-gray-600 bg-white/80 px-2 py-1 rounded-full">
+          <Users className="h-4 w-4" />
           <span>2.9k</span>
         </div>
       </div>
 
-      <ScrollArea className="h-[180px] md:h-[240px] pr-2 md:pr-4">
-        <div className="mt-8 md:mt-10 mb-3 md:mb-4">
-          <div className="inline-flex items-center gap-1 md:gap-2 px-2 md:px-3 py-1 md:py-1.5 rounded-full bg-white/80 text-xs md:text-sm font-medium text-gray-700">
-            <Icon className="h-3 w-3 md:h-4 md:w-4" />
+      <ScrollArea className="h-[180px] pr-4">
+        <div className="mt-10 mb-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/80 text-sm font-medium text-gray-700">
+            <Icon className="h-4 w-4" />
             <span>{toolkit.category || "INSPIRATION"}</span>
           </div>
         </div>
 
         <div className="space-y-2">
-          <h3 className="text-base md:text-lg font-semibold text-gray-900">
+          <h3 className="text-lg font-semibold text-gray-900">
             {toolkit.name || toolkit.title}
           </h3>
-          <p className="text-xs md:text-sm text-gray-600">
+          <p className="text-sm text-gray-600">
             {toolkit.description}
           </p>
         </div>
 
         {toolkit.example && (
-          <div className="mt-2 md:mt-3">
-            <p className="text-xs md:text-sm text-gray-700 font-medium">Beispiel:</p>
-            <p className="text-xs md:text-sm text-gray-600">{toolkit.example}</p>
+          <div className="mt-3">
+            <p className="text-sm text-gray-700 font-medium">Beispiel:</p>
+            <p className="text-sm text-gray-600">{toolkit.example}</p>
           </div>
         )}
 
         {toolkit.steps && toolkit.steps.length > 0 && (
-          <div className="mt-2 md:mt-3">
-            <p className="text-xs md:text-sm text-gray-700 font-medium">Schritte:</p>
-            <ul className="text-xs md:text-sm text-gray-600 list-disc list-inside">
+          <div className="mt-3">
+            <p className="text-sm text-gray-700 font-medium">Schritte:</p>
+            <ul className="text-sm text-gray-600 list-disc list-inside">
               {toolkit.steps.map((step, index) => (
                 <li key={index}>{step}</li>
               ))}
@@ -135,16 +135,16 @@ export const ToolkitCard = ({ toolkit, onSelect, onRemove, onAdd }: ToolkitCardP
         )}
       </ScrollArea>
 
-      <div className="absolute bottom-4 md:bottom-6 left-4 md:left-6 right-4 md:right-6">
+      <div className="absolute bottom-6 left-6 right-6">
         <Button 
           onClick={(e) => {
             e.stopPropagation();
             onAdd?.(toolkit);
           }}
-          className="w-full bg-white hover:bg-gray-50 text-gray-900 gap-1 md:gap-2 shadow-sm text-xs md:text-sm py-1 md:py-2"
+          className="w-full bg-white hover:bg-gray-50 text-gray-900 gap-2 shadow-sm text-sm py-2"
           variant="outline"
         >
-          <Plus className="h-3 w-3 md:h-4 md:w-4" />
+          <Plus className="h-4 w-4" />
           {toolkit.id ? 'Bearbeiten' : 'Hinzufügen'}
         </Button>
       </div>
