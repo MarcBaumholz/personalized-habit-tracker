@@ -146,7 +146,7 @@ export const HabitJourney = () => {
               </div>
             </div>
             <Progress value={calculateProgress(habit)} className="h-2" />
-            <div className="flex justify-between text-sm text-gray-600">
+            <div className={`${isMobile ? 'flex flex-col space-y-1' : 'flex justify-between'} text-sm text-gray-600`}>
               <span>Fortschritt: {calculateProgress(habit)}%</span>
               <span>
                 Noch {getRemainingDays(habit)} Tage bis zum Automatismus
