@@ -252,8 +252,8 @@ export const WeeklyTimeboxing = () => {
         <div className="min-w-full px-4 md:px-0">
           <div className={`grid ${
             view === 'day' 
-              ? 'grid-cols-[80px_1fr]' 
-              : `grid-cols-[80px_repeat(${weekDays.length},1fr)]`
+              ? 'grid-cols-[60px_1fr]' 
+              : `grid-cols-[60px_repeat(${weekDays.length},1fr)]`
           } gap-1 mb-2`}>
             <div className="font-medium text-sm">Zeit</div>
             {view !== 'day' && weekDays.map(day => (
@@ -269,11 +269,11 @@ export const WeeklyTimeboxing = () => {
                 key={slot.time}
                 className={`grid ${
                   view === 'day' 
-                    ? 'grid-cols-[80px_1fr]' 
-                    : `grid-cols-[80px_repeat(${weekDays.length},1fr)]`
+                    ? 'grid-cols-[60px_1fr]' 
+                    : `grid-cols-[60px_repeat(${weekDays.length},1fr)]`
                 } gap-1`}
               >
-                <div className="text-xs py-2 px-1 bg-gray-50 rounded truncate">
+                <div className="text-xs py-2 px-1 bg-gray-50 rounded truncate text-center">
                   {isMobile ? slot.time.split(" - ")[0] : slot.time}
                 </div>
                 {view === 'day' ? (
@@ -281,7 +281,7 @@ export const WeeklyTimeboxing = () => {
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <div
-                          className={`rounded min-h-[40px] p-1 text-xs cursor-pointer transition-colors ${
+                          className={`rounded min-h-[40px] p-1 text-xs cursor-pointer transition-colors overflow-hidden ${
                             getActivityForSlot(slot.time, weekStart)
                               ? getActivityForSlot(slot.time, weekStart)?.type === 'todo'
                                 ? 'bg-blue-50 hover:bg-blue-100'
@@ -329,7 +329,7 @@ export const WeeklyTimeboxing = () => {
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <div
-                              className={`rounded min-h-[40px] p-1 text-xs cursor-pointer transition-colors ${
+                              className={`rounded min-h-[40px] p-1 text-xs cursor-pointer transition-colors overflow-hidden ${
                                 activity 
                                   ? activity.type === 'todo' 
                                     ? 'bg-blue-50 hover:bg-blue-100'
