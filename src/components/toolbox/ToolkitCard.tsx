@@ -40,7 +40,7 @@ export const ToolkitCard = ({ toolkit, onSelect, onRemove, onAdd }: ToolkitCardP
     <div 
       onClick={() => onSelect?.(toolkit)}
       className={cn(
-        "group relative h-[300px] md:h-[380px] rounded-3xl p-4 md:p-6 cursor-pointer transition-all duration-300",
+        "group relative h-[280px] md:h-[340px] rounded-3xl p-4 md:p-6 cursor-pointer transition-all duration-300",
         "bg-gradient-to-br",
         randomGradient,
         "hover:shadow-lg hover:-translate-y-1"
@@ -99,16 +99,16 @@ export const ToolkitCard = ({ toolkit, onSelect, onRemove, onAdd }: ToolkitCardP
         </div>
       </div>
 
-      <ScrollArea className="h-[200px] md:h-[280px] pr-2 md:pr-4">
-        <div className="mt-8 md:mt-12 mb-4 md:mb-6">
+      <ScrollArea className="h-[180px] md:h-[240px] pr-2 md:pr-4">
+        <div className="mt-8 md:mt-10 mb-3 md:mb-4">
           <div className="inline-flex items-center gap-1 md:gap-2 px-2 md:px-3 py-1 md:py-1.5 rounded-full bg-white/80 text-xs md:text-sm font-medium text-gray-700">
             <Icon className="h-3 w-3 md:h-4 md:w-4" />
             <span>{toolkit.category || "INSPIRATION"}</span>
           </div>
         </div>
 
-        <div className="space-y-2 md:space-y-3">
-          <h3 className="text-lg md:text-2xl font-semibold text-gray-900">
+        <div className="space-y-2">
+          <h3 className="text-base md:text-lg font-semibold text-gray-900">
             {toolkit.name || toolkit.title}
           </h3>
           <p className="text-xs md:text-sm text-gray-600">
@@ -117,14 +117,14 @@ export const ToolkitCard = ({ toolkit, onSelect, onRemove, onAdd }: ToolkitCardP
         </div>
 
         {toolkit.example && (
-          <div className="mt-3 md:mt-4">
+          <div className="mt-2 md:mt-3">
             <p className="text-xs md:text-sm text-gray-700 font-medium">Beispiel:</p>
             <p className="text-xs md:text-sm text-gray-600">{toolkit.example}</p>
           </div>
         )}
 
         {toolkit.steps && toolkit.steps.length > 0 && (
-          <div className="mt-3 md:mt-4">
+          <div className="mt-2 md:mt-3">
             <p className="text-xs md:text-sm text-gray-700 font-medium">Schritte:</p>
             <ul className="text-xs md:text-sm text-gray-600 list-disc list-inside">
               {toolkit.steps.map((step, index) => (

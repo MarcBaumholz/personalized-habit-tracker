@@ -37,7 +37,7 @@ export const ToolboxCarousel = ({ toolkits, onSelect, onRemove, onAdd, activeTab
   }
 
   return (
-    <div className="w-full relative">
+    <div className="w-full max-w-[1400px] mx-auto relative px-4">
       <Carousel
         opts={{
           align: "start",
@@ -53,12 +53,12 @@ export const ToolboxCarousel = ({ toolkits, onSelect, onRemove, onAdd, activeTab
             <ArrowLeft className="w-4 h-4 md:w-6 md:h-6" />
           </CarouselPrevious>
 
-          <CarouselContent className="-ml-1">
+          <CarouselContent className="-ml-2 md:-ml-4">
             {toolkits.map((toolkit, index) => (
               <CarouselItem 
                 key={toolkit.id || index} 
                 className={cn(
-                  "pl-1 basis-full",
+                  "pl-2 md:pl-4 basis-full",
                   {
                     "sm:basis-1/2": !isMobile,
                     "lg:basis-1/3": !isMobile,
