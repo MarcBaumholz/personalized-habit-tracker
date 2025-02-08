@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -8,11 +9,13 @@ import { useToast } from "@/hooks/use-toast";
 import { ReflectionDialog } from "./ReflectionDialog";
 import { EditHabitDialog } from "./EditHabitDialog";
 import { useState } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export const HabitJourney = () => {
   const [selectedHabit, setSelectedHabit] = useState<any>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const isMobile = useIsMobile();
 
   const { data: habits } = useQuery({
     queryKey: ["habits"],
@@ -100,7 +103,7 @@ export const HabitJourney = () => {
       <div className="space-y-6">
         {habits?.map((habit: any) => (
           <div key={habit.id} className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className={`flex ${isMobile ? 'flex-col space-y-4' : 'items-center justify-between'}`}>
               <div className="flex items-center gap-2">
                 <h3 className="font-medium">{habit.name}</h3>
                 <div className="flex items-center gap-1">
@@ -108,7 +111,7 @@ export const HabitJourney = () => {
                   <Flame className="h-4 w-4 text-orange-500" />
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className={`flex ${isMobile ? 'justify-start' : 'items-center'} gap-2 flex-wrap`}>
                 <EditHabitDialog habit={habit} />
                 <Button
                   variant="ghost"
