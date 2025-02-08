@@ -3,14 +3,12 @@ import {
   Carousel,
   CarouselContent,
   CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
 } from "@/components/ui/carousel";
 import { ToolkitCard } from "./ToolkitCard";
-import { AddHabitDialog } from "@/components/habits/AddHabitDialog";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { ArrowLeft, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { EmptyToolboxState } from "./EmptyToolboxState";
+import { CarouselNavButton } from "./CarouselNavButton";
 
 interface ToolboxCarouselProps {
   toolkits: any[];
@@ -24,16 +22,7 @@ export const ToolboxCarousel = ({ toolkits, onSelect, onRemove, onAdd, activeTab
   const isMobile = useIsMobile();
 
   if (toolkits.length === 0) {
-    return (
-      <div className="text-center py-10">
-        <p className="text-gray-600 mb-4">
-          {activeTab === 'routines' 
-            ? 'Du hast noch keine Routinen erstellt' 
-            : 'Keine Einträge gefunden'}
-        </p>
-        <AddHabitDialog />
-      </div>
-    );
+    return <EmptyToolboxState activeTab={activeTab} />;
   }
 
   return (
@@ -47,11 +36,7 @@ export const ToolboxCarousel = ({ toolkits, onSelect, onRemove, onAdd, activeTab
         className="w-full"
       >
         <div className="flex items-center w-full px-4">
-          <CarouselPrevious 
-            className="hidden md:flex relative left-0 translate-x-0 h-8 w-8 rounded-full bg-white/90 hover:bg-white shadow-lg"
-          >
-            <ArrowLeft className="w-4 h-4 md:w-6 md:h-6" />
-          </CarouselPrevious>
+          <CarouselNavButton direction="prev" />
 
           <CarouselContent className="-ml-2 md:-ml-4 w-full">
             {toolkits.map((toolkit, index) => (
@@ -74,11 +59,7 @@ export const ToolboxCarousel = ({ toolkits, onSelect, onRemove, onAdd, activeTab
             ))}
           </CarouselContent>
 
-          <CarouselNext 
-            className="hidden md:flex relative right-0 translate-x-0 h-8 w-8 rounded-full bg-white/90 hover:bg-white shadow-lg"
-          >
-            <ArrowRight className="w-4 h-4 md:w-6 md:h-6" />
-          </CarouselNext>
+          <CarouselNavButton direction="next" />
         </div>
       </Carousel>
     </div>

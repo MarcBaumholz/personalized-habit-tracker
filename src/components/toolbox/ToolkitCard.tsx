@@ -1,15 +1,10 @@
 
-import { Calendar, Plus, Users, Settings2, Trash2 } from "lucide-react";
+import { Calendar, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { ToolkitCardActions } from "./ToolkitCardActions";
 
 interface ToolkitCardProps {
   toolkit: {
@@ -46,58 +41,12 @@ export const ToolkitCard = ({ toolkit, onSelect, onRemove, onAdd }: ToolkitCardP
         "hover:shadow-lg hover:-translate-y-1"
       )}
     >
-      <div className="absolute top-4 right-4 flex items-center gap-2">
-        {toolkit.id && (
-          <div className="flex items-center gap-2">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onRemove?.(toolkit.id!);
-                    }}
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0"
-                  >
-                    <Trash2 className="h-4 w-4 text-gray-600 hover:text-red-600" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Routine löschen</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onSelect?.(toolkit);
-                    }}
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0"
-                  >
-                    <Settings2 className="h-4 w-4 text-gray-600 hover:text-blue-600" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Einstellungen anpassen</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-        )}
-        
-        <div className="flex items-center gap-1 text-sm text-gray-600 bg-white/80 px-2 py-1 rounded-full">
-          <Users className="h-4 w-4" />
-          <span>2.9k</span>
-        </div>
-      </div>
+      <ToolkitCardActions
+        id={toolkit.id}
+        onRemove={onRemove}
+        onSelect={onSelect}
+        toolkit={toolkit}
+      />
 
       <ScrollArea className="h-[180px] pr-4">
         <div className="mt-10 mb-4">
