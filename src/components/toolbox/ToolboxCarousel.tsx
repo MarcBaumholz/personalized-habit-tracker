@@ -36,26 +36,22 @@ export const ToolboxCarousel = ({ toolkits, onSelect, onRemove, onAdd, activeTab
   }
 
   return (
-    <div className="relative flex items-center justify-center w-full max-w-full">
-      <div className="absolute left-0 z-10 -ml-4 lg:-ml-8">
-        <CarouselPrevious 
-          className="relative !static flex bg-white/90 hover:bg-white shadow-lg"
-          variant="outline"
-          size="lg"
-        >
-          <ArrowLeft className="w-4 h-4 md:w-6 md:h-6" />
-        </CarouselPrevious>
-      </div>
+    <div className="relative w-full max-w-full px-12 lg:px-16">
+      <Carousel
+        opts={{
+          align: "start",
+          loop: true,
+        }}
+        className="w-full mx-auto"
+      >
+        <div className="flex items-center">
+          <CarouselPrevious 
+            className="relative left-0 translate-x-0 h-8 w-8 rounded-full bg-white/90 hover:bg-white shadow-lg"
+          >
+            <ArrowLeft className="w-4 h-4 md:w-6 md:h-6" />
+          </CarouselPrevious>
 
-      <div className="w-full px-2 md:px-4">
-        <Carousel
-          opts={{
-            align: "start",
-            loop: true,
-          }}
-          className="w-full mx-auto"
-        >
-          <CarouselContent>
+          <CarouselContent className="px-2 md:px-4">
             {toolkits.map((toolkit, index) => (
               <CarouselItem 
                 key={toolkit.id || index} 
@@ -72,18 +68,15 @@ export const ToolboxCarousel = ({ toolkits, onSelect, onRemove, onAdd, activeTab
               </CarouselItem>
             ))}
           </CarouselContent>
-        </Carousel>
-      </div>
 
-      <div className="absolute right-0 z-10 -mr-4 lg:-mr-8">
-        <CarouselNext 
-          className="relative !static flex bg-white/90 hover:bg-white shadow-lg"
-          variant="outline"
-          size="lg"
-        >
-          <ArrowRight className="w-4 h-4 md:w-6 md:h-6" />
-        </CarouselNext>
-      </div>
+          <CarouselNext 
+            className="relative right-0 translate-x-0 h-8 w-8 rounded-full bg-white/90 hover:bg-white shadow-lg"
+          >
+            <ArrowRight className="w-4 h-4 md:w-6 md:h-6" />
+          </CarouselNext>
+        </div>
+      </Carousel>
     </div>
   );
 };
+
