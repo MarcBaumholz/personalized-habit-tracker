@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { format, startOfWeek, addDays } from "date-fns";
+import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
+import { format, startOfWeek, addDays, getISOWeek } from "date-fns";
 import { de } from "date-fns/locale";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +15,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 type ViewType = 'day' | 'workweek' | 'week';
 
@@ -42,6 +48,7 @@ export const WeeklyTimeboxing = () => {
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [selectedSlot, setSelectedSlot] = useState<{ time: string; date: Date } | null>(null);
   const [view, setView] = useState<ViewType>('workweek');
+  const [selectedActivity, setSelectedActivity] = useState<any>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
@@ -215,20 +222,8 @@ export const WeeklyTimeboxing = () => {
 
   return (
     <Card className="p-4 md:p-6 mt-6">
-      <div className={`flex flex-col ${isMobile ? 'space-y-4' : 'sm:flex-row sm:justify-between'} items-center mb-6`}>
-        <h2 className="text-xl font-semibold">Wochenplan</h2>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" onClick={previousPeriod}>
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <span className="font-medium text-sm md:text-base min-w-[150px] text-center">
-              {format(weekStart, view === 'day' ? "dd. MMMM yyyy" : "dd. MMMM yyyy", { locale: de })}
-            </span>
-            <Button variant="outline" size="icon" onClick={nextPeriod}>
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
+      <div className="flex flex-col space-y-4">
+        <div className="flex items-center justify-between">
           <Tabs value={view} onValueChange={(v) => setView(v as ViewType)} className="w-full sm:w-auto">
             <TabsList>
               <TabsTrigger value="day">Tag</TabsTrigger>
@@ -236,10 +231,25 @@ export const WeeklyTimeboxing = () => {
               <TabsTrigger value="week">Woche</TabsTrigger>
             </TabsList>
           </Tabs>
+          <span className="text-sm text-muted-foreground">
+            KW {getISOWeek(weekStart)}
+          </span>
+        </div>
+        
+        <div className="flex items-center justify-between">
+          <Button variant="outline" size="icon" onClick={previousPeriod}>
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <span className="font-medium text-sm md:text-base">
+            {format(weekStart, view === 'day' ? "dd. MMMM yyyy" : "dd. MMMM yyyy", { locale: de })}
+          </span>
+          <Button variant="outline" size="icon" onClick={nextPeriod}>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 
-      <div className="overflow-x-auto -mx-4 md:mx-0">
+      <div className="overflow-x-auto -mx-4 md:mx-0 mt-6">
         <div className={`min-w-[${isMobile ? '300px' : '800px'}] px-4 md:px-0`}>
           <div className={`grid grid-cols-[80px_repeat(${weekDays.length},1fr)] md:grid-cols-[120px_repeat(${weekDays.length},1fr)] gap-1 mb-2`}>
             <div className="font-medium text-sm md:text-base">Zeit</div>
@@ -263,34 +273,45 @@ export const WeeklyTimeboxing = () => {
                   const activity = getActivityForSlot(slot.time, day);
                   
                   return (
-                    <div
-                      key={day.toString()}
-                      className={`rounded min-h-[40px] md:min-h-[48px] p-1 md:p-2 text-xs md:text-sm cursor-pointer transition-colors ${
-                        activity 
-                          ? activity.type === 'todo' 
-                            ? 'bg-blue-50 hover:bg-blue-100'
-                            : 'bg-green-50 hover:bg-green-100'
-                          : 'bg-gray-50 hover:bg-gray-100'
-                      }`}
-                      onClick={() => {
-                        if (activity) {
-                          deleteTimeboxEntryMutation.mutate(activity.id);
-                        } else {
-                          setSelectedSlot({ time: slot.time, date: day });
-                        }
-                      }}
-                    >
-                      {activity && (
-                        <div className="truncate">
-                          <span className="font-medium">{activity.title}</span>
-                          {activity.category && !isMobile && (
-                            <span className="ml-2 text-xs text-gray-500">
-                              {activity.category}
-                            </span>
-                          )}
-                        </div>
-                      )}
-                    </div>
+                    <TooltipProvider key={day.toString()}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div
+                            className={`rounded min-h-[40px] md:min-h-[48px] p-1 md:p-2 text-xs md:text-sm cursor-pointer transition-colors ${
+                              activity 
+                                ? activity.type === 'todo' 
+                                  ? 'bg-blue-50 hover:bg-blue-100'
+                                  : 'bg-green-50 hover:bg-green-100'
+                                : 'bg-gray-50 hover:bg-gray-100'
+                            }`}
+                            onClick={() => {
+                              if (activity) {
+                                setSelectedActivity(activity);
+                              } else {
+                                setSelectedSlot({ time: slot.time, date: day });
+                              }
+                            }}
+                          >
+                            {activity && (
+                              <div className="flex items-center space-x-1">
+                                <span className="font-medium truncate max-w-[80%]">
+                                  {activity.title}
+                                </span>
+                                <MoreHorizontal className="h-4 w-4 text-gray-400" />
+                              </div>
+                            )}
+                          </div>
+                        </TooltipTrigger>
+                        {activity && (
+                          <TooltipContent>
+                            <p className="font-medium">{activity.title}</p>
+                            {activity.category && (
+                              <p className="text-xs text-gray-500">{activity.category}</p>
+                            )}
+                          </TooltipContent>
+                        )}
+                      </Tooltip>
+                    </TooltipProvider>
                   );
                 })}
               </div>
@@ -364,6 +385,35 @@ export const WeeklyTimeboxing = () => {
               ))}
             </TabsContent>
           </Tabs>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!selectedActivity} onOpenChange={(open) => !open && setSelectedActivity(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{selectedActivity?.title}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            {selectedActivity?.category && (
+              <p className="text-sm text-gray-500">
+                Kategorie: {selectedActivity.category}
+              </p>
+            )}
+            <p className="text-sm text-gray-500">
+              Typ: {selectedActivity?.type === 'todo' ? 'Aufgabe' : 'Gewohnheit'}
+            </p>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (selectedActivity) {
+                  deleteTimeboxEntryMutation.mutate(selectedActivity.id);
+                  setSelectedActivity(null);
+                }
+              }}
+            >
+              Eintrag löschen
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </Card>
