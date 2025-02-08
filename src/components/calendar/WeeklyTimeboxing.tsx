@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,6 +15,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+type ViewType = 'day' | 'workweek' | 'week';
 
 interface TimeSlot {
   time: string;
@@ -40,12 +41,16 @@ const TIME_SLOTS: TimeSlot[] = Array.from({ length: 17 }, (_, i) => {
 export const WeeklyTimeboxing = () => {
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [selectedSlot, setSelectedSlot] = useState<{ time: string; date: Date } | null>(null);
+  const [view, setView] = useState<ViewType>('workweek');
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
   
   const weekStart = startOfWeek(currentWeek, { weekStartsOn: 1 });
-  const weekDays = Array.from({ length: 5 }, (_, i) => addDays(weekStart, i));
+  const weekDays = Array.from(
+    { length: view === 'week' ? 7 : view === 'workweek' ? 5 : 1 }, 
+    (_, i) => addDays(weekStart, i)
+  );
 
   const { data: timeboxEntries } = useQuery({
     queryKey: ["timebox-entries", weekStart],
@@ -64,7 +69,7 @@ export const WeeklyTimeboxing = () => {
         `)
         .eq("user_id", user.id)
         .gte("date", format(weekStart, "yyyy-MM-dd"))
-        .lte("date", format(addDays(weekStart, 4), "yyyy-MM-dd"));
+        .lte("date", format(addDays(weekStart, view === 'week' ? 6 : 4), "yyyy-MM-dd"));
 
       return data || [];
     },
@@ -165,12 +170,18 @@ export const WeeklyTimeboxing = () => {
     },
   });
 
-  const previousWeek = () => {
-    setCurrentWeek(prev => addDays(prev, -7));
+  const previousPeriod = () => {
+    setCurrentWeek(prev => {
+      if (view === 'day') return addDays(prev, -1);
+      return addDays(prev, -7);
+    });
   };
 
-  const nextWeek = () => {
-    setCurrentWeek(prev => addDays(prev, 7));
+  const nextPeriod = () => {
+    setCurrentWeek(prev => {
+      if (view === 'day') return addDays(prev, 1);
+      return addDays(prev, 7);
+    });
   };
 
   const getActivityForSlot = (time: string, date: Date) => {
@@ -204,24 +215,33 @@ export const WeeklyTimeboxing = () => {
 
   return (
     <Card className="p-4 md:p-6 mt-6">
-      <div className={`flex ${isMobile ? 'flex-col space-y-4' : 'justify-between'} items-center mb-6`}>
+      <div className={`flex flex-col ${isMobile ? 'space-y-4' : 'sm:flex-row sm:justify-between'} items-center mb-6`}>
         <h2 className="text-xl font-semibold">Wochenplan</h2>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" onClick={previousWeek}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <span className="font-medium text-sm md:text-base">
-            {format(weekStart, "dd. MMMM yyyy", { locale: de })}
-          </span>
-          <Button variant="outline" size="icon" onClick={nextWeek}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="icon" onClick={previousPeriod}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <span className="font-medium text-sm md:text-base min-w-[150px] text-center">
+              {format(weekStart, view === 'day' ? "dd. MMMM yyyy" : "dd. MMMM yyyy", { locale: de })}
+            </span>
+            <Button variant="outline" size="icon" onClick={nextPeriod}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+          <Tabs value={view} onValueChange={(v) => setView(v as ViewType)} className="w-full sm:w-auto">
+            <TabsList>
+              <TabsTrigger value="day">Tag</TabsTrigger>
+              <TabsTrigger value="workweek">Mo-Fr</TabsTrigger>
+              <TabsTrigger value="week">Woche</TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
       </div>
 
       <div className="overflow-x-auto -mx-4 md:mx-0">
-        <div className={`min-w-[${isMobile ? '600px' : '800px'}] px-4 md:px-0`}>
-          <div className="grid grid-cols-[80px_repeat(5,1fr)] md:grid-cols-[120px_repeat(5,1fr)] gap-1 mb-2">
+        <div className={`min-w-[${isMobile ? '300px' : '800px'}] px-4 md:px-0`}>
+          <div className={`grid grid-cols-[80px_repeat(${weekDays.length},1fr)] md:grid-cols-[120px_repeat(${weekDays.length},1fr)] gap-1 mb-2`}>
             <div className="font-medium text-sm md:text-base">Zeit</div>
             {weekDays.map(day => (
               <div key={day.toString()} className="font-medium text-center text-sm md:text-base">
@@ -234,7 +254,7 @@ export const WeeklyTimeboxing = () => {
             {TIME_SLOTS.map((slot) => (
               <div
                 key={slot.time}
-                className="grid grid-cols-[80px_repeat(5,1fr)] md:grid-cols-[120px_repeat(5,1fr)] gap-1"
+                className={`grid grid-cols-[80px_repeat(${weekDays.length},1fr)] md:grid-cols-[120px_repeat(${weekDays.length},1fr)] gap-1`}
               >
                 <div className="text-xs md:text-sm py-2 px-2 bg-gray-50 rounded truncate">
                   {isMobile ? slot.time.split(" - ")[0] : slot.time}
@@ -245,7 +265,7 @@ export const WeeklyTimeboxing = () => {
                   return (
                     <div
                       key={day.toString()}
-                      className={`rounded min-h-[32px] md:min-h-[40px] p-1 md:p-2 text-xs md:text-sm cursor-pointer transition-colors ${
+                      className={`rounded min-h-[40px] md:min-h-[48px] p-1 md:p-2 text-xs md:text-sm cursor-pointer transition-colors ${
                         activity 
                           ? activity.type === 'todo' 
                             ? 'bg-blue-50 hover:bg-blue-100'
@@ -280,7 +300,7 @@ export const WeeklyTimeboxing = () => {
       </div>
 
       <Dialog open={!!selectedSlot} onOpenChange={(open) => !open && setSelectedSlot(null)}>
-        <DialogContent>
+        <DialogContent className="max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               Eintrag für {selectedSlot?.time} am{" "}
