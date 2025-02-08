@@ -40,7 +40,7 @@ export const ToolkitCard = ({ toolkit, onSelect, onRemove, onAdd }: ToolkitCardP
     <div 
       onClick={() => onSelect?.(toolkit)}
       className={cn(
-        "group relative h-[280px] rounded-3xl p-6 cursor-pointer transition-all duration-300",
+        "group relative h-[280px] w-full rounded-3xl p-6 cursor-pointer transition-all duration-300",
         "bg-gradient-to-br",
         randomGradient,
         "hover:shadow-lg hover:-translate-y-1"
