@@ -1,3 +1,4 @@
+
 import { Navigation } from "@/components/layout/Navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -126,7 +127,7 @@ const Profile = () => {
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-50 transition-all duration-500">
       <Navigation />
       <main className="container py-8 px-4 md:px-6 lg:px-8 animate-fade-in">
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
           <h1 className="text-2xl font-bold text-purple-800 bg-gradient-to-r from-purple-700 to-purple-900 bg-clip-text text-transparent">
             Dein Persönlichkeitsprofil
           </h1>
@@ -135,8 +136,7 @@ const Profile = () => {
               <Pencil className="h-4 w-4" />
             </Button>
             <Button onClick={handleRestartOnboarding} variant="outline" className="hover:bg-purple-50">
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Reflexion neustarten
+              <RefreshCw className="h-4 w-4" />
             </Button>
           </div>
         </div>
