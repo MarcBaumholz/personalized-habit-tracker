@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -251,9 +252,13 @@ export const WeeklyTimeboxing = () => {
 
       <div className="overflow-x-auto -mx-4 md:mx-0 mt-6">
         <div className={`min-w-[${isMobile ? '300px' : '800px'}] px-4 md:px-0`}>
-          <div className={`grid grid-cols-[80px_repeat(${weekDays.length},1fr)] md:grid-cols-[120px_repeat(${weekDays.length},1fr)] gap-1 mb-2`}>
+          <div className={`grid ${
+            view === 'day' 
+              ? 'grid-cols-[120px_1fr]' 
+              : `grid-cols-[120px_repeat(${weekDays.length},1fr)]`
+          } gap-1 mb-2`}>
             <div className="font-medium text-sm md:text-base">Zeit</div>
-            {weekDays.map(day => (
+            {view !== 'day' && weekDays.map(day => (
               <div key={day.toString()} className="font-medium text-center text-sm md:text-base">
                 {format(day, isMobile ? "E" : "EEE", { locale: de })}
               </div>
@@ -264,56 +269,106 @@ export const WeeklyTimeboxing = () => {
             {TIME_SLOTS.map((slot) => (
               <div
                 key={slot.time}
-                className={`grid grid-cols-[80px_repeat(${weekDays.length},1fr)] md:grid-cols-[120px_repeat(${weekDays.length},1fr)] gap-1`}
+                className={`grid ${
+                  view === 'day' 
+                    ? 'grid-cols-[120px_1fr]' 
+                    : `grid-cols-[120px_repeat(${weekDays.length},1fr)]`
+                } gap-1`}
               >
                 <div className="text-xs md:text-sm py-2 px-2 bg-gray-50 rounded truncate">
                   {isMobile ? slot.time.split(" - ")[0] : slot.time}
                 </div>
-                {weekDays.map(day => {
-                  const activity = getActivityForSlot(slot.time, day);
-                  
-                  return (
-                    <TooltipProvider key={day.toString()}>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div
-                            className={`rounded min-h-[40px] md:min-h-[48px] p-1 md:p-2 text-xs md:text-sm cursor-pointer transition-colors ${
-                              activity 
-                                ? activity.type === 'todo' 
-                                  ? 'bg-blue-50 hover:bg-blue-100'
-                                  : 'bg-green-50 hover:bg-green-100'
-                                : 'bg-gray-50 hover:bg-gray-100'
-                            }`}
-                            onClick={() => {
-                              if (activity) {
-                                setSelectedActivity(activity);
-                              } else {
-                                setSelectedSlot({ time: slot.time, date: day });
-                              }
-                            }}
-                          >
-                            {activity && (
-                              <div className="flex items-center space-x-1">
-                                <span className="font-medium truncate max-w-[80%]">
-                                  {activity.title}
-                                </span>
-                                <MoreHorizontal className="h-4 w-4 text-gray-400" />
-                              </div>
-                            )}
-                          </div>
-                        </TooltipTrigger>
-                        {activity && (
-                          <TooltipContent>
-                            <p className="font-medium">{activity.title}</p>
-                            {activity.category && (
-                              <p className="text-xs text-gray-500">{activity.category}</p>
-                            )}
-                          </TooltipContent>
-                        )}
-                      </Tooltip>
-                    </TooltipProvider>
-                  );
-                })}
+                {view === 'day' ? (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div
+                          className={`rounded min-h-[40px] md:min-h-[48px] p-1 md:p-2 text-xs md:text-sm cursor-pointer transition-colors ${
+                            getActivityForSlot(slot.time, weekStart)
+                              ? getActivityForSlot(slot.time, weekStart)?.type === 'todo'
+                                ? 'bg-blue-50 hover:bg-blue-100'
+                                : 'bg-green-50 hover:bg-green-100'
+                              : 'bg-gray-50 hover:bg-gray-100'
+                          }`}
+                          onClick={() => {
+                            const activity = getActivityForSlot(slot.time, weekStart);
+                            if (activity) {
+                              setSelectedActivity(activity);
+                            } else {
+                              setSelectedSlot({ time: slot.time, date: weekStart });
+                            }
+                          }}
+                        >
+                          {getActivityForSlot(slot.time, weekStart) && (
+                            <div className="flex items-center space-x-1">
+                              <span className="font-medium truncate max-w-[80%]">
+                                {getActivityForSlot(slot.time, weekStart)?.title}
+                              </span>
+                              <MoreHorizontal className="h-4 w-4 text-gray-400" />
+                            </div>
+                          )}
+                        </div>
+                      </TooltipTrigger>
+                      {getActivityForSlot(slot.time, weekStart) && (
+                        <TooltipContent>
+                          <p className="font-medium">
+                            {getActivityForSlot(slot.time, weekStart)?.title}
+                          </p>
+                          {getActivityForSlot(slot.time, weekStart)?.category && (
+                            <p className="text-xs text-gray-500">
+                              {getActivityForSlot(slot.time, weekStart)?.category}
+                            </p>
+                          )}
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  </TooltipProvider>
+                ) : (
+                  weekDays.map(day => {
+                    const activity = getActivityForSlot(slot.time, day);
+                    return (
+                      <TooltipProvider key={day.toString()}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div
+                              className={`rounded min-h-[40px] md:min-h-[48px] p-1 md:p-2 text-xs md:text-sm cursor-pointer transition-colors ${
+                                activity 
+                                  ? activity.type === 'todo' 
+                                    ? 'bg-blue-50 hover:bg-blue-100'
+                                    : 'bg-green-50 hover:bg-green-100'
+                                  : 'bg-gray-50 hover:bg-gray-100'
+                              }`}
+                              onClick={() => {
+                                if (activity) {
+                                  setSelectedActivity(activity);
+                                } else {
+                                  setSelectedSlot({ time: slot.time, date: day });
+                                }
+                              }}
+                            >
+                              {activity && (
+                                <div className="flex items-center space-x-1">
+                                  <span className="font-medium truncate max-w-[80%]">
+                                    {activity.title}
+                                  </span>
+                                  <MoreHorizontal className="h-4 w-4 text-gray-400" />
+                                </div>
+                              )}
+                            </div>
+                          </TooltipTrigger>
+                          {activity && (
+                            <TooltipContent>
+                              <p className="font-medium">{activity.title}</p>
+                              {activity.category && (
+                                <p className="text-xs text-gray-500">{activity.category}</p>
+                              )}
+                            </TooltipContent>
+                          )}
+                        </Tooltip>
+                      </TooltipProvider>
+                    );
+                  })
+                )}
               </div>
             ))}
           </div>
