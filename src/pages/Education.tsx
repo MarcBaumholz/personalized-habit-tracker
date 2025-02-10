@@ -181,41 +181,41 @@ const Education = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
       <Navigation />
-      <main className="container py-6">
+      <main className="container mx-auto px-4 py-8">
         <div className="max-w-3xl mx-auto text-center mb-12">
-          <h1 className="text-3xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-blue-500">
+          <h1 className="text-4xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-400">
             Lernbereich
           </h1>
-          <p className="text-gray-600">
+          <p className="text-lg text-gray-600">
             Entdecke fundiertes Wissen zur Gewohnheitsbildung und entwickle dich weiter
           </p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 mb-12">
           {courses.map((course) => {
             const Icon = course.icon;
             return (
-              <Card key={course.title} className="p-6 hover:shadow-lg transition-shadow duration-300">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="p-3 bg-gradient-to-br from-purple-100 to-purple-200 rounded-lg">
-                    <Icon className="h-6 w-6 text-purple-600" />
+              <Card key={course.title} className="p-8 hover:shadow-xl transition-shadow duration-300 border border-blue-100/50">
+                <div className="flex items-center gap-4 mb-8">
+                  <div className="p-4 bg-gradient-to-br from-blue-100 to-blue-50 rounded-xl shadow-sm">
+                    <Icon className="h-8 w-8 text-blue-600" />
                   </div>
                   <div>
-                    <h3 className="font-medium text-lg">{course.title}</h3>
-                    <p className="text-sm text-gray-600">{course.description}</p>
+                    <h3 className="text-xl font-semibold text-gray-800">{course.title}</h3>
+                    <p className="text-base text-gray-600">{course.description}</p>
                   </div>
                 </div>
 
-                <div className="space-y-2 mb-6">
-                  <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
-                    <span className="flex items-center">
-                      <Calendar className="h-4 w-4 mr-1" />
+                <div className="space-y-4 mb-8">
+                  <div className="flex items-center justify-between text-base text-gray-600 mb-4">
+                    <span className="flex items-center gap-2">
+                      <Calendar className="h-5 w-5" />
                       {course.duration}
                     </span>
-                    <span className="flex items-center">
-                      <Target className="h-4 w-4 mr-1" />
+                    <span className="flex items-center gap-2">
+                      <Target className="h-5 w-5" />
                       {course.difficulty}
                     </span>
                   </div>
@@ -224,22 +224,22 @@ const Education = () => {
                     <Dialog key={index}>
                       <DialogTrigger asChild>
                         <button 
-                          className="flex items-center justify-between w-full p-3 hover:bg-purple-50 rounded-lg transition-colors text-left group"
+                          className="flex items-center justify-between w-full p-4 hover:bg-blue-50 rounded-xl transition-colors text-left group"
                           onClick={() => handleModuleClick(module)}
                         >
-                          <div className="flex items-center">
-                            <div className="w-6 h-6 rounded-full border-2 border-purple-200 flex items-center justify-center mr-3 group-hover:border-purple-400">
+                          <div className="flex items-center gap-4">
+                            <div className="w-8 h-8 rounded-full border-2 border-blue-200 flex items-center justify-center group-hover:border-blue-400">
                               {index + 1}
                             </div>
                             <div>
-                              <p className="font-medium text-gray-900">{module.title}</p>
+                              <p className="font-medium text-gray-800">{module.title}</p>
                               <p className="text-sm text-gray-500">{module.duration}</p>
                             </div>
                           </div>
                           {module.isCompleted ? (
-                            <CheckCircle2 className="h-5 w-5 text-green-500" />
+                            <CheckCircle2 className="h-6 w-6 text-green-500" />
                           ) : (
-                            <Info className="h-5 w-5 text-gray-400 group-hover:text-purple-500" />
+                            <Info className="h-6 w-6 text-gray-400 group-hover:text-blue-500" />
                           )}
                         </button>
                       </DialogTrigger>
@@ -249,12 +249,16 @@ const Education = () => {
                           <DialogDescription>{module.duration}</DialogDescription>
                         </DialogHeader>
                         <div 
-                          className="prose prose-purple max-w-none"
+                          className="prose prose-blue max-w-none"
                           dangerouslySetInnerHTML={{ __html: module.content }}
                         />
                         <div className="flex justify-end mt-6">
-                          <Button onClick={handleCompleteModule}>
-                            <CheckCircle2 className="h-4 w-4 mr-2" />
+                          <Button 
+                            onClick={handleCompleteModule}
+                            className="bg-blue-600 hover:bg-blue-700 text-white"
+                            size="lg"
+                          >
+                            <CheckCircle2 className="h-5 w-5 mr-2" />
                             Als abgeschlossen markieren
                           </Button>
                         </div>
@@ -265,25 +269,24 @@ const Education = () => {
 
                 <div className="space-y-4">
                   <div>
-                    <div className="flex justify-between text-sm mb-1">
+                    <div className="flex justify-between text-base mb-2">
                       <span>Fortschritt</span>
                       <span>{course.progress}%</span>
                     </div>
-                    <div className="h-2 bg-gray-100 rounded-full">
-                      <div
-                        className="h-full bg-gradient-to-r from-purple-500 to-purple-600 rounded-full transition-all duration-300"
-                        style={{ width: `${course.progress}%` }}
-                      />
-                    </div>
+                    <Progress 
+                      value={course.progress} 
+                      className="h-2 bg-blue-100"
+                    />
                   </div>
                   
                   <Button 
-                    className="w-full group"
+                    className="w-full group shadow-sm"
                     variant={course.progress > 0 ? "outline" : "default"}
+                    size="lg"
                     onClick={() => handleStartCourse(course)}
                   >
                     {course.progress > 0 ? "Fortsetzen" : "Jetzt starten"}
-                    <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                    <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
                   </Button>
                 </div>
               </Card>
@@ -291,30 +294,30 @@ const Education = () => {
           })}
         </div>
 
-        <Card className="mt-12 p-8 bg-gradient-to-br from-purple-50 to-white">
-          <div className="flex items-center gap-4 mb-8">
-            <div className="p-4 bg-gradient-to-br from-purple-100 to-purple-200 rounded-lg">
-              <Award className="h-8 w-8 text-purple-600" />
+        <Card className="p-8 bg-gradient-to-br from-blue-50 to-white border border-blue-100/50">
+          <div className="flex items-center gap-6 mb-8">
+            <div className="p-4 bg-gradient-to-br from-blue-100 to-blue-50 rounded-xl shadow-sm">
+              <Award className="h-8 w-8 text-blue-600" />
             </div>
             <div>
-              <h2 className="text-2xl font-semibold">Deine Lernfortschritte</h2>
-              <p className="text-gray-600">
+              <h2 className="text-2xl font-semibold text-gray-800">Deine Lernfortschritte</h2>
+              <p className="text-lg text-gray-600">
                 Tracking deiner Entwicklung und Zertifikate
               </p>
             </div>
           </div>
           <div className="grid gap-6 md:grid-cols-3">
-            <div className="p-6 bg-gradient-to-br from-purple-50 to-white rounded-xl border border-purple-100">
+            <div className="p-6 bg-gradient-to-br from-blue-50 to-white rounded-xl border border-blue-100 shadow-sm">
               <h4 className="font-medium mb-2 text-gray-600">Abgeschlossene Kurse</h4>
-              <p className="text-3xl font-bold text-purple-600">2</p>
+              <p className="text-3xl font-bold text-blue-600">2</p>
             </div>
-            <div className="p-6 bg-gradient-to-br from-purple-50 to-white rounded-xl border border-purple-100">
+            <div className="p-6 bg-gradient-to-br from-blue-50 to-white rounded-xl border border-blue-100 shadow-sm">
               <h4 className="font-medium mb-2 text-gray-600">Lernstunden</h4>
-              <p className="text-3xl font-bold text-purple-600">12</p>
+              <p className="text-3xl font-bold text-blue-600">12</p>
             </div>
-            <div className="p-6 bg-gradient-to-br from-purple-50 to-white rounded-xl border border-purple-100">
+            <div className="p-6 bg-gradient-to-br from-blue-50 to-white rounded-xl border border-blue-100 shadow-sm">
               <h4 className="font-medium mb-2 text-gray-600">Zertifikate</h4>
-              <p className="text-3xl font-bold text-purple-600">1</p>
+              <p className="text-3xl font-bold text-blue-600">1</p>
             </div>
           </div>
         </Card>

@@ -36,73 +36,74 @@ export const HabitEducation = () => {
   const isMobile = useIsMobile();
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
-      <div className={`flex flex-col ${!isMobile && 'items-center justify-between'} border-b border-gray-800/10 pb-6`}>
-        <div className="flex items-center gap-3 mb-4">
-          <div className="p-2.5 rounded-xl bg-gray-900/5 backdrop-blur-sm border border-gray-200/10">
-            <BookOpen className="h-6 w-6 text-gray-700" />
+    <div className="container mx-auto px-4 py-8 space-y-8">
+      <div className={`flex ${isMobile ? 'flex-col gap-4' : 'items-center justify-between'} border-b border-blue-100 pb-6`}>
+        <div className="flex items-center gap-4">
+          <div className="p-3 rounded-xl bg-blue-50 shadow-sm">
+            <BookOpen className="h-7 w-7 text-blue-600" />
           </div>
           <div className="space-y-1">
-            <h2 className={`${isMobile ? 'text-xl' : 'text-2xl'} font-semibold text-gray-800`}>
+            <h2 className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-semibold text-gray-800`}>
               Habit Baukasten
             </h2>
-            <p className="text-sm text-gray-500">
+            <p className="text-base text-gray-600">
               Professionelle Methoden für nachhaltigen Erfolg
             </p>
           </div>
         </div>
         <Button 
           variant="secondary" 
-          className="text-gray-700 bg-gray-100 hover:bg-gray-200 font-medium rounded-xl w-full md:w-auto"
+          className="text-blue-600 bg-blue-50 hover:bg-blue-100 font-medium rounded-xl px-6 py-3 w-full md:w-auto shadow-sm"
+          size="lg"
         >
           <span>Alle Kategorien</span>
-          <ArrowRight className="ml-2 h-4 w-4" />
+          <ArrowRight className="ml-2 h-5 w-5" />
         </Button>
       </div>
 
-      <ScrollArea className={`h-[${isMobile ? '480px' : '580px'}] pr-4`}>
-        <div className="grid gap-4">
+      <ScrollArea className="h-[calc(100vh-12rem)] w-full pr-4">
+        <div className="space-y-6">
           {HABIT_TOOLKITS.map((toolkit) => (
             <Card
               key={toolkit.id}
-              className="group relative overflow-hidden border-0 bg-gradient-to-br from-gray-50 to-white shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.2)] transition-all duration-300"
+              className="group relative overflow-hidden border border-blue-100/50 bg-gradient-to-br from-white to-blue-50/30 shadow-lg hover:shadow-xl transition-all duration-300 p-8"
             >
-              <div className="relative p-6 space-y-4">
-                <div className={`flex ${isMobile ? 'flex-col gap-3' : 'items-center justify-between'}`}>
-                  <span className="px-4 py-1.5 text-xs font-medium rounded-full bg-gray-900/5 text-gray-700 uppercase tracking-wider backdrop-blur-sm border border-gray-200/10 w-fit">
+              <div className="space-y-6">
+                <div className={`flex ${isMobile ? 'flex-col gap-4' : 'items-center justify-between'}`}>
+                  <span className="px-5 py-2 text-sm font-medium rounded-full bg-blue-50 text-blue-600 uppercase tracking-wider shadow-sm border border-blue-100/50 w-fit">
                     {toolkit.category}
                   </span>
-                  <div className={`flex ${isMobile ? 'justify-between' : ''} items-center gap-6`}>
+                  <div className={`flex ${isMobile ? 'justify-between' : ''} items-center gap-8`}>
                     <div className="flex items-center gap-2">
-                      <Star className="h-5 w-5 text-amber-500" />
-                      <span className="text-sm font-semibold text-gray-700">
+                      <Star className="h-6 w-6 text-amber-500" />
+                      <span className="text-lg font-semibold text-gray-700">
                         {toolkit.rating}
                       </span>
                     </div>
                     <div className="flex items-center gap-2 text-gray-500">
-                      <Users className="h-5 w-5" />
-                      <span className="text-sm font-medium">
+                      <Users className="h-6 w-6" />
+                      <span className="text-lg font-medium">
                         {toolkit.users.toLocaleString()}
                       </span>
                     </div>
                   </div>
                 </div>
 
-                <div className="space-y-3">
-                  <h3 className={`${isMobile ? 'text-lg' : 'text-xl'} font-semibold text-gray-800`}>
+                <div className="space-y-4">
+                  <h3 className={`${isMobile ? 'text-xl' : 'text-2xl'} font-semibold text-gray-800`}>
                     {toolkit.title}
                   </h3>
-                  <p className="text-base text-gray-600 leading-relaxed">
+                  <p className="text-lg text-gray-600 leading-relaxed">
                     {toolkit.description}
                   </p>
                 </div>
 
                 <Button 
-                  className="w-full bg-gray-900 hover:bg-gray-800 text-white font-medium rounded-xl"
-                  size={isMobile ? "default" : "lg"}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl shadow-md"
+                  size="lg"
                 >
                   Methode anwenden
-                  <ArrowRight className="ml-2 h-4 w-4" />
+                  <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </div>
             </Card>
@@ -112,3 +113,4 @@ export const HabitEducation = () => {
     </div>
   );
 };
+
