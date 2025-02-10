@@ -78,6 +78,53 @@ const Profile = () => {
     },
   });
 
+  const { data: zrmResources } = useQuery({
+    queryKey: ["zrm-resources"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
+
+      const { data } = await supabase
+        .from("zrm_resources")
+        .select("*")
+        .eq("user_id", user.id);
+
+      return data || [];
+    },
+  });
+
+  const { data: attitudeGoals } = useQuery({
+    queryKey: ["attitude-goals"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
+
+      const { data } = await supabase
+        .from("attitude_goals")
+        .select("*")
+        .eq("user_id", user.id);
+
+      return data || [];
+    },
+  });
+
+  const { data: coachingReflections } = useQuery({
+    queryKey: ["coaching-reflections"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
+
+      const { data } = await supabase
+        .from("coaching_reflections")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("reflection_date", { ascending: false })
+        .limit(1);
+
+      return data?.[0];
+    },
+  });
+
   const getResponse = (key: string) => {
     return responses?.find(r => r.question_key === key)?.response || "";
   };
@@ -244,28 +291,86 @@ const Profile = () => {
           </Card>
 
           <Card className="p-6 bg-white rounded-2xl shadow-lg border border-blue-100 backdrop-blur-sm transition-all duration-300 hover:shadow-xl animate-slide-in">
-            <h2 className="text-xl font-semibold mb-4 text-blue-800">ZRM-Entwicklungsbereiche</h2>
+            <h2 className="text-xl font-semibold mb-4 text-blue-800">Zürcher Ressourcen Model (ZRM)</h2>
             <div className="space-y-6">
-              <div className="space-y-2">
-                <h3 className="font-medium text-blue-700">Aktuelles Haltungsziel</h3>
-                <p className="text-blue-600 italic">
-                  "Ich bin wie ein ruhiger Berg, der gelassen neue Herausforderungen meistert"
-                </p>
-              </div>
-              <div className="space-y-2">
+              <div className="space-y-4">
                 <h3 className="font-medium text-blue-700">Ressourcenpool</h3>
-                <div className="flex gap-2 flex-wrap">
-                  {["Meditation", "Sport", "Natur", "Musik"].map((resource) => (
-                    <span
-                      key={resource}
-                      className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm"
-                    >
-                      {resource}
-                    </span>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {zrmResources?.map((resource: any) => (
+                    <div key={resource.id} className="p-3 bg-blue-50 rounded-lg">
+                      <p className="font-medium">{resource.resource_type}</p>
+                      <p className="text-sm text-blue-600">{resource.resource_content}</p>
+                      <p className="text-xs text-blue-500 mt-1">
+                        Emotionale Stärke: {resource.somatic_marker_strength}/5
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h3 className="font-medium text-blue-700">Haltungsziele</h3>
+                <div className="space-y-3">
+                  {attitudeGoals?.map((goal: any) => (
+                    <div key={goal.id} className="p-4 bg-blue-50 rounded-lg">
+                      <p className="font-medium">{goal.goal_statement}</p>
+                      {goal.if_then_plan && (
+                        <p className="text-sm text-blue-600 mt-2">
+                          Wenn-Dann-Plan: {goal.if_then_plan}
+                        </p>
+                      )}
+                      {goal.embodiment_practice && (
+                        <p className="text-sm text-blue-600 mt-1">
+                          Embodiment: {goal.embodiment_practice}
+                        </p>
+                      )}
+                    </div>
                   ))}
                 </div>
               </div>
             </div>
+          </Card>
+
+          <Card className="p-6 bg-white rounded-2xl shadow-lg border border-blue-100 backdrop-blur-sm transition-all duration-300 hover:shadow-xl animate-slide-in">
+            <h2 className="text-xl font-semibold mb-4 text-blue-800">Coaching Reflexion</h2>
+            {coachingReflections ? (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <p className="text-sm text-blue-600">Energielevel</p>
+                    <Progress value={coachingReflections.energy_level * 10} />
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-sm text-blue-600">Stimmung</p>
+                    <Progress value={coachingReflections.mood_rating * 10} />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <h3 className="font-medium text-blue-700">Herausforderungen & Lösungen</h3>
+                  <div className="p-3 bg-blue-50 rounded-lg">
+                    <p className="text-sm text-blue-800">{coachingReflections.challenges}</p>
+                    <p className="text-sm text-blue-600 mt-2">{coachingReflections.solutions}</p>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <h3 className="font-medium text-blue-700">Werte & Stärken</h3>
+                  <div className="p-3 bg-blue-50 rounded-lg">
+                    <p className="text-sm text-blue-800">{coachingReflections.values_alignment}</p>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {coachingReflections.strengths_used?.map((strength: string) => (
+                        <span key={strength} className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs">
+                          {strength}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <p className="text-blue-600">Noch keine Reflexionen vorhanden.</p>
+            )}
           </Card>
         </div>
       </main>

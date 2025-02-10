@@ -50,6 +50,47 @@ export type Database = {
           },
         ]
       }
+      attitude_goals: {
+        Row: {
+          created_at: string
+          embodiment_practice: string | null
+          goal_statement: string
+          habit_id: string | null
+          id: string
+          if_then_plan: string | null
+          target_emotion: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          embodiment_practice?: string | null
+          goal_statement: string
+          habit_id?: string | null
+          id?: string
+          if_then_plan?: string | null
+          target_emotion?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          embodiment_practice?: string | null
+          goal_statement?: string
+          habit_id?: string | null
+          id?: string
+          if_then_plan?: string | null
+          target_emotion?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attitude_goals_habit_id_fkey"
+            columns: ["habit_id"]
+            isOneToOne: false
+            referencedRelation: "habits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       badges: {
         Row: {
           achieved_at: string
@@ -135,6 +176,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      coaching_reflections: {
+        Row: {
+          challenges: string | null
+          created_at: string
+          energy_level: number | null
+          id: string
+          mood_rating: number | null
+          reflection_date: string | null
+          solutions: string | null
+          strengths_used: string[] | null
+          user_id: string
+          values_alignment: string | null
+        }
+        Insert: {
+          challenges?: string | null
+          created_at?: string
+          energy_level?: number | null
+          id?: string
+          mood_rating?: number | null
+          reflection_date?: string | null
+          solutions?: string | null
+          strengths_used?: string[] | null
+          user_id: string
+          values_alignment?: string | null
+        }
+        Update: {
+          challenges?: string | null
+          created_at?: string
+          energy_level?: number | null
+          id?: string
+          mood_rating?: number | null
+          reflection_date?: string | null
+          solutions?: string | null
+          strengths_used?: string[] | null
+          user_id?: string
+          values_alignment?: string | null
+        }
+        Relationships: []
       }
       habit_completions: {
         Row: {
@@ -650,6 +730,47 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      zrm_resources: {
+        Row: {
+          created_at: string
+          emotion_association: string | null
+          habit_id: string | null
+          id: string
+          resource_content: string
+          resource_type: string
+          somatic_marker_strength: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          emotion_association?: string | null
+          habit_id?: string | null
+          id?: string
+          resource_content: string
+          resource_type: string
+          somatic_marker_strength?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          emotion_association?: string | null
+          habit_id?: string | null
+          id?: string
+          resource_content?: string
+          resource_type?: string
+          somatic_marker_strength?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "zrm_resources_habit_id_fkey"
+            columns: ["habit_id"]
+            isOneToOne: false
+            referencedRelation: "habits"
             referencedColumns: ["id"]
           },
         ]
