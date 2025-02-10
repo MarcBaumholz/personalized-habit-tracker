@@ -24,6 +24,19 @@ export const useTodos = () => {
     },
   });
 
+  const { data: todoStats } = useQuery({
+    queryKey: ["todo-stats"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
+
+      const { data } = await supabase
+        .rpc('get_last_24h_todo_stats', { user_id: user.id });
+
+      return data;
+    },
+  });
+
   const { data: archivedTodos } = useQuery({
     queryKey: ["archived-todos"],
     queryFn: async () => {
@@ -104,6 +117,7 @@ export const useTodos = () => {
   return {
     todos,
     archivedTodos,
+    todoStats,
     addTodo: addTodoMutation.mutate,
     toggleTodo: toggleTodoMutation.mutate,
     deleteTodo: deleteTodoMutation.mutate,
