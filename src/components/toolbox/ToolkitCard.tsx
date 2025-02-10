@@ -25,22 +25,22 @@ interface ToolkitCardProps {
 export const ToolkitCard = ({ toolkit, onSelect, onRemove, onAdd }: ToolkitCardProps) => {
   const Icon = toolkit.icon || Calendar;
   const randomGradient = [
-    "from-purple-100 to-indigo-50",
-    "from-blue-100 to-purple-50",
-    "from-indigo-100 to-blue-50",
-    "from-violet-100 to-purple-50",
+    "from-sky-50 to-blue-50",
+    "from-blue-50 to-indigo-50",
+    "from-slate-50 to-blue-50",
+    "from-gray-50 to-slate-50",
   ][Math.floor(Math.random() * 4)];
 
   return (
     <div 
       onClick={() => onSelect?.(toolkit)}
       className={cn(
-        "group relative h-[280px] w-full rounded-2xl p-6",
+        "group relative h-[320px] w-full rounded-xl p-6",
         "cursor-pointer transition-all duration-300",
         "bg-gradient-to-br",
         randomGradient,
         "hover:shadow-lg hover:-translate-y-1",
-        "border border-white/80"
+        "border border-gray-200"
       )}
     >
       <ToolkitCardActions
@@ -50,10 +50,10 @@ export const ToolkitCard = ({ toolkit, onSelect, onRemove, onAdd }: ToolkitCardP
         toolkit={toolkit}
       />
 
-      <ScrollArea className="h-[180px] pr-4">
+      <ScrollArea className="h-[220px] pr-4">
         <div className="mt-10 mb-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/90 text-sm font-medium text-gray-700 shadow-sm border border-purple-100/50">
-            <Icon className="h-4 w-4 text-purple-600" />
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white text-sm font-medium text-gray-700 shadow-sm border border-gray-200">
+            <Icon className="h-4 w-4 text-blue-600" />
             <span>{toolkit.category || "INSPIRATION"}</span>
           </div>
         </div>
@@ -93,9 +93,9 @@ export const ToolkitCard = ({ toolkit, onSelect, onRemove, onAdd }: ToolkitCardP
             onAdd?.(toolkit);
           }}
           className={cn(
-            "w-full gap-2 shadow-sm text-sm py-2",
+            "w-full gap-2 shadow-sm text-sm py-5",
             "bg-white hover:bg-gray-50 text-gray-900",
-            "border border-purple-100",
+            "border border-gray-200",
             "transition-all duration-200",
             "hover:shadow-md"
           )}

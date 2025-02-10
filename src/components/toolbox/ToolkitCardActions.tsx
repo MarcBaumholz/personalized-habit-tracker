@@ -64,7 +64,7 @@ export const ToolkitCardActions = ({ id, onRemove, onSelect, toolkit }: ToolkitC
         </div>
       )}
       
-      <div className="flex items-center gap-1 text-sm text-gray-600 bg-white/80 px-2 py-1 rounded-full">
+      <div className="flex items-center gap-1 text-sm text-gray-600 bg-white/90 px-2.5 py-1.5 rounded-full shadow-sm border border-gray-200">
         <Users className="h-4 w-4" />
         <span>2.9k</span>
       </div>

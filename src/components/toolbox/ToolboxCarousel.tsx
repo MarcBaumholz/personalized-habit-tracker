@@ -26,7 +26,7 @@ export const ToolboxCarousel = ({ toolkits, onSelect, onRemove, onAdd, activeTab
   }
 
   return (
-    <div className="w-full max-w-[1400px] mx-auto">
+    <div className="w-full max-w-[1400px] mx-auto px-4">
       <Carousel
         opts={{
           align: "start",
