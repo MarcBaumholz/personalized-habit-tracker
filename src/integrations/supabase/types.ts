@@ -797,7 +797,7 @@ export type Database = {
     Functions: {
       get_last_24h_todo_stats: {
         Args: {
-          user_id: string
+          p_user_id: string
         }
         Returns: Json
       }
