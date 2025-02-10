@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { Flame, Circle, Check, Smile, ChevronUp, ChevronDown, Trash2 } from "lucide-react";
+import { Flame, Circle, Check, Smile, ChevronUp, ChevronDown, Trash2, BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -32,6 +32,7 @@ export const HabitCard = ({
   calculateProgress,
 }: HabitCardProps) => {
   const [showEmotionTracker, setShowEmotionTracker] = useState(false);
+  const [showHabitLoop, setShowHabitLoop] = useState(false);
   const [elasticLevel, setElasticLevel] = useState(habit.elastic_level || "medium");
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -126,6 +127,45 @@ export const HabitCard = ({
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <Dialog open={showHabitLoop} onOpenChange={setShowHabitLoop}>
+            <DialogTrigger asChild>
+              <Button size="sm" variant="outline">
+                <BookOpen className="h-4 w-4 mr-2" />
+                Habit Loop
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Dein Habit Loop</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 p-4">
+                <div className="rounded-lg bg-purple-50 p-4">
+                  <h4 className="font-semibold mb-2">Cue (Auslöser)</h4>
+                  <p className="text-sm text-gray-600">
+                    {habit.cue || "Was löst diese Gewohnheit aus?"}
+                  </p>
+                </div>
+                <div className="rounded-lg bg-blue-50 p-4">
+                  <h4 className="font-semibold mb-2">Craving (Verlangen)</h4>
+                  <p className="text-sm text-gray-600">
+                    {habit.craving || "Welches Bedürfnis steckt dahinter?"}
+                  </p>
+                </div>
+                <div className="rounded-lg bg-green-50 p-4">
+                  <h4 className="font-semibold mb-2">Routine</h4>
+                  <p className="text-sm text-gray-600">
+                    {habit.name}
+                  </p>
+                </div>
+                <div className="rounded-lg bg-yellow-50 p-4">
+                  <h4 className="font-semibold mb-2">Reward (Belohnung)</h4>
+                  <p className="text-sm text-gray-600">
+                    {habit.reward || "Wie belohnst du dich?"}
+                  </p>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
           <div className="flex flex-col items-center">
             <Button
               size="sm"
