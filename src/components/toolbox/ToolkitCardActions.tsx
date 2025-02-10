@@ -17,9 +17,9 @@ interface ToolkitCardActionsProps {
 
 export const ToolkitCardActions = ({ id, onRemove, onSelect, toolkit }: ToolkitCardActionsProps) => {
   return (
-    <div className="absolute top-4 right-4 flex items-center gap-2">
+    <div className="absolute top-6 right-6 flex items-center gap-3">
       {id && (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -30,9 +30,9 @@ export const ToolkitCardActions = ({ id, onRemove, onSelect, toolkit }: ToolkitC
                   }}
                   variant="ghost"
                   size="sm"
-                  className="h-8 w-8 p-0 hover:bg-red-50"
+                  className="h-10 w-10 p-0 hover:bg-red-50 bg-white"
                 >
-                  <Trash2 className="h-4 w-4 text-gray-600 hover:text-red-600" />
+                  <Trash2 className="h-5 w-5 text-gray-600 hover:text-red-600" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
@@ -51,9 +51,9 @@ export const ToolkitCardActions = ({ id, onRemove, onSelect, toolkit }: ToolkitC
                   }}
                   variant="ghost"
                   size="sm"
-                  className="h-8 w-8 p-0 hover:bg-blue-50"
+                  className="h-10 w-10 p-0 hover:bg-blue-50 bg-white"
                 >
-                  <Settings2 className="h-4 w-4 text-gray-600 hover:text-blue-600" />
+                  <Settings2 className="h-5 w-5 text-gray-600 hover:text-blue-600" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
@@ -64,9 +64,9 @@ export const ToolkitCardActions = ({ id, onRemove, onSelect, toolkit }: ToolkitC
         </div>
       )}
       
-      <div className="flex items-center gap-1.5 text-sm text-gray-700 bg-white/90 px-2.5 py-1.5 rounded-full shadow-sm border border-gray-200">
-        <Users className="h-4 w-4" />
-        <span className="font-medium">2.9k</span>
+      <div className="flex items-center gap-2 text-base bg-white/90 px-4 py-2 rounded-full shadow-sm border border-gray-200">
+        <Users className="h-5 w-5 text-blue-600" />
+        <span className="font-medium text-gray-700">2.9k</span>
       </div>
     </div>
   );
