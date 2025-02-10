@@ -52,8 +52,8 @@ const Index = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white flex items-center justify-center">
-        <div className="animate-pulse text-gray-600">Loading...</div>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center">
+        <div className="animate-pulse text-blue-600">Loading...</div>
       </div>
     );
   }
@@ -63,43 +63,43 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white transition-all duration-500">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white transition-all duration-500">
       <Navigation />
-      <main className={`container max-w-7xl mx-auto ${isMobile ? 'py-6 px-4' : 'py-12 px-6'} animate-fade-in`}>
-        <div className={`mb-${isMobile ? '6' : '12'} max-w-3xl mx-auto`}>
-          <div className="space-y-2 mb-6">
-            <h2 className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-semibold text-gray-800`}>
+      <main className="container max-w-7xl mx-auto py-8 md:py-12 px-4 md:px-6 animate-fade-in">
+        <div className="max-w-4xl mx-auto mb-8 md:mb-12">
+          <div className="space-y-3 mb-8">
+            <h2 className="text-3xl md:text-4xl font-bold text-blue-800 bg-gradient-to-r from-blue-700 to-blue-900 bg-clip-text text-transparent">
               Dein Fortschritt
             </h2>
-            <p className="text-gray-600 text-sm">
+            <p className="text-lg text-blue-600">
               Verfolge deine Entwicklung und erreiche deine Ziele
             </p>
           </div>
-          <Card className={`p-${isMobile ? '6' : '8'} bg-white shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] border-0`}>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-600">Gesamtfortschritt</span>
-                <span className="text-sm font-medium text-gray-800">
+          <Card className="p-8 bg-white shadow-lg hover:shadow-xl transition-shadow border-0 rounded-xl">
+            <div className="space-y-6">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-lg font-medium text-blue-700">Gesamtfortschritt</span>
+                <span className="text-lg font-bold text-blue-800">
                   {calculateOverallProgress()}%
                 </span>
               </div>
               <Progress 
                 value={calculateOverallProgress()} 
-                className="h-2 bg-gray-100"
+                className="h-3 bg-blue-100"
               />
-              <p className="text-sm text-gray-600 flex items-center gap-2">
+              <p className="text-lg text-blue-600 flex items-center gap-2">
                 Du bist auf einem guten Weg
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className="h-5 w-5" />
               </p>
             </div>
           </Card>
         </div>
 
-        <div className={`grid ${isMobile ? 'grid-cols-1' : 'md:grid-cols-2'} gap-6 max-w-7xl mx-auto`}>
-          <Card className={`p-${isMobile ? '6' : '8'} bg-white shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] border-0 transition-all duration-300 hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.2)]`}>
+        <div className="grid md:grid-cols-2 gap-8 max-w-7xl mx-auto">
+          <Card className="p-8 bg-white shadow-lg hover:shadow-xl transition-shadow border-0 rounded-xl">
             <HabitJourney />
           </Card>
-          <Card className={`p-${isMobile ? '6' : '8'} bg-white shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] border-0 transition-all duration-300 hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.2)]`}>
+          <Card className="p-8 bg-white shadow-lg hover:shadow-xl transition-shadow border-0 rounded-xl">
             <TodoList />
           </Card>
         </div>
