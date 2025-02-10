@@ -402,12 +402,15 @@ export type Database = {
         Row: {
           category: string
           context: string | null
+          craving: string | null
           created_at: string
+          cue: string | null
           difficulty: string | null
           difficulty_level: string | null
           effort: string | null
           elastic_level: string | null
           frequency: string | null
+          hook_trigger: string | null
           id: string
           identity: string | null
           last_completed_at: string | null
@@ -419,11 +422,13 @@ export type Database = {
           reminder_time: string | null
           reminder_type: string | null
           repetition_type: string | null
+          reward: string | null
           satisfaction_level: string | null
           smart_goal: string | null
           streak_count: number | null
           time_of_day: string | null
           user_id: string
+          variable_reward_type: string | null
           weekly_streak: number | null
           why: string | null
           why_description: string | null
@@ -431,12 +436,15 @@ export type Database = {
         Insert: {
           category: string
           context?: string | null
+          craving?: string | null
           created_at?: string
+          cue?: string | null
           difficulty?: string | null
           difficulty_level?: string | null
           effort?: string | null
           elastic_level?: string | null
           frequency?: string | null
+          hook_trigger?: string | null
           id?: string
           identity?: string | null
           last_completed_at?: string | null
@@ -448,11 +456,13 @@ export type Database = {
           reminder_time?: string | null
           reminder_type?: string | null
           repetition_type?: string | null
+          reward?: string | null
           satisfaction_level?: string | null
           smart_goal?: string | null
           streak_count?: number | null
           time_of_day?: string | null
           user_id: string
+          variable_reward_type?: string | null
           weekly_streak?: number | null
           why?: string | null
           why_description?: string | null
@@ -460,12 +470,15 @@ export type Database = {
         Update: {
           category?: string
           context?: string | null
+          craving?: string | null
           created_at?: string
+          cue?: string | null
           difficulty?: string | null
           difficulty_level?: string | null
           effort?: string | null
           elastic_level?: string | null
           frequency?: string | null
+          hook_trigger?: string | null
           id?: string
           identity?: string | null
           last_completed_at?: string | null
@@ -477,11 +490,13 @@ export type Database = {
           reminder_time?: string | null
           reminder_type?: string | null
           repetition_type?: string | null
+          reward?: string | null
           satisfaction_level?: string | null
           smart_goal?: string | null
           streak_count?: number | null
           time_of_day?: string | null
           user_id?: string
+          variable_reward_type?: string | null
           weekly_streak?: number | null
           why?: string | null
           why_description?: string | null
