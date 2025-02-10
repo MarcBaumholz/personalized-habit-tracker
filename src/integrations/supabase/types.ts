@@ -139,6 +139,7 @@ export type Database = {
       habit_completions: {
         Row: {
           completed_date: string
+          completion_type: string | null
           created_at: string
           habit_id: string
           id: string
@@ -146,6 +147,7 @@ export type Database = {
         }
         Insert: {
           completed_date?: string
+          completion_type?: string | null
           created_at?: string
           habit_id: string
           id?: string
@@ -153,6 +155,7 @@ export type Database = {
         }
         Update: {
           completed_date?: string
+          completion_type?: string | null
           created_at?: string
           habit_id?: string
           id?: string
