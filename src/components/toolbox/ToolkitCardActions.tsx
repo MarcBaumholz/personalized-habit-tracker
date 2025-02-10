@@ -30,7 +30,7 @@ export const ToolkitCardActions = ({ id, onRemove, onSelect, toolkit }: ToolkitC
                   }}
                   variant="ghost"
                   size="sm"
-                  className="h-8 w-8 p-0"
+                  className="h-8 w-8 p-0 hover:bg-red-50"
                 >
                   <Trash2 className="h-4 w-4 text-gray-600 hover:text-red-600" />
                 </Button>
@@ -51,7 +51,7 @@ export const ToolkitCardActions = ({ id, onRemove, onSelect, toolkit }: ToolkitC
                   }}
                   variant="ghost"
                   size="sm"
-                  className="h-8 w-8 p-0"
+                  className="h-8 w-8 p-0 hover:bg-blue-50"
                 >
                   <Settings2 className="h-4 w-4 text-gray-600 hover:text-blue-600" />
                 </Button>
@@ -64,9 +64,9 @@ export const ToolkitCardActions = ({ id, onRemove, onSelect, toolkit }: ToolkitC
         </div>
       )}
       
-      <div className="flex items-center gap-1 text-sm text-gray-600 bg-white/90 px-2.5 py-1.5 rounded-full shadow-sm border border-gray-200">
+      <div className="flex items-center gap-1.5 text-sm text-gray-700 bg-white/90 px-2.5 py-1.5 rounded-full shadow-sm border border-gray-200">
         <Users className="h-4 w-4" />
-        <span>2.9k</span>
+        <span className="font-medium">2.9k</span>
       </div>
     </div>
   );

@@ -26,19 +26,19 @@ export const ToolboxCarousel = ({ toolkits, onSelect, onRemove, onAdd, activeTab
   }
 
   return (
-    <div className="w-full max-w-[1400px] mx-auto px-4">
+    <div className="w-full max-w-[1400px] mx-auto px-6 sm:px-8">
       <Carousel
         opts={{
           align: "start",
           loop: true,
           dragFree: true,
         }}
-        className="w-full"
+        className="w-full relative"
       >
-        <div className="flex items-center w-full">
+        <div className="flex items-center w-full gap-4">
           <CarouselNavButton direction="prev" />
 
-          <CarouselContent className="-ml-2 md:-ml-4 w-full">
+          <CarouselContent className="w-full">
             {toolkits.map((toolkit, index) => (
               <CarouselItem 
                 key={toolkit.id || index} 
@@ -47,7 +47,7 @@ export const ToolboxCarousel = ({ toolkits, onSelect, onRemove, onAdd, activeTab
                   isMobile ? "basis-full" : "basis-full sm:basis-1/2 lg:basis-1/3 xl:basis-1/4"
                 )}
               >
-                <div className="p-1">
+                <div className="p-2">
                   <ToolkitCard
                     toolkit={toolkit}
                     onSelect={onSelect}
