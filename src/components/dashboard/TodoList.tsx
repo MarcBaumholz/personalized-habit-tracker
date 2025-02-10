@@ -7,13 +7,14 @@ import { TodoItem } from "./TodoItem";
 import { EmptyTodoState } from "./EmptyTodoState";
 import { useTodos } from "@/hooks/useTodos";
 import { CATEGORIES, CATEGORY_EMOJIS, INSPIRATIONAL_MESSAGES } from "@/constants/todoConstants";
+import { Separator } from "@/components/ui/separator";
 
 export const TodoList = () => {
   const [newTodo, setNewTodo] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [selectedTime, setSelectedTime] = useState<string>("");
   const [timeUntilMidnight, setTimeUntilMidnight] = useState("");
-  const { todos, addTodo, toggleTodo, deleteTodo } = useTodos();
+  const { todos, archivedTodos, addTodo, toggleTodo, deleteTodo } = useTodos();
 
   useEffect(() => {
     const updateTimeUntilMidnight = () => {
@@ -83,6 +84,30 @@ export const TodoList = () => {
             <EmptyTodoState getMessage={getRandomMessage} />
           )}
         </div>
+
+        {archivedTodos && archivedTodos.length > 0 && (
+          <div className="mt-6">
+            <Separator className="my-4" />
+            <h3 className="text-sm font-medium text-gray-500 mb-3">
+              Todos von gestern
+            </h3>
+            <div className="space-y-2 opacity-75">
+              {archivedTodos.map((todo: any) => (
+                <div
+                  key={todo.id}
+                  className="flex items-center justify-between p-3 rounded-lg bg-gray-50 border border-gray-100"
+                >
+                  <span className="text-gray-600">
+                    {CATEGORY_EMOJIS[todo.category || "Sonstiges"]} {todo.title}
+                  </span>
+                  <span className="text-xs text-gray-400">
+                    {todo.completed ? "Erledigt" : "Nicht erledigt"}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </Card>
   );

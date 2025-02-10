@@ -24,6 +24,25 @@ export const useTodos = () => {
     },
   });
 
+  const { data: archivedTodos } = useQuery({
+    queryKey: ["archived-todos"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
+
+      const today = new Date().toISOString().split('T')[0];
+      
+      const { data } = await supabase
+        .from("archived_todos")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("completion_date", today)
+        .order("archived_at", { ascending: false });
+
+      return data;
+    },
+  });
+
   const addTodoMutation = useMutation({
     mutationFn: async (todo: { title: string; category: string; scheduled_time: string | null }) => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -84,6 +103,7 @@ export const useTodos = () => {
 
   return {
     todos,
+    archivedTodos,
     addTodo: addTodoMutation.mutate,
     toggleTodo: toggleTodoMutation.mutate,
     deleteTodo: deleteTodoMutation.mutate,
