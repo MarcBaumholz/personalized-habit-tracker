@@ -1,4 +1,3 @@
-
 import { Navigation } from "@/components/layout/Navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -124,26 +123,26 @@ const Profile = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-50 transition-all duration-500">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 transition-all duration-500">
       <Navigation />
       <main className="container py-8 px-4 md:px-6 lg:px-8 animate-fade-in">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-          <h1 className="text-2xl font-bold text-purple-800 bg-gradient-to-r from-purple-700 to-purple-900 bg-clip-text text-transparent">
+          <h1 className="text-2xl md:text-3xl font-bold text-blue-800 bg-gradient-to-r from-blue-700 to-blue-900 bg-clip-text text-transparent">
             Dein Persönlichkeitsprofil
           </h1>
           <div className="flex gap-2">
-            <Button onClick={handleEdit} variant="outline" className="hover:bg-purple-50">
+            <Button onClick={handleEdit} variant="outline" className="hover:bg-blue-50">
               <Pencil className="h-4 w-4" />
             </Button>
-            <Button onClick={handleRestartOnboarding} variant="outline" className="hover:bg-purple-50">
+            <Button onClick={handleRestartOnboarding} variant="outline" className="hover:bg-blue-50">
               <RefreshCw className="h-4 w-4" />
             </Button>
           </div>
         </div>
         
         <div className="grid gap-6">
-          <Card className="p-6 bg-white rounded-2xl shadow-lg border border-purple-100 backdrop-blur-sm transition-all duration-300 hover:shadow-xl animate-slide-in">
-            <h2 className="text-xl font-semibold mb-4 text-purple-800">Deine ausgewählten Lebensbereiche</h2>
+          <Card className="p-6 md:p-8 bg-white rounded-2xl shadow-lg border border-blue-100 backdrop-blur-sm transition-all duration-300 hover:shadow-xl animate-slide-in">
+            <h2 className="text-xl md:text-2xl font-semibold mb-6 text-blue-800">Deine ausgewählten Lebensbereiche</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {lifeAreas?.map((areaId: string) => {
                 const area = {
@@ -160,7 +159,7 @@ const Profile = () => {
                 return area ? (
                   <div
                     key={areaId}
-                    className={`p-4 rounded-lg border-2 ${area.color}`}
+                    className={`p-4 rounded-lg border-2 ${area.color} text-lg`}
                   >
                     <span className="font-medium">{area.name}</span>
                   </div>
@@ -169,8 +168,8 @@ const Profile = () => {
             </div>
           </Card>
 
-          <Card className="p-6 bg-white rounded-2xl shadow-lg border border-purple-100 backdrop-blur-sm transition-all duration-300 hover:shadow-xl animate-slide-in">
-            <h2 className="text-xl font-semibold mb-4 text-purple-800">Big Five Persönlichkeitstest</h2>
+          <Card className="p-6 bg-white rounded-2xl shadow-lg border border-blue-100 backdrop-blur-sm transition-all duration-300 hover:shadow-xl animate-slide-in">
+            <h2 className="text-xl font-semibold mb-4 text-blue-800">Big Five Persönlichkeitstest</h2>
             {bigFiveResults ? (
               <div className="space-y-4">
                 {Object.entries(bigFiveResults)
@@ -178,8 +177,8 @@ const Profile = () => {
                   .map(([trait, score]) => (
                     <div key={trait} className="space-y-2">
                       <div className="flex justify-between items-center">
-                        <span className="font-medium text-purple-700">{getPersonalityTraitLabel(trait)}</span>
-                        <span className="text-sm text-purple-600">{Math.round(score as number)}%</span>
+                        <span className="font-medium text-blue-700">{getPersonalityTraitLabel(trait)}</span>
+                        <span className="text-sm text-blue-600">{Math.round(score as number)}%</span>
                       </div>
                       <Progress value={score as number} className="h-2" />
                     </div>
@@ -190,7 +189,7 @@ const Profile = () => {
                       href={bigFiveResults.pdf_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-purple-600 hover:text-purple-700 text-sm underline"
+                      className="text-blue-600 hover:text-blue-700 text-sm underline"
                     >
                       Detaillierte Ergebnisse anzeigen (PDF)
                     </a>
@@ -198,68 +197,68 @@ const Profile = () => {
                 )}
               </div>
             ) : (
-              <p className="text-purple-600">Noch keine Testergebnisse vorhanden.</p>
+              <p className="text-blue-600">Noch keine Testergebnisse vorhanden.</p>
             )}
           </Card>
 
-          <Card className="p-6 bg-white rounded-2xl shadow-lg border border-purple-100 backdrop-blur-sm transition-all duration-300 hover:shadow-xl animate-slide-in">
-            <h2 className="text-xl font-semibold mb-4 text-purple-800">Deine Keystone Habits</h2>
+          <Card className="p-6 bg-white rounded-2xl shadow-lg border border-blue-100 backdrop-blur-sm transition-all duration-300 hover:shadow-xl animate-slide-in">
+            <h2 className="text-xl font-semibold mb-4 text-blue-800">Deine Keystone Habits</h2>
             <div className="space-y-4">
               {keystoneHabits?.map((habit, index) => (
-                <div key={index} className="p-4 border rounded-lg bg-purple-50/50">
-                  <h3 className="font-medium mb-2 text-purple-700">{habit.habit_name}</h3>
-                  <p className="text-purple-600 mb-2">{habit.description}</p>
-                  <p className="text-sm text-purple-500">Lebensbereich: {habit.life_area}</p>
+                <div key={index} className="p-4 border rounded-lg bg-blue-50/50">
+                  <h3 className="font-medium mb-2 text-blue-700">{habit.habit_name}</h3>
+                  <p className="text-blue-600 mb-2">{habit.description}</p>
+                  <p className="text-sm text-blue-500">Lebensbereich: {habit.life_area}</p>
                   {habit.guideline && (
-                    <p className="text-sm text-purple-500 mt-2">Leitfaden: {habit.guideline}</p>
+                    <p className="text-sm text-blue-500 mt-2">Leitfaden: {habit.guideline}</p>
                   )}
                 </div>
               ))}
             </div>
           </Card>
 
-          <Card className="p-6 bg-white rounded-2xl shadow-lg border border-purple-100 backdrop-blur-sm transition-all duration-300 hover:shadow-xl animate-slide-in">
-            <h2 className="text-xl font-semibold mb-4 text-purple-800">Deine Onboarding Antworten</h2>
+          <Card className="p-6 bg-white rounded-2xl shadow-lg border border-blue-100 backdrop-blur-sm transition-all duration-300 hover:shadow-xl animate-slide-in">
+            <h2 className="text-xl font-semibold mb-4 text-blue-800">Deine Onboarding Antworten</h2>
             <div className="space-y-4">
-              <div className="p-4 border rounded-lg bg-purple-50/50">
-                <h3 className="font-medium mb-2 text-purple-700">Motivation</h3>
-                <p className="text-purple-600">{getResponse("motivation")}</p>
+              <div className="p-4 border rounded-lg bg-blue-50/50">
+                <h3 className="font-medium mb-2 text-blue-700">Motivation</h3>
+                <p className="text-blue-600">{getResponse("motivation")}</p>
               </div>
-              <div className="p-4 border rounded-lg bg-purple-50/50">
-                <h3 className="font-medium mb-2 text-purple-700">Herausforderungen</h3>
-                <p className="text-purple-600">{getResponse("challenges")}</p>
+              <div className="p-4 border rounded-lg bg-blue-50/50">
+                <h3 className="font-medium mb-2 text-blue-700">Herausforderungen</h3>
+                <p className="text-blue-600">{getResponse("challenges")}</p>
               </div>
-              <div className="p-4 border rounded-lg bg-purple-50/50">
-                <h3 className="font-medium mb-2 text-purple-700">Gewünschte Überzeugungen</h3>
-                <p className="text-purple-600">{getResponse("beliefs")}</p>
+              <div className="p-4 border rounded-lg bg-blue-50/50">
+                <h3 className="font-medium mb-2 text-blue-700">Gewünschte Überzeugungen</h3>
+                <p className="text-blue-600">{getResponse("beliefs")}</p>
               </div>
-              <div className="p-4 border rounded-lg bg-purple-50/50">
-                <h3 className="font-medium mb-2 text-purple-700">Schlüsselgewohnheiten</h3>
-                <p className="text-purple-600">{getResponse("keystone_habits")}</p>
+              <div className="p-4 border rounded-lg bg-blue-50/50">
+                <h3 className="font-medium mb-2 text-blue-700">Schlüsselgewohnheiten</h3>
+                <p className="text-blue-600">{getResponse("keystone_habits")}</p>
               </div>
-              <div className="p-4 border rounded-lg bg-purple-50/50">
-                <h3 className="font-medium mb-2 text-purple-700">Umsetzungsbedenken</h3>
-                <p className="text-purple-600">{getResponse("implementation")}</p>
+              <div className="p-4 border rounded-lg bg-blue-50/50">
+                <h3 className="font-medium mb-2 text-blue-700">Umsetzungsbedenken</h3>
+                <p className="text-blue-600">{getResponse("implementation")}</p>
               </div>
             </div>
           </Card>
 
-          <Card className="p-6 bg-white rounded-2xl shadow-lg border border-purple-100 backdrop-blur-sm transition-all duration-300 hover:shadow-xl animate-slide-in">
-            <h2 className="text-xl font-semibold mb-4 text-purple-800">ZRM-Entwicklungsbereiche</h2>
+          <Card className="p-6 bg-white rounded-2xl shadow-lg border border-blue-100 backdrop-blur-sm transition-all duration-300 hover:shadow-xl animate-slide-in">
+            <h2 className="text-xl font-semibold mb-4 text-blue-800">ZRM-Entwicklungsbereiche</h2>
             <div className="space-y-6">
               <div className="space-y-2">
-                <h3 className="font-medium text-purple-700">Aktuelles Haltungsziel</h3>
-                <p className="text-purple-600 italic">
+                <h3 className="font-medium text-blue-700">Aktuelles Haltungsziel</h3>
+                <p className="text-blue-600 italic">
                   "Ich bin wie ein ruhiger Berg, der gelassen neue Herausforderungen meistert"
                 </p>
               </div>
               <div className="space-y-2">
-                <h3 className="font-medium text-purple-700">Ressourcenpool</h3>
+                <h3 className="font-medium text-blue-700">Ressourcenpool</h3>
                 <div className="flex gap-2 flex-wrap">
                   {["Meditation", "Sport", "Natur", "Musik"].map((resource) => (
                     <span
                       key={resource}
-                      className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm"
+                      className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm"
                     >
                       {resource}
                     </span>
