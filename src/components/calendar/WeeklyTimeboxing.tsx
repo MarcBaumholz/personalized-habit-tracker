@@ -1,7 +1,8 @@
+
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar } from "lucide-react";
 import { format, startOfWeek, addDays, getISOWeek } from "date-fns";
 import { de } from "date-fns/locale";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -221,54 +222,62 @@ export const WeeklyTimeboxing = () => {
   };
 
   return (
-    <Card className="p-4 md:p-6 mt-6 bg-white/50 backdrop-blur-sm shadow-lg">
-      <div className="flex flex-col space-y-4">
+    <Card className="p-6 md:p-8 mt-8 bg-white/90 backdrop-blur-sm shadow-xl rounded-xl border border-blue-100 hover:shadow-lg transition-all duration-300">
+      <div className="flex flex-col space-y-6">
         <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Calendar className="h-6 w-6 text-blue-600" />
+            <h2 className="text-2xl font-bold text-blue-800 bg-gradient-to-r from-blue-700 to-blue-900 bg-clip-text text-transparent">
+              {format(weekStart, "MMMM yyyy", { locale: de })}
+            </h2>
+          </div>
           <Tabs value={view} onValueChange={(v) => setView(v as ViewType)} className="w-full sm:w-auto">
-            <TabsList className="bg-purple-100/50">
-              <TabsTrigger value="day" className="data-[state=active]:bg-purple-500 data-[state=active]:text-white">
+            <TabsList className="bg-blue-50/50 border border-blue-100">
+              <TabsTrigger value="day" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
                 Tag
               </TabsTrigger>
-              <TabsTrigger value="workweek" className="data-[state=active]:bg-purple-500 data-[state=active]:text-white">
+              <TabsTrigger value="workweek" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
                 Mo-Fr
               </TabsTrigger>
             </TabsList>
           </Tabs>
-          <span className="text-sm text-purple-700 font-medium">
-            KW {getISOWeek(weekStart)}
-          </span>
         </div>
         
         <div className="flex items-center justify-between">
-          <Button variant="outline" size="icon" onClick={previousPeriod} className="hover:bg-purple-50">
-            <ChevronLeft className="h-4 w-4" />
+          <Button variant="outline" size="icon" onClick={previousPeriod} className="hover:bg-blue-50 border-blue-200">
+            <ChevronLeft className="h-4 w-4 text-blue-600" />
           </Button>
-          <span className="font-medium text-sm md:text-base text-purple-800">
-            {format(weekStart, view === 'day' ? "dd. MMMM yyyy" : "dd. MMMM yyyy", { locale: de })}
+          <span className="font-medium text-sm md:text-base text-blue-800">
+            KW {getISOWeek(weekStart)}
           </span>
-          <Button variant="outline" size="icon" onClick={nextPeriod} className="hover:bg-purple-50">
-            <ChevronRight className="h-4 w-4" />
+          <Button variant="outline" size="icon" onClick={nextPeriod} className="hover:bg-blue-50 border-blue-200">
+            <ChevronRight className="h-4 w-4 text-blue-600" />
           </Button>
         </div>
       </div>
 
-      <div className="mt-6 rounded-lg overflow-hidden border border-purple-100 bg-white">
-        <div className="grid grid-cols-[80px_repeat(auto-fit,minmax(0,1fr))] bg-purple-50">
-          <div className="p-3 font-medium text-sm text-purple-700 border-r border-purple-100">Zeit</div>
+      <div className="mt-6 rounded-xl overflow-hidden border border-blue-100 bg-white">
+        <div className="grid grid-cols-[80px_repeat(auto-fit,minmax(0,1fr))] bg-blue-50/80">
+          <div className="p-3 font-medium text-sm text-blue-700 border-r border-blue-100">Zeit</div>
           {view !== 'day' && weekDays.map(day => (
-            <div key={day.toString()} className="p-3 font-medium text-sm text-center text-purple-700 border-r border-purple-100 last:border-r-0">
-              {format(day, isMobile ? "E" : "EEE", { locale: de })}
+            <div key={day.toString()} className="p-3 flex flex-col items-center border-r border-blue-100 last:border-r-0">
+              <span className="font-medium text-sm text-blue-700">
+                {format(day, isMobile ? "E" : "EEEE", { locale: de })}
+              </span>
+              <span className="text-sm text-blue-600 mt-1">
+                {format(day, "dd.MM.", { locale: de })}
+              </span>
             </div>
           ))}
         </div>
 
-        <div className="divide-y divide-purple-100">
+        <div className="divide-y divide-blue-100">
           {TIME_SLOTS.map((slot) => (
             <div
               key={slot.time}
               className="grid grid-cols-[80px_repeat(auto-fit,minmax(0,1fr))]"
             >
-              <div className="p-2 text-xs text-purple-600 bg-purple-50/50 border-r border-purple-100">
+              <div className="p-2 text-xs text-blue-600 bg-blue-50/50 border-r border-blue-100">
                 {isMobile ? slot.time.split(" - ")[0] : slot.time}
               </div>
               {view === 'day' ? (
@@ -276,7 +285,7 @@ export const WeeklyTimeboxing = () => {
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <div
-                        className={`min-h-[60px] p-2 cursor-pointer transition-all hover:bg-purple-50 border-l border-purple-100 group ${
+                        className={`min-h-[60px] p-2 cursor-pointer transition-all hover:bg-blue-50 border-l border-blue-100 group ${
                           getActivityForSlot(slot.time, weekStart)
                             ? getActivityForSlot(slot.time, weekStart)?.type === 'todo'
                               ? 'bg-blue-50/80'
@@ -466,3 +475,4 @@ export const WeeklyTimeboxing = () => {
     </Card>
   );
 };
+
