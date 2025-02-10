@@ -15,7 +15,7 @@ export const CarouselNavButton = ({ direction }: CarouselNavButtonProps) => {
     <Component 
       className={cn(
         "relative left-0 translate-x-0 z-10",
-        "h-12 w-12 rounded-full",
+        "h-14 w-14 rounded-full",
         "bg-white hover:bg-blue-50",
         "shadow-lg border border-gray-200",
         "transition-all duration-200 ease-in-out",
@@ -23,7 +23,7 @@ export const CarouselNavButton = ({ direction }: CarouselNavButtonProps) => {
         "flex items-center justify-center"
       )}
     >
-      <Icon className="w-6 h-6 text-blue-600" />
+      <Icon className="w-7 h-7 text-blue-600" />
     </Component>
   );
 };
