@@ -7,6 +7,9 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { AddZRMResourceDialog } from "@/components/zrm/AddZRMResourceDialog";
+import { AddAttitudeGoalDialog } from "@/components/zrm/AddAttitudeGoalDialog";
+import { AddReflectionDialog } from "@/components/coaching/AddReflectionDialog";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -265,33 +268,10 @@ const Profile = () => {
           </Card>
 
           <Card className="p-6 bg-white rounded-2xl shadow-lg border border-blue-100 backdrop-blur-sm transition-all duration-300 hover:shadow-xl animate-slide-in">
-            <h2 className="text-xl font-semibold mb-4 text-blue-800">Deine Onboarding Antworten</h2>
-            <div className="space-y-4">
-              <div className="p-4 border rounded-lg bg-blue-50/50">
-                <h3 className="font-medium mb-2 text-blue-700">Motivation</h3>
-                <p className="text-blue-600">{getResponse("motivation")}</p>
-              </div>
-              <div className="p-4 border rounded-lg bg-blue-50/50">
-                <h3 className="font-medium mb-2 text-blue-700">Herausforderungen</h3>
-                <p className="text-blue-600">{getResponse("challenges")}</p>
-              </div>
-              <div className="p-4 border rounded-lg bg-blue-50/50">
-                <h3 className="font-medium mb-2 text-blue-700">Gewünschte Überzeugungen</h3>
-                <p className="text-blue-600">{getResponse("beliefs")}</p>
-              </div>
-              <div className="p-4 border rounded-lg bg-blue-50/50">
-                <h3 className="font-medium mb-2 text-blue-700">Schlüsselgewohnheiten</h3>
-                <p className="text-blue-600">{getResponse("keystone_habits")}</p>
-              </div>
-              <div className="p-4 border rounded-lg bg-blue-50/50">
-                <h3 className="font-medium mb-2 text-blue-700">Umsetzungsbedenken</h3>
-                <p className="text-blue-600">{getResponse("implementation")}</p>
-              </div>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-semibold text-blue-800">Zürcher Ressourcen Model (ZRM)</h2>
+              <AddZRMResourceDialog />
             </div>
-          </Card>
-
-          <Card className="p-6 bg-white rounded-2xl shadow-lg border border-blue-100 backdrop-blur-sm transition-all duration-300 hover:shadow-xl animate-slide-in">
-            <h2 className="text-xl font-semibold mb-4 text-blue-800">Zürcher Ressourcen Model (ZRM)</h2>
             <div className="space-y-6">
               <div className="space-y-4">
                 <h3 className="font-medium text-blue-700">Ressourcenpool</h3>
@@ -309,7 +289,10 @@ const Profile = () => {
               </div>
 
               <div className="space-y-4">
-                <h3 className="font-medium text-blue-700">Haltungsziele</h3>
+                <div className="flex justify-between items-center">
+                  <h3 className="font-medium text-blue-700">Haltungsziele</h3>
+                  <AddAttitudeGoalDialog />
+                </div>
                 <div className="space-y-3">
                   {attitudeGoals?.map((goal: any) => (
                     <div key={goal.id} className="p-4 bg-blue-50 rounded-lg">
@@ -332,7 +315,10 @@ const Profile = () => {
           </Card>
 
           <Card className="p-6 bg-white rounded-2xl shadow-lg border border-blue-100 backdrop-blur-sm transition-all duration-300 hover:shadow-xl animate-slide-in">
-            <h2 className="text-xl font-semibold mb-4 text-blue-800">Coaching Reflexion</h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold text-blue-800">Coaching Reflexion</h2>
+              <AddReflectionDialog />
+            </div>
             {coachingReflections ? (
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
@@ -371,6 +357,32 @@ const Profile = () => {
             ) : (
               <p className="text-blue-600">Noch keine Reflexionen vorhanden.</p>
             )}
+          </Card>
+
+          <Card className="p-6 bg-white rounded-2xl shadow-lg border border-blue-100 backdrop-blur-sm transition-all duration-300 hover:shadow-xl animate-slide-in">
+            <h2 className="text-xl font-semibold mb-4 text-blue-800">Deine Onboarding Antworten</h2>
+            <div className="space-y-4">
+              <div className="p-4 border rounded-lg bg-blue-50/50">
+                <h3 className="font-medium mb-2 text-blue-700">Motivation</h3>
+                <p className="text-blue-600">{getResponse("motivation")}</p>
+              </div>
+              <div className="p-4 border rounded-lg bg-blue-50/50">
+                <h3 className="font-medium mb-2 text-blue-700">Herausforderungen</h3>
+                <p className="text-blue-600">{getResponse("challenges")}</p>
+              </div>
+              <div className="p-4 border rounded-lg bg-blue-50/50">
+                <h3 className="font-medium mb-2 text-blue-700">Gewünschte Überzeugungen</h3>
+                <p className="text-blue-600">{getResponse("beliefs")}</p>
+              </div>
+              <div className="p-4 border rounded-lg bg-blue-50/50">
+                <h3 className="font-medium mb-2 text-blue-700">Schlüsselgewohnheiten</h3>
+                <p className="text-blue-600">{getResponse("keystone_habits")}</p>
+              </div>
+              <div className="p-4 border rounded-lg bg-blue-50/50">
+                <h3 className="font-medium mb-2 text-blue-700">Umsetzungsbedenken</h3>
+                <p className="text-blue-600">{getResponse("implementation")}</p>
+              </div>
+            </div>
           </Card>
         </div>
       </main>
