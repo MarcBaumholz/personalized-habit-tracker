@@ -4,17 +4,12 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format, startOfYear, eachDayOfInterval, endOfYear } from "date-fns";
 import { de } from "date-fns/locale";
-import { Check } from "lucide-react";
+import { Check, Star } from "lucide-react";
 
-const LIFE_AREA_COLORS = {
-  "Gesundheit": "#22C55E",      // Green for health
-  "Beziehungen": "#EC4899",     // Pink for relationships
-  "Karriere": "#3B82F6",        // Blue for career
-  "Finanzen": "#8B5CF6",        // Purple for finances
-  "Persönlichkeit": "#F97316",  // Orange for personal development
-  "Freizeit": "#EAB308",        // Yellow for leisure
-  "Spiritualität": "#14B8A6",   // Teal for spirituality
-  "Umwelt": "#64748B",         // Slate for environment
+const COMPLETION_COLORS = {
+  "check": "#22C55E",  // Green for full completion
+  "star": "#EAB308",   // Yellow for partial completion
+  "default": "#1F2937" // Dark gray for no completion
 };
 
 export const YearlyActivity = () => {
@@ -26,7 +21,13 @@ export const YearlyActivity = () => {
 
       const { data: habits } = await supabase
         .from("habits")
-        .select("*, habit_completions(completed_date), life_area")
+        .select(`
+          *,
+          habit_completions(
+            completed_date,
+            completion_type
+          )
+        `)
         .eq("user_id", user.id);
 
       if (!habits) return [];
@@ -39,14 +40,14 @@ export const YearlyActivity = () => {
       return habits.map(habit => {
         const completionMap = new Map();
         habit.habit_completions?.forEach((completion: any) => {
-          completionMap.set(completion.completed_date, true);
+          completionMap.set(completion.completed_date, completion.completion_type || 'check');
         });
 
         const days = allDays.map(date => {
           const dateStr = format(date, 'yyyy-MM-dd');
           return {
             date: dateStr,
-            completed: completionMap.has(dateStr),
+            completionType: completionMap.get(dateStr) || null,
             month: format(date, 'MMM', { locale: de }),
           };
         });
@@ -54,18 +55,15 @@ export const YearlyActivity = () => {
         return {
           id: habit.id,
           name: habit.name,
-          lifeArea: habit.life_area || 'Persönlichkeit',
           days
         };
       });
     }
   });
 
-  const getActivityStyle = (completed: boolean, lifeArea: string) => {
-    if (!completed) return 'bg-gray-800 dark:bg-gray-900';
-    const baseColor = LIFE_AREA_COLORS[lifeArea as keyof typeof LIFE_AREA_COLORS] || '#64748B';
-    
-    return `bg-[${baseColor}]`;
+  const getCompletionColor = (completionType: string | null) => {
+    if (!completionType) return COMPLETION_COLORS.default;
+    return COMPLETION_COLORS[completionType as keyof typeof COMPLETION_COLORS] || COMPLETION_COLORS.default;
   };
 
   if (!habitsData) return null;
@@ -76,15 +74,16 @@ export const YearlyActivity = () => {
         <Card key={habit.id} className="p-4 bg-gray-950">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full flex items-center justify-center" 
-                   style={{ backgroundColor: LIFE_AREA_COLORS[habit.lifeArea as keyof typeof LIFE_AREA_COLORS] || '#64748B' }}>
-                <span className="text-white text-sm">{habit.name.charAt(0)}</span>
-              </div>
               <h3 className="text-lg font-medium text-white">{habit.name}</h3>
             </div>
-            {habit.days[habit.days.length - 1]?.completed && (
-              <div className="w-8 h-8 rounded-lg bg-[#EAB308] flex items-center justify-center">
-                <Check className="w-5 h-5 text-black" style={{ strokeWidth: 3 }} />
+            {habit.days[habit.days.length - 1]?.completionType && (
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center"
+                   style={{ backgroundColor: getCompletionColor(habit.days[habit.days.length - 1]?.completionType) }}>
+                {habit.days[habit.days.length - 1]?.completionType === 'star' ? (
+                  <Star className="w-5 h-5 text-black" style={{ strokeWidth: 3 }} />
+                ) : (
+                  <Check className="w-5 h-5 text-black" style={{ strokeWidth: 3 }} />
+                )}
               </div>
             )}
           </div>
@@ -92,8 +91,9 @@ export const YearlyActivity = () => {
             {habit.days.map((day, index) => (
               <div
                 key={`${habit.id}-${day.date}`}
-                className={`aspect-square rounded-sm ${getActivityStyle(day.completed, habit.lifeArea)}`}
-                title={`${day.date}: ${day.completed ? 'Completed' : 'Not completed'}`}
+                className="aspect-square rounded-sm transition-colors duration-200"
+                style={{ backgroundColor: getCompletionColor(day.completionType) }}
+                title={`${day.date}: ${day.completionType ? 'Completed' : 'Not completed'}`}
               />
             ))}
           </div>
