@@ -196,26 +196,28 @@ const Toolbox = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       <Navigation />
-      <main className="container max-w-7xl mx-auto px-6 py-8">
-        <ToolboxHeader 
-          activeTab={activeTab} 
-          onTabChange={setActiveTab} 
-        />
-        
-        <div className="relative py-10">
-          <ToolboxCarousel
-            toolkits={getActiveToolkits()}
-            onSelect={setSelectedToolkit}
-            onRemove={removeRoutine}
-            onAdd={addToolkitToProfile}
-            activeTab={activeTab}
+      <main className="container max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+        <div className="max-w-6xl mx-auto space-y-8 animate-fade-in">
+          <ToolboxHeader 
+            activeTab={activeTab} 
+            onTabChange={setActiveTab} 
           />
-        </div>
+          
+          <div className="relative py-6 sm:py-10">
+            <ToolboxCarousel
+              toolkits={getActiveToolkits()}
+              onSelect={setSelectedToolkit}
+              onRemove={removeRoutine}
+              onAdd={addToolkitToProfile}
+              activeTab={activeTab}
+            />
+          </div>
 
-        <div className="mt-8 flex justify-center">
-          <AddHabitDialog />
+          <div className="mt-8 flex justify-center">
+            <AddHabitDialog />
+          </div>
         </div>
       </main>
     </div>

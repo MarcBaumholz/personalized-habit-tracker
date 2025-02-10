@@ -25,20 +25,22 @@ interface ToolkitCardProps {
 export const ToolkitCard = ({ toolkit, onSelect, onRemove, onAdd }: ToolkitCardProps) => {
   const Icon = toolkit.icon || Calendar;
   const randomGradient = [
-    "from-purple-200 to-purple-100",
-    "from-blue-200 to-blue-100",
-    "from-pink-200 to-pink-100",
-    "from-indigo-200 to-indigo-100",
+    "from-purple-100 to-indigo-50",
+    "from-blue-100 to-purple-50",
+    "from-indigo-100 to-blue-50",
+    "from-violet-100 to-purple-50",
   ][Math.floor(Math.random() * 4)];
 
   return (
     <div 
       onClick={() => onSelect?.(toolkit)}
       className={cn(
-        "group relative h-[280px] w-full rounded-3xl p-6 cursor-pointer transition-all duration-300",
+        "group relative h-[280px] w-full rounded-2xl p-6",
+        "cursor-pointer transition-all duration-300",
         "bg-gradient-to-br",
         randomGradient,
-        "hover:shadow-lg hover:-translate-y-1"
+        "hover:shadow-lg hover:-translate-y-1",
+        "border border-white/80"
       )}
     >
       <ToolkitCardActions
@@ -50,8 +52,8 @@ export const ToolkitCard = ({ toolkit, onSelect, onRemove, onAdd }: ToolkitCardP
 
       <ScrollArea className="h-[180px] pr-4">
         <div className="mt-10 mb-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/80 text-sm font-medium text-gray-700">
-            <Icon className="h-4 w-4" />
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/90 text-sm font-medium text-gray-700 shadow-sm border border-purple-100/50">
+            <Icon className="h-4 w-4 text-purple-600" />
             <span>{toolkit.category || "INSPIRATION"}</span>
           </div>
         </div>
@@ -60,24 +62,24 @@ export const ToolkitCard = ({ toolkit, onSelect, onRemove, onAdd }: ToolkitCardP
           <h3 className="text-lg font-semibold text-gray-900">
             {toolkit.name || toolkit.title}
           </h3>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600 leading-relaxed">
             {toolkit.description}
           </p>
         </div>
 
         {toolkit.example && (
-          <div className="mt-3">
+          <div className="mt-4">
             <p className="text-sm text-gray-700 font-medium">Beispiel:</p>
-            <p className="text-sm text-gray-600">{toolkit.example}</p>
+            <p className="text-sm text-gray-600 leading-relaxed">{toolkit.example}</p>
           </div>
         )}
 
         {toolkit.steps && toolkit.steps.length > 0 && (
-          <div className="mt-3">
+          <div className="mt-4">
             <p className="text-sm text-gray-700 font-medium">Schritte:</p>
-            <ul className="text-sm text-gray-600 list-disc list-inside">
+            <ul className="text-sm text-gray-600 list-disc list-inside space-y-1">
               {toolkit.steps.map((step, index) => (
-                <li key={index}>{step}</li>
+                <li key={index} className="leading-relaxed">{step}</li>
               ))}
             </ul>
           </div>
@@ -90,7 +92,13 @@ export const ToolkitCard = ({ toolkit, onSelect, onRemove, onAdd }: ToolkitCardP
             e.stopPropagation();
             onAdd?.(toolkit);
           }}
-          className="w-full bg-white hover:bg-gray-50 text-gray-900 gap-2 shadow-sm text-sm py-2"
+          className={cn(
+            "w-full gap-2 shadow-sm text-sm py-2",
+            "bg-white hover:bg-gray-50 text-gray-900",
+            "border border-purple-100",
+            "transition-all duration-200",
+            "hover:shadow-md"
+          )}
           variant="outline"
         >
           <Plus className="h-4 w-4" />
