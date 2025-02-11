@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -13,6 +14,7 @@ import Profile from "./pages/Profile";
 import Calendar from "./pages/Calendar";
 import Education from "./pages/Education";
 import Toolbox from "./pages/Toolbox";
+import Archive from "./pages/Archive";
 
 const queryClient = new QueryClient();
 
@@ -79,6 +81,10 @@ const App = () => {
             <Route
               path="/toolbox"
               element={session ? <Toolbox /> : <Navigate to="/auth" />}
+            />
+            <Route
+              path="/archive"
+              element={session ? <Archive /> : <Navigate to="/auth" />}
             />
           </Routes>
         </BrowserRouter>
