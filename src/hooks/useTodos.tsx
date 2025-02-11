@@ -39,7 +39,18 @@ export const useTodos = () => {
       const { data } = await supabase
         .rpc('get_last_24h_todo_stats', { p_user_id: user.id });
 
-      return data as TodoStats;
+      // Since we know the RPC function returns a JSON object with the correct shape,
+      // we can safely cast it after checking it's an object
+      if (data && typeof data === 'object' && !Array.isArray(data)) {
+        return data as TodoStats;
+      }
+      
+      // Return default values if data is not in expected format
+      return {
+        completed_todos: 0,
+        incomplete_todos: 0,
+        total_todos: 0
+      };
     },
   });
 
