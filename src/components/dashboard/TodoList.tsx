@@ -9,10 +9,12 @@ import { useTodos } from "@/hooks/useTodos";
 import { CATEGORIES, CATEGORY_EMOJIS, INSPIRATIONAL_MESSAGES } from "@/constants/todoConstants";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, Archive, SmileIcon } from "lucide-react";
 import { format } from "date-fns";
+import { useNavigate } from "react-router-dom";
 
 export const TodoList = () => {
+  const navigate = useNavigate();
   const [newTodo, setNewTodo] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [selectedTime, setSelectedTime] = useState<string>("");
@@ -56,18 +58,40 @@ export const TodoList = () => {
     return INSPIRATIONAL_MESSAGES[randomIndex];
   };
 
-  const getDailyStats = () => {
+  const getFeedbackMessage = () => {
     if (!todoStats) return "";
     
-    if (todoStats.completed_todos === 0) {
-      return "Gestern wurden keine Todos abgeschlossen. Heute ist ein neuer Tag!";
+    const { completed_todos, total_todos } = todoStats;
+    const completionRate = total_todos > 0 ? (completed_todos / total_todos) * 100 : 0;
+
+    if (total_todos === 0) {
+      return "Willkommen! Beginne deinen Tag mit einem neuen Todo.";
     }
 
-    return `Gestern ${todoStats.completed_todos} von ${todoStats.total_todos} Todos abgeschlossen! ${
-      todoStats.incomplete_todos > 0 
-        ? `${todoStats.incomplete_todos} Todo${todoStats.incomplete_todos === 1 ? '' : 's'} warten noch auf dich.`
-        : 'Super gemacht!'
-    }`;
+    if (completionRate >= 80) {
+      return (
+        <div className="flex items-center gap-2 text-green-600">
+          <SmileIcon className="h-5 w-5" />
+          <span>Super Leistung! Du hast {completed_todos} von {total_todos} Todos geschafft!</span>
+        </div>
+      );
+    }
+
+    if (completionRate >= 50) {
+      return (
+        <div className="flex items-center gap-2 text-blue-600">
+          <SmileIcon className="h-5 w-5" />
+          <span>Gute Arbeit! Weiter so mit den restlichen Todos!</span>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex items-center gap-2 text-blue-600">
+        <SmileIcon className="h-5 w-5" />
+        <span>Jeder Fortschritt zählt! Du schaffst das!</span>
+      </div>
+    );
   };
 
   return (
@@ -75,7 +99,9 @@ export const TodoList = () => {
       <TodoHeader timeUntilMidnight={timeUntilMidnight} />
       
       <div className="space-y-4">
-        <p className="text-sm text-gray-600 italic">{getDailyStats()}</p>
+        <div className="bg-blue-50 p-4 rounded-lg">
+          {getFeedbackMessage()}
+        </div>
 
         <TodoInput
           newTodo={newTodo}
@@ -149,7 +175,19 @@ export const TodoList = () => {
             )}
           </div>
         )}
+
+        <div className="mt-6">
+          <Button
+            variant="outline"
+            className="w-full flex items-center justify-center gap-2 text-blue-600 hover:text-blue-700"
+            onClick={() => navigate("/archive")}
+          >
+            <Archive className="h-4 w-4" />
+            Zum vollständigen Archiv
+          </Button>
+        </div>
       </div>
     </Card>
   );
 };
+
