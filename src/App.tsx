@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -19,7 +18,7 @@ import Archive from "./pages/Archive";
 const queryClient = new QueryClient();
 
 const App = () => {
-  const [session, setSession] = useState<any>(null);
+  const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -45,10 +44,10 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
+      <BrowserRouter basename="/personalized-habit-tracker">
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
           <Routes>
             <Route
               path="/"
@@ -87,8 +86,8 @@ const App = () => {
               element={session ? <Archive /> : <Navigate to="/auth" />}
             />
           </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
+        </TooltipProvider>
+      </BrowserRouter>
     </QueryClientProvider>
   );
 };
