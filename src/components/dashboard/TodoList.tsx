@@ -10,6 +10,7 @@ import { CATEGORIES, CATEGORY_EMOJIS, INSPIRATIONAL_MESSAGES } from "@/constants
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import { format } from "date-fns";
 
 export const TodoList = () => {
   const [newTodo, setNewTodo] = useState("");
@@ -109,7 +110,7 @@ export const TodoList = () => {
             <Separator className="my-4" />
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-medium text-gray-500">
-                Todos von gestern
+                Archivierte Todos
               </h3>
               <Button
                 variant="ghost"
@@ -131,9 +132,14 @@ export const TodoList = () => {
                     key={todo.id}
                     className="flex items-center justify-between p-3 rounded-lg bg-gray-50 border border-gray-100"
                   >
-                    <span className="text-gray-600">
-                      {CATEGORY_EMOJIS[todo.category || "Sonstiges"]} {todo.title}
-                    </span>
+                    <div className="flex flex-col">
+                      <span className="text-gray-600">
+                        {CATEGORY_EMOJIS[todo.category || "Sonstiges"]} {todo.title}
+                      </span>
+                      <span className="text-xs text-gray-400">
+                        {format(new Date(todo.archived_at), 'dd.MM.yyyy HH:mm')} Uhr
+                      </span>
+                    </div>
                     <span className={`text-xs ${todo.completed ? "text-green-500" : "text-red-500"}`}>
                       {todo.completed ? "Erledigt" : "Nicht erledigt"}
                     </span>
