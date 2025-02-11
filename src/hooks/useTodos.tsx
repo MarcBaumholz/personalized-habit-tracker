@@ -42,7 +42,16 @@ export const useTodos = () => {
       // Since we know the RPC function returns a JSON object with the correct shape,
       // we can safely cast it after checking it's an object
       if (data && typeof data === 'object' && !Array.isArray(data)) {
-        return data as TodoStats;
+        const statsData = data as Record<string, number>;
+        if ('completed_todos' in statsData && 
+            'incomplete_todos' in statsData && 
+            'total_todos' in statsData) {
+          return {
+            completed_todos: statsData.completed_todos,
+            incomplete_todos: statsData.incomplete_todos,
+            total_todos: statsData.total_todos
+          } as TodoStats;
+        }
       }
       
       // Return default values if data is not in expected format
