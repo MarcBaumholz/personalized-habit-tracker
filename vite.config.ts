@@ -6,6 +6,16 @@ import { componentTagger } from "lovable-tagger";
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   base: '/personalized-habit-tracker/',
+  build: {
+    outDir: 'dist',
+    assetsDir: 'assets',
+    rollupOptions: {
+      output: {
+        assetFileNames: 'assets/[name].[ext]'
+      }
+    },
+    sourcemap: true,
+  },
   server: {
     host: "::",
     port: 8080,
@@ -19,9 +29,5 @@ export default defineConfig(({ mode }) => ({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
-  },
-  build: {
-    outDir: 'dist',
-    sourcemap: true,
   },
 }));
