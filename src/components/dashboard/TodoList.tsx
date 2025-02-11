@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { TodoHeader } from "./TodoHeader";
@@ -114,7 +115,7 @@ export const TodoList = () => {
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowArchive(!showArchive)}
-                className="text-gray-500"
+                className="text-gray-500 hover:bg-gray-100"
               >
                 {showArchive ? (
                   <ChevronUp className="h-4 w-4" />
