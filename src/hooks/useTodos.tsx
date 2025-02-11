@@ -3,6 +3,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
+interface TodoStats {
+  completed_todos: number;
+  incomplete_todos: number;
+  total_todos: number;
+}
+
 export const useTodos = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -31,9 +37,9 @@ export const useTodos = () => {
       if (!user) throw new Error("No user found");
 
       const { data } = await supabase
-        .rpc('get_last_24h_todo_stats', { user_id: user.id });
+        .rpc('get_last_24h_todo_stats', { p_user_id: user.id });
 
-      return data;
+      return data as TodoStats;
     },
   });
 
