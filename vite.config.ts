@@ -4,30 +4,20 @@ import path from "path";
 import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => ({
-  base: '/personalized-habit-tracker/',
+export default defineConfig({
+  base: '/',
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
-    rollupOptions: {
-      output: {
-        assetFileNames: 'assets/[name].[ext]'
-      }
-    },
-    sourcemap: true,
   },
   server: {
-    host: "::",
     port: 8080,
+    open: true
   },
-  plugins: [
-    react(),
-    mode === 'development' &&
-    componentTagger(),
-  ].filter(Boolean),
+  plugins: [react()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
   },
-}));
+});
