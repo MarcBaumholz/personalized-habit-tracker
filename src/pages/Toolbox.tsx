@@ -1,3 +1,4 @@
+
 import { Navigation } from "@/components/layout/Navigation";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -7,9 +8,15 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Brain, Target, Calendar, List, BookOpen, Clock, Lightbulb, Package } from "lucide-react";
 import { ToolboxHeader } from "@/components/toolbox/ToolboxHeader";
 import { ToolboxCarousel } from "@/components/toolbox/ToolboxCarousel";
-import { Database } from "@/integrations/supabase/types";
 
-type BuildingBlock = Database['public']['Tables']['building_blocks']['Row'];
+interface BuildingBlock {
+  id: string;
+  name: string;
+  description: string | null;
+  category: string;
+  impact_area: string[];
+  created_at: string;
+}
 
 const INSPIRATION_TOOLKITS = [
   {
@@ -145,10 +152,13 @@ const Toolbox = () => {
   const { data: buildingBlocks } = useQuery<BuildingBlock[]>({
     queryKey: ["building-blocks"],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('building_blocks')
-        .select('*');
-      return data || [];
+        .select('*')
+        .order('category');
+      
+      if (error) throw error;
+      return (data as BuildingBlock[]) || [];
     },
   });
 

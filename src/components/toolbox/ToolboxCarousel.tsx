@@ -11,9 +11,15 @@ import { EmptyToolboxState } from "./EmptyToolboxState";
 import { CarouselNavButton } from "./CarouselNavButton";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Database } from "@/integrations/supabase/types";
 
-type BuildingBlock = Database['public']['Tables']['building_blocks']['Row'];
+interface BuildingBlock {
+  id: string;
+  name: string;
+  description: string | null;
+  category: string;
+  impact_area: string[];
+  created_at: string;
+}
 
 interface ToolboxCarouselProps {
   toolkits: any[];
@@ -29,10 +35,12 @@ export const ToolboxCarousel = ({ toolkits = [], onSelect, onRemove, onAdd, acti
   const { data: buildingBlocks } = useQuery<BuildingBlock[]>({
     queryKey: ['building-blocks'],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('building_blocks')
         .select('*');
-      return data || [];
+      
+      if (error) throw error;
+      return (data as BuildingBlock[]) || [];
     },
   });
 
