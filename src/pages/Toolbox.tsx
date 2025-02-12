@@ -7,6 +7,9 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Brain, Target, Calendar, List, BookOpen, Clock, Lightbulb, Package } from "lucide-react";
 import { ToolboxHeader } from "@/components/toolbox/ToolboxHeader";
 import { ToolboxCarousel } from "@/components/toolbox/ToolboxCarousel";
+import { Database } from "@/integrations/supabase/types";
+
+type BuildingBlock = Database['public']['Tables']['building_blocks']['Row'];
 
 const INSPIRATION_TOOLKITS = [
   {
@@ -139,13 +142,12 @@ const Toolbox = () => {
     },
   });
 
-  const { data: buildingBlocks } = useQuery({
+  const { data: buildingBlocks } = useQuery<BuildingBlock[]>({
     queryKey: ["building-blocks"],
     queryFn: async () => {
       const { data } = await supabase
-        .from("building_blocks")
-        .select("*")
-        .order("category");
+        .from('building_blocks')
+        .select('*');
       return data || [];
     },
   });
