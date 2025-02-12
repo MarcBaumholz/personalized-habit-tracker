@@ -8,32 +8,36 @@ import { ToolkitCardActions } from "./ToolkitCardActions";
 import { Badge } from "@/components/ui/badge";
 import { HabitLoop } from "./HabitLoop";
 
+interface Toolkit {
+  id?: string;
+  title: string;
+  name?: string;
+  description: string;
+  category?: string;
+  icon?: LucideIcon;
+  example?: string;
+  steps?: string[];
+  type?: string;
+  cue?: string;
+  craving?: string;
+  routine?: string;
+  reward?: string;
+  minimal_dose?: string;
+  impact_area?: string[];
+  building_blocks?: string[];
+}
+
 interface ToolkitCardProps {
-  toolkit: {
-    id?: string;
-    title: string;
-    name?: string;
-    description: string;
-    category?: string;
-    icon: LucideIcon;
-    example?: string;
-    steps?: string[];
-    type?: string;
-    cue?: string;
-    craving?: string;
-    routine?: string;
-    reward?: string;
-    minimal_dose?: string;
-    impact_area?: string[];
-    building_blocks?: string[];
-  };
-  onSelect?: (toolkit: any) => void;
+  toolkit: Toolkit;
+  onSelect?: (toolkit: Toolkit) => void;
   onRemove?: (id: string) => void;
-  onAdd?: (toolkit: any) => void;
+  onAdd?: (toolkit: Toolkit) => void;
 }
 
 export const ToolkitCard = ({ toolkit, onSelect, onRemove, onAdd }: ToolkitCardProps) => {
   const Icon = toolkit.icon || Calendar;
+
+  const showHabitLoop = toolkit.cue && toolkit.craving && toolkit.routine && toolkit.reward;
 
   return (
     <div 
@@ -78,7 +82,16 @@ export const ToolkitCard = ({ toolkit, onSelect, onRemove, onAdd }: ToolkitCardP
           </p>
         </div>
 
-        {toolkit.cue && <HabitLoop toolkit={toolkit} />}
+        {showHabitLoop && (
+          <HabitLoop 
+            toolkit={{
+              cue: toolkit.cue!,
+              craving: toolkit.craving!,
+              routine: toolkit.routine!,
+              reward: toolkit.reward!
+            }} 
+          />
+        )}
 
         {toolkit.minimal_dose && (
           <div className="mt-8">
