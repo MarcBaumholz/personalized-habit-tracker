@@ -177,6 +177,33 @@ export type Database = {
           },
         ]
       }
+      building_blocks: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          impact_area: string[]
+          name: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          impact_area?: string[]
+          name: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          impact_area?: string[]
+          name?: string
+        }
+        Relationships: []
+      }
       coaching_reflections: {
         Row: {
           challenges: string | null
