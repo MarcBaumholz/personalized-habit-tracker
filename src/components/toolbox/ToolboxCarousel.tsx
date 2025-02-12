@@ -9,6 +9,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { EmptyToolboxState } from "./EmptyToolboxState";
 import { CarouselNavButton } from "./CarouselNavButton";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ToolboxCarouselProps {
   toolkits: any[];
@@ -18,10 +20,29 @@ interface ToolboxCarouselProps {
   activeTab: string;
 }
 
-export const ToolboxCarousel = ({ toolkits, onSelect, onRemove, onAdd, activeTab }: ToolboxCarouselProps) => {
+export const ToolboxCarousel = ({ toolkits = [], onSelect, onRemove, onAdd, activeTab }: ToolboxCarouselProps) => {
   const isMobile = useIsMobile();
 
-  if (toolkits.length === 0) {
+  const { data: buildingBlocks } = useQuery({
+    queryKey: ['building-blocks'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('building_blocks')
+        .select('*')
+        .order('category');
+      return data || [];
+    },
+  });
+
+  const combinedToolkits = activeTab === 'inspiration' 
+    ? [...toolkits, ...(buildingBlocks || []).map(block => ({
+        ...block,
+        type: 'building_block',
+        steps: block.impact_area,
+      }))]
+    : toolkits;
+
+  if (combinedToolkits.length === 0) {
     return <EmptyToolboxState activeTab={activeTab} />;
   }
 
@@ -39,7 +60,7 @@ export const ToolboxCarousel = ({ toolkits, onSelect, onRemove, onAdd, activeTab
           <CarouselNavButton direction="prev" />
 
           <CarouselContent className="w-full">
-            {toolkits.map((toolkit, index) => (
+            {combinedToolkits.map((toolkit, index) => (
               <CarouselItem 
                 key={toolkit.id || index} 
                 className={cn(

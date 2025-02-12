@@ -1,10 +1,12 @@
 
-import { Calendar, Plus } from "lucide-react";
+import { Calendar, Plus, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ToolkitCardActions } from "./ToolkitCardActions";
+import { Badge } from "@/components/ui/badge";
+import { HabitLoop } from "./HabitLoop";
 
 interface ToolkitCardProps {
   toolkit: {
@@ -16,6 +18,14 @@ interface ToolkitCardProps {
     icon: LucideIcon;
     example?: string;
     steps?: string[];
+    type?: string;
+    cue?: string;
+    craving?: string;
+    routine?: string;
+    reward?: string;
+    minimal_dose?: string;
+    impact_area?: string[];
+    building_blocks?: string[];
   };
   onSelect?: (toolkit: any) => void;
   onRemove?: (id: string) => void;
@@ -29,7 +39,7 @@ export const ToolkitCard = ({ toolkit, onSelect, onRemove, onAdd }: ToolkitCardP
     <div 
       onClick={() => onSelect?.(toolkit)}
       className={cn(
-        "group relative min-h-[500px] w-full rounded-xl p-8",
+        "group relative min-h-[600px] w-full rounded-xl p-8",
         "cursor-pointer transition-all duration-300",
         "bg-white hover:bg-blue-50",
         "shadow-md hover:shadow-xl hover:-translate-y-1",
@@ -43,11 +53,19 @@ export const ToolkitCard = ({ toolkit, onSelect, onRemove, onAdd }: ToolkitCardP
         toolkit={toolkit}
       />
 
-      <ScrollArea className="h-[400px] pr-4">
+      <ScrollArea className="h-[500px] pr-4">
         <div className="mt-8 mb-8">
-          <div className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-blue-50 text-base font-medium text-blue-700 border border-blue-100">
-            <Icon className="h-5 w-5 text-blue-600" />
-            <span>{toolkit.category || "INSPIRATION"}</span>
+          <div className="flex flex-wrap gap-2">
+            <Badge variant="secondary" className="text-base font-medium">
+              <Icon className="h-5 w-5 text-blue-600 mr-2" />
+              {toolkit.category || "INSPIRATION"}
+            </Badge>
+            {toolkit.type === 'building_block' && (
+              <Badge variant="outline" className="text-base font-medium">
+                <Star className="h-4 w-4 text-yellow-500 mr-2" />
+                Building Block
+              </Badge>
+            )}
           </div>
         </div>
 
@@ -60,6 +78,15 @@ export const ToolkitCard = ({ toolkit, onSelect, onRemove, onAdd }: ToolkitCardP
           </p>
         </div>
 
+        {toolkit.cue && <HabitLoop toolkit={toolkit} />}
+
+        {toolkit.minimal_dose && (
+          <div className="mt-8">
+            <p className="text-lg font-medium text-gray-900 mb-3">Minimal Dose:</p>
+            <p className="text-lg text-gray-600 leading-relaxed">{toolkit.minimal_dose}</p>
+          </div>
+        )}
+
         {toolkit.example && (
           <div className="mt-8">
             <p className="text-lg font-medium text-gray-900 mb-3">Beispiel:</p>
@@ -67,14 +94,29 @@ export const ToolkitCard = ({ toolkit, onSelect, onRemove, onAdd }: ToolkitCardP
           </div>
         )}
 
-        {toolkit.steps && toolkit.steps.length > 0 && (
+        {(toolkit.steps || toolkit.impact_area) && (
           <div className="mt-8">
-            <p className="text-lg font-medium text-gray-900 mb-3">Schritte:</p>
+            <p className="text-lg font-medium text-gray-900 mb-3">
+              {toolkit.type === 'building_block' ? 'Impact Areas:' : 'Schritte:'}
+            </p>
             <ul className="text-lg text-gray-600 list-disc list-inside space-y-3">
-              {toolkit.steps.map((step, index) => (
+              {(toolkit.steps || toolkit.impact_area || []).map((step, index) => (
                 <li key={index} className="leading-relaxed">{step}</li>
               ))}
             </ul>
+          </div>
+        )}
+
+        {toolkit.building_blocks && toolkit.building_blocks.length > 0 && (
+          <div className="mt-8">
+            <p className="text-lg font-medium text-gray-900 mb-3">Building Blocks:</p>
+            <div className="flex flex-wrap gap-2">
+              {toolkit.building_blocks.map((block, index) => (
+                <Badge key={index} variant="secondary">
+                  {block}
+                </Badge>
+              ))}
+            </div>
           </div>
         )}
       </ScrollArea>

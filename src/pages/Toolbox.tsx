@@ -1,4 +1,3 @@
-
 import { Navigation } from "@/components/layout/Navigation";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -21,11 +20,16 @@ const INSPIRATION_TOOLKITS = [
       "Bereite deine Umgebung vor",
       "Starte mit 5-10 Minuten",
     ],
+    cue: "Nach dem Aufwachen",
+    craving: "Einen ruhigen, fokussierten Start in den Tag",
+    routine: "10 Minuten Meditation",
+    reward: "Klarheit und innere Ruhe",
+    minimal_dose: "2 Minuten achtsames Atmen",
   },
   {
     id: "deep-work",
     title: "Deep Work",
-    description: "Maximale Produktivität",
+    description: "Maximale Produktivität durch fokussierte Arbeit",
     icon: Brain,
     example: "2 Stunden fokussierte Arbeit ohne Ablenkungen",
     steps: [
@@ -33,6 +37,11 @@ const INSPIRATION_TOOLKITS = [
       "Eliminiere Ablenkungen",
       "Setze klare Ziele",
     ],
+    cue: "Morgens nach dem ersten Kaffee",
+    craving: "Produktiver und effektiver arbeiten",
+    routine: "90 Minuten fokussierte Arbeit",
+    reward: "Sichtbare Fortschritte und Erfolgserlebnisse",
+    minimal_dose: "25 Minuten Pomodoro-Session",
   },
   {
     id: "habit-tracking",
@@ -110,7 +119,7 @@ const INSPIRATION_TOOLKITS = [
 
 const Toolbox = () => {
   const [selectedToolkit, setSelectedToolkit] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<'routines' | 'community' | 'inspiration'>('routines');
+  const [activeTab, setActiveTab] = useState<'routines' | 'community' | 'inspiration' | 'building-blocks'>('routines');
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -130,14 +139,27 @@ const Toolbox = () => {
     },
   });
 
+  const { data: buildingBlocks } = useQuery({
+    queryKey: ["building-blocks"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("building_blocks")
+        .select("*")
+        .order("category");
+      return data || [];
+    },
+  });
+
   const getActiveToolkits = () => {
     switch (activeTab) {
       case 'routines':
         return activeRoutines || [];
+      case 'building-blocks':
+        return buildingBlocks || [];
       case 'inspiration':
         return INSPIRATION_TOOLKITS;
       case 'community':
-        return []; // This could be populated with community data in the future
+        return []; // Will be implemented later
       default:
         return [];
     }
@@ -148,12 +170,19 @@ const Toolbox = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
-      await supabase.from("habits").insert({
+      const habitData = {
         user_id: user.id,
         name: toolkit.title,
-        category: "routine",
-        context: JSON.stringify(toolkit),
-      });
+        category: toolkit.category || "routine",
+        cue: toolkit.cue,
+        craving: toolkit.craving,
+        routine: toolkit.routine,
+        reward: toolkit.reward,
+        minimal_dose: toolkit.minimal_dose,
+        building_blocks: toolkit.building_blocks,
+      };
+
+      await supabase.from("habits").insert(habitData);
 
       queryClient.invalidateQueries({ queryKey: ["active-routines"] });
 

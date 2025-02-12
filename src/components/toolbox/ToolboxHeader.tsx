@@ -1,11 +1,11 @@
 
-import { Star, Users, Sparkle } from "lucide-react";
+import { Star, Users, Sparkle, Package } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ToolboxHeaderProps {
-  activeTab: 'routines' | 'community' | 'inspiration';
-  onTabChange: (tab: 'routines' | 'community' | 'inspiration') => void;
+  activeTab: 'routines' | 'community' | 'inspiration' | 'building-blocks';
+  onTabChange: (tab: 'routines' | 'community' | 'inspiration' | 'building-blocks') => void;
 }
 
 export const ToolboxHeader = ({ activeTab, onTabChange }: ToolboxHeaderProps) => {
@@ -14,17 +14,29 @@ export const ToolboxHeader = ({ activeTab, onTabChange }: ToolboxHeaderProps) =>
   return (
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h1 className="text-3xl sm:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-400">
-          Habit Baukasten
-        </h1>
+        <div className="space-y-2">
+          <h1 className="text-3xl sm:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-400">
+            Habit Baukasten
+          </h1>
+          <p className="text-gray-600 max-w-xl">
+            Entdecke bewährte Gewohnheitsmuster und Bausteine für deine persönliche Entwicklung
+          </p>
+        </div>
       </div>
       
-      <div className="flex border-b border-gray-200 w-full md:w-[400px] bg-white rounded-t-lg shadow-sm">
+      <div className="flex border-b border-gray-200 w-full md:w-[500px] bg-white rounded-t-lg shadow-sm">
         <TabButton
           isActive={activeTab === 'routines'}
           onClick={() => onTabChange('routines')}
           icon={<Star className="h-5 w-5" />}
           label="Routinen"
+          isMobile={isMobile}
+        />
+        <TabButton
+          isActive={activeTab === 'building-blocks'}
+          onClick={() => onTabChange('building-blocks')}
+          icon={<Package className="h-5 w-5" />}
+          label="Bausteine"
           isMobile={isMobile}
         />
         <TabButton
