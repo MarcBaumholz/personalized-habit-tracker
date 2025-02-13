@@ -1,3 +1,4 @@
+
 import { Navigation } from "@/components/layout/Navigation";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
@@ -58,7 +59,6 @@ const Profile = () => {
         .eq("user_id", user.id)
         .eq("question_key", "life_areas");
 
-      // Get the first response if there are multiple, or return empty array
       const firstResponse = data?.[0]?.response;
       return firstResponse ? JSON.parse(firstResponse) : [];
     },
@@ -79,36 +79,6 @@ const Profile = () => {
         .single();
 
       return data;
-    },
-  });
-
-  const { data: zrmResources } = useQuery({
-    queryKey: ["zrm-resources"],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("No user found");
-
-      const { data } = await supabase
-        .from("zrm_resources")
-        .select("*")
-        .eq("user_id", user.id);
-
-      return data || [];
-    },
-  });
-
-  const { data: attitudeGoals } = useQuery({
-    queryKey: ["attitude-goals"],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("No user found");
-
-      const { data } = await supabase
-        .from("attitude_goals")
-        .select("*")
-        .eq("user_id", user.id);
-
-      return data || [];
     },
   });
 
@@ -133,28 +103,57 @@ const Profile = () => {
     return responses?.find(r => r.question_key === key)?.response || "";
   };
 
-  const handleRestartReflection = async () => {
+  const handleRestartOnboarding = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
+      // Delete existing onboarding responses
+      const { error: onboardingError } = await supabase
+        .from("onboarding_responses")
+        .delete()
+        .eq("user_id", user.id);
+
+      if (onboardingError) throw onboardingError;
+
       // Delete existing reflection data
-      const { error } = await supabase
+      const { error: reflectionError } = await supabase
         .from("coaching_reflections")
         .delete()
-        .eq("user_id", user.id)
-        .eq("reflection_date", new Date().toISOString().split('T')[0]);
+        .eq("user_id", user.id);
 
-      if (error) throw error;
+      if (reflectionError) throw reflectionError;
+
+      // Delete existing keystone habits
+      const { error: habitError } = await supabase
+        .from("keystone_habits")
+        .delete()
+        .eq("user_id", user.id);
+
+      if (habitError) throw habitError;
+
+      // Delete existing Big Five results
+      const { error: bigFiveError } = await supabase
+        .from("big_five_results")
+        .delete()
+        .eq("user_id", user.id);
+
+      if (bigFiveError) throw bigFiveError;
 
       toast({
-        title: "Reflexion zurückgesetzt",
-        description: "Du kannst jetzt eine neue Reflexion starten.",
+        title: "Onboarding neu gestartet",
+        description: "Alle deine Daten wurden zurückgesetzt. Du kannst jetzt von vorne beginnen.",
       });
+
+      // Refresh all queries
+      queryClient.invalidateQueries();
+
+      // Redirect to onboarding
+      navigate("/onboarding");
     } catch (error) {
       toast({
         title: "Fehler",
-        description: "Die Reflexion konnte nicht zurückgesetzt werden.",
+        description: "Das Onboarding konnte nicht neu gestartet werden.",
         variant: "destructive",
       });
     }
@@ -169,9 +168,9 @@ const Profile = () => {
             Dein Persönlichkeitsprofil
           </h1>
           <div className="flex gap-2">
-            <Button onClick={handleRestartReflection} variant="outline" className="hover:bg-blue-50 gap-2">
+            <Button onClick={handleRestartOnboarding} variant="outline" className="hover:bg-blue-50 gap-2">
               <RefreshCw className="h-4 w-4" />
-              Reflexion neu starten
+              Onboarding neu starten
             </Button>
           </div>
         </div>
@@ -188,6 +187,27 @@ const Profile = () => {
             title="Herausforderungen"
             content={getResponse("challenges")}
             sectionKey="challenges"
+            onUpdate={() => queryClient.invalidateQueries({ queryKey: ["onboarding-responses"] })}
+          />
+
+          <EditableProfileBlock
+            title="Neugier & Veränderung"
+            content={getResponse("curiosities")}
+            sectionKey="curiosities"
+            onUpdate={() => queryClient.invalidateQueries({ queryKey: ["onboarding-responses"] })}
+          />
+
+          <EditableProfileBlock
+            title="Werte & Normen"
+            content={getResponse("values")}
+            sectionKey="values"
+            onUpdate={() => queryClient.invalidateQueries({ queryKey: ["onboarding-responses"] })}
+          />
+
+          <EditableProfileBlock
+            title="Aktuelle Gewohnheiten"
+            content={getResponse("current_habits")}
+            sectionKey="current_habits"
             onUpdate={() => queryClient.invalidateQueries({ queryKey: ["onboarding-responses"] })}
           />
 
