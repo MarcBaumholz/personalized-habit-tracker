@@ -130,10 +130,10 @@ export const KeystoneHabitsSetup = ({ onComplete }: { onComplete: () => void }) 
           alt="Wise completion image"
           className="mx-auto rounded-lg shadow-xl"
         />
-        <h2 className="text-2xl font-bold text-purple-800">
+        <h2 className="text-2xl font-bold text-blue-800">
           Glückwunsch! Du hast den Onboarding-Prozess abgeschlossen.
         </h2>
-        <p className="text-purple-600">
+        <p className="text-blue-600">
           Du wirst in wenigen Sekunden zu deiner personalisierten Startseite weitergeleitet...
         </p>
       </div>
@@ -143,15 +143,15 @@ export const KeystoneHabitsSetup = ({ onComplete }: { onComplete: () => void }) 
   return (
     <Card className="max-w-2xl mx-auto p-6 space-y-6 bg-white/80 backdrop-blur-sm">
       <div className="space-y-2">
-        <h2 className="text-2xl font-bold text-purple-800">Deine Keystone Habits</h2>
-        <p className="text-purple-600">
+        <h2 className="text-2xl font-bold text-blue-800">Deine Keystone Habits</h2>
+        <p className="text-blue-600">
           Definiere zwei Schlüsselgewohnheiten, die den größten positiven Einfluss auf dein Leben haben werden
         </p>
       </div>
 
       {habits.map((habit, index) => (
-        <div key={index} className="space-y-4 p-4 border rounded-lg bg-purple-50">
-          <h3 className="font-semibold text-purple-800">Keystone Habit {index + 1}</h3>
+        <div key={index} className="space-y-4 p-4 border rounded-lg bg-blue-50">
+          <h3 className="font-semibold text-blue-800">Keystone Habit {index + 1}</h3>
           
           <div className="space-y-2">
             <Label>Name der Gewohnheit</Label>
@@ -266,7 +266,7 @@ export const KeystoneHabitsSetup = ({ onComplete }: { onComplete: () => void }) 
 
       <Button
         onClick={handleSubmit}
-        className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+        className="w-full bg-blue-600 hover:bg-blue-700 text-white"
       >
         Keystone Habits speichern
       </Button>

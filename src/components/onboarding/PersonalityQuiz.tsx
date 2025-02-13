@@ -141,15 +141,15 @@ export const PersonalityQuiz = ({ onComplete }: { onComplete: () => void }) => {
   return (
     <Card className="max-w-2xl mx-auto p-6 space-y-6 bg-white/80 backdrop-blur-sm">
       <div className="space-y-2">
-        <h2 className="text-2xl font-bold text-purple-800">Big Five Persönlichkeitstest</h2>
-        <p className="text-purple-600">
+        <h2 className="text-2xl font-bold text-blue-800">Big Five Persönlichkeitstest</h2>
+        <p className="text-blue-600">
           Beantworte die folgenden Fragen, um dein Persönlichkeitsprofil zu erstellen
         </p>
       </div>
 
       {BIG_FIVE_QUESTIONS.map((category) => (
-        <div key={category.category} className="space-y-4 p-4 border rounded-lg bg-purple-50">
-          <h3 className="font-semibold text-purple-800 capitalize">
+        <div key={category.category} className="space-y-4 p-4 border rounded-lg bg-blue-50">
+          <h3 className="font-semibold text-blue-800 capitalize">
             {category.category}
           </h3>
           
@@ -182,7 +182,7 @@ export const PersonalityQuiz = ({ onComplete }: { onComplete: () => void }) => {
             onChange={handleFileChange}
             className="bg-white"
           />
-          <p className="text-sm text-purple-600">
+          <p className="text-sm text-blue-600">
             Falls du bereits einen Big Five Test gemacht hast, kannst du hier das Ergebnis als PDF hochladen
           </p>
         </div>
@@ -191,7 +191,7 @@ export const PersonalityQuiz = ({ onComplete }: { onComplete: () => void }) => {
       <Button
         onClick={handleSubmit}
         disabled={!isComplete && !pdfFile}
-        className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+        className="w-full bg-blue-600 hover:bg-blue-700 text-white"
       >
         Persönlichkeitstest abschließen
       </Button>

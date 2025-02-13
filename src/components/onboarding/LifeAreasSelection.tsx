@@ -75,8 +75,8 @@ export const LifeAreasSelection = ({ onComplete }: { onComplete: () => void }) =
   return (
     <Card className="max-w-2xl mx-auto p-6 space-y-6 bg-white/80 backdrop-blur-sm">
       <div className="space-y-2">
-        <h2 className="text-2xl font-bold text-purple-800">Wähle deine Lebensbereiche</h2>
-        <p className="text-purple-600">
+        <h2 className="text-2xl font-bold text-blue-800">Wähle deine Lebensbereiche</h2>
+        <p className="text-blue-600">
           Wähle bis zu 3 Bereiche aus, auf die du dich konzentrieren möchtest
         </p>
       </div>
@@ -90,7 +90,7 @@ export const LifeAreasSelection = ({ onComplete }: { onComplete: () => void }) =
               area.color
             } ${
               selectedAreas.includes(area.id)
-                ? "border-opacity-100 ring-2 ring-purple-400"
+                ? "border-opacity-100 ring-2 ring-blue-400"
                 : "border-opacity-50 hover:border-opacity-100"
             }`}
           >
@@ -104,7 +104,7 @@ export const LifeAreasSelection = ({ onComplete }: { onComplete: () => void }) =
 
       <Button
         onClick={handleSubmit}
-        className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+        className="w-full bg-blue-600 hover:bg-blue-700 text-white"
       >
         Weiter
       </Button>
