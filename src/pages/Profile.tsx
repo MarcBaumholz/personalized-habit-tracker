@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Brain, Heart, Star, Users, Coffee, RefreshCw, Pencil } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -12,10 +12,13 @@ import { AddAttitudeGoalDialog } from "@/components/zrm/AddAttitudeGoalDialog";
 import { AddReflectionDialog } from "@/components/coaching/AddReflectionDialog";
 import { EditDialog } from "@/components/profile/EditDialog";
 import { EditableProfileBlock } from "@/components/profile/EditableProfileBlock";
+import { PersonalityQuiz } from "@/components/onboarding/PersonalityQuiz";
+import { LifeAreasSelection } from "@/components/onboarding/LifeAreasSelection";
 
 const Profile = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   const { data: responses } = useQuery({
     queryKey: ["onboarding-responses"],
@@ -185,9 +188,6 @@ const Profile = () => {
             Dein Persönlichkeitsprofil
           </h1>
           <div className="flex gap-2">
-            <Button onClick={handleEdit} variant="outline" className="hover:bg-blue-50">
-              <Pencil className="h-4 w-4" />
-            </Button>
             <Button onClick={handleRestartReflection} variant="outline" className="hover:bg-blue-50 gap-2">
               <RefreshCw className="h-4 w-4" />
               Reflexion neu starten
@@ -332,10 +332,7 @@ const Profile = () => {
               </div>
 
               <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="font-medium text-blue-700">Haltungsziele</h3>
-                  <AddAttitudeGoalDialog />
-                </div>
+                <h3 className="font-medium text-blue-700">Haltungsziele</h3>
                 <div className="space-y-3">
                   {attitudeGoals?.map((goal: any) => (
                     <div key={goal.id} className="p-4 bg-blue-50 rounded-lg">
@@ -368,30 +365,28 @@ const Profile = () => {
                 </EditDialog>
               </div>
             </div>
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {lifeAreas?.map((areaId: string) => {
-                  const area = {
-                    health: { name: "Gesundheit", color: "bg-red-100 border-red-200 text-red-700" },
-                    relationships: { name: "Beziehungen", color: "bg-pink-100 border-pink-200 text-pink-700" },
-                    career: { name: "Karriere", color: "bg-blue-100 border-blue-200 text-blue-700" },
-                    finance: { name: "Finanzen", color: "bg-green-100 border-green-200 text-green-700" },
-                    personal: { name: "Persönlichkeit", color: "bg-purple-100 border-purple-200 text-purple-700" },
-                    leisure: { name: "Freizeit", color: "bg-yellow-100 border-yellow-200 text-yellow-700" },
-                    spiritual: { name: "Spiritualität", color: "bg-indigo-100 border-indigo-200 text-indigo-700" },
-                    environment: { name: "Umwelt", color: "bg-teal-100 border-teal-200 text-teal-700" },
-                  }[areaId];
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {lifeAreas?.map((areaId: string) => {
+                const area = {
+                  health: { name: "Gesundheit", color: "bg-red-100 border-red-200 text-red-700" },
+                  relationships: { name: "Beziehungen", color: "bg-pink-100 border-pink-200 text-pink-700" },
+                  career: { name: "Karriere", color: "bg-blue-100 border-blue-200 text-blue-700" },
+                  finance: { name: "Finanzen", color: "bg-green-100 border-green-200 text-green-700" },
+                  personal: { name: "Persönlichkeit", color: "bg-purple-100 border-purple-200 text-purple-700" },
+                  leisure: { name: "Freizeit", color: "bg-yellow-100 border-yellow-200 text-yellow-700" },
+                  spiritual: { name: "Spiritualität", color: "bg-indigo-100 border-indigo-200 text-indigo-700" },
+                  environment: { name: "Umwelt", color: "bg-teal-100 border-teal-200 text-teal-700" },
+                }[areaId];
 
-                  return area ? (
-                    <div
-                      key={areaId}
-                      className={`p-4 rounded-lg border-2 ${area.color} text-lg`}
-                    >
-                      <span className="font-medium">{area.name}</span>
-                    </div>
-                  ) : null;
-                })}
-              </div>
+                return area ? (
+                  <div
+                    key={areaId}
+                    className={`p-4 rounded-lg border-2 ${area.color}`}
+                  >
+                    <span className="font-medium">{area.name}</span>
+                  </div>
+                ) : null;
+              })}
             </div>
           </Card>
         </div>
