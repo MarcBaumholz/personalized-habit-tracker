@@ -191,6 +191,51 @@ const Profile = () => {
         </div>
         
         <div className="grid gap-6">
+          <EditableProfileBlock
+            title="Motivation"
+            content={getResponse("motivation")}
+            sectionKey="motivation"
+            onUpdate={() => {
+              // Refetch queries if needed
+            }}
+          />
+
+          <EditableProfileBlock
+            title="Herausforderungen"
+            content={getResponse("challenges")}
+            sectionKey="challenges"
+            onUpdate={() => {
+              // Refetch queries if needed
+            }}
+          />
+
+          <EditableProfileBlock
+            title="Gewünschte Überzeugungen"
+            content={getResponse("beliefs")}
+            sectionKey="beliefs"
+            onUpdate={() => {
+              // Refetch queries if needed
+            }}
+          />
+
+          <EditableProfileBlock
+            title="Schlüsselgewohnheiten"
+            content={getResponse("keystone_habits")}
+            sectionKey="keystone_habits"
+            onUpdate={() => {
+              // Refetch queries if needed
+            }}
+          />
+
+          <EditableProfileBlock
+            title="Umsetzungsbedenken"
+            content={getResponse("implementation")}
+            sectionKey="implementation"
+            onUpdate={() => {
+              // Refetch queries if needed
+            }}
+          />
+
           <Card className="p-6 md:p-8 bg-white rounded-2xl shadow-lg border border-blue-100 backdrop-blur-sm transition-all duration-300 hover:shadow-xl animate-slide-in">
             <h2 className="text-xl md:text-2xl font-semibold mb-6 text-blue-800">Deine ausgewählten Lebensbereiche</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -391,3 +436,16 @@ const Profile = () => {
 };
 
 export default Profile;
+
+const EditableProfileBlock = ({ title, content, sectionKey, onUpdate }) => {
+  return (
+    <Card className="p-6 bg-white rounded-2xl shadow-lg border border-blue-100 backdrop-blur-sm transition-all duration-300 hover:shadow-xl animate-slide-in">
+      <h2 className="text-xl font-semibold mb-4 text-blue-800">{title}</h2>
+      <div className="space-y-4">
+        <div className="p-4 border rounded-lg bg-blue-50/50">
+          <p className="text-blue-600">{content}</p>
+        </div>
+      </div>
+    </Card>
+  );
+};

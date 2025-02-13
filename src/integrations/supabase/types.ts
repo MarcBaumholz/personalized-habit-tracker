@@ -621,6 +621,33 @@ export type Database = {
           },
         ]
       }
+      profile_sections: {
+        Row: {
+          content: Json
+          created_at: string
+          id: string
+          last_edited_at: string
+          section_key: string
+          user_id: string
+        }
+        Insert: {
+          content: Json
+          created_at?: string
+          id?: string
+          last_edited_at?: string
+          section_key: string
+          user_id: string
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          id?: string
+          last_edited_at?: string
+          section_key?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
