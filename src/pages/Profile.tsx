@@ -10,6 +10,8 @@ import { useToast } from "@/hooks/use-toast";
 import { AddZRMResourceDialog } from "@/components/zrm/AddZRMResourceDialog";
 import { AddAttitudeGoalDialog } from "@/components/zrm/AddAttitudeGoalDialog";
 import { AddReflectionDialog } from "@/components/coaching/AddReflectionDialog";
+import { EditDialog } from "@/components/profile/EditDialog";
+import { EditableProfileBlock } from "@/components/profile/EditableProfileBlock";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -132,26 +134,28 @@ const Profile = () => {
     return responses?.find(r => r.question_key === key)?.response || "";
   };
 
-  const handleRestartOnboarding = async () => {
+  const handleRestartReflection = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
-      await supabase
-        .from("onboarding_responses")
+      // Delete existing reflection data
+      const { error } = await supabase
+        .from("coaching_reflections")
         .delete()
-        .eq("user_id", user.id);
+        .eq("user_id", user.id)
+        .eq("reflection_date", new Date().toISOString().split('T')[0]);
+
+      if (error) throw error;
 
       toast({
-        title: "Onboarding zurückgesetzt",
-        description: "Du kannst den Prozess jetzt neu starten.",
+        title: "Reflexion zurückgesetzt",
+        description: "Du kannst jetzt eine neue Reflexion starten.",
       });
-
-      navigate("/onboarding");
     } catch (error) {
       toast({
         title: "Fehler",
-        description: "Beim Zurücksetzen ist ein Fehler aufgetreten.",
+        description: "Die Reflexion konnte nicht zurückgesetzt werden.",
         variant: "destructive",
       });
     }
@@ -184,8 +188,9 @@ const Profile = () => {
             <Button onClick={handleEdit} variant="outline" className="hover:bg-blue-50">
               <Pencil className="h-4 w-4" />
             </Button>
-            <Button onClick={handleRestartOnboarding} variant="outline" className="hover:bg-blue-50">
+            <Button onClick={handleRestartReflection} variant="outline" className="hover:bg-blue-50 gap-2">
               <RefreshCw className="h-4 w-4" />
+              Reflexion neu starten
             </Button>
           </div>
         </div>
@@ -195,127 +200,120 @@ const Profile = () => {
             title="Motivation"
             content={getResponse("motivation")}
             sectionKey="motivation"
-            onUpdate={() => {
-              // Refetch queries if needed
-            }}
+            onUpdate={() => queryClient.invalidateQueries({ queryKey: ["onboarding-responses"] })}
           />
 
           <EditableProfileBlock
             title="Herausforderungen"
             content={getResponse("challenges")}
             sectionKey="challenges"
-            onUpdate={() => {
-              // Refetch queries if needed
-            }}
+            onUpdate={() => queryClient.invalidateQueries({ queryKey: ["onboarding-responses"] })}
           />
 
-          <EditableProfileBlock
-            title="Gewünschte Überzeugungen"
-            content={getResponse("beliefs")}
-            sectionKey="beliefs"
-            onUpdate={() => {
-              // Refetch queries if needed
-            }}
-          />
-
-          <EditableProfileBlock
-            title="Schlüsselgewohnheiten"
-            content={getResponse("keystone_habits")}
-            sectionKey="keystone_habits"
-            onUpdate={() => {
-              // Refetch queries if needed
-            }}
-          />
-
-          <EditableProfileBlock
-            title="Umsetzungsbedenken"
-            content={getResponse("implementation")}
-            sectionKey="implementation"
-            onUpdate={() => {
-              // Refetch queries if needed
-            }}
-          />
-
-          <Card className="p-6 md:p-8 bg-white rounded-2xl shadow-lg border border-blue-100 backdrop-blur-sm transition-all duration-300 hover:shadow-xl animate-slide-in">
-            <h2 className="text-xl md:text-2xl font-semibold mb-6 text-blue-800">Deine ausgewählten Lebensbereiche</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {lifeAreas?.map((areaId: string) => {
-                const area = {
-                  health: { name: "Gesundheit", color: "bg-red-100 border-red-200 text-red-700" },
-                  relationships: { name: "Beziehungen", color: "bg-pink-100 border-pink-200 text-pink-700" },
-                  career: { name: "Karriere", color: "bg-blue-100 border-blue-200 text-blue-700" },
-                  finance: { name: "Finanzen", color: "bg-green-100 border-green-200 text-green-700" },
-                  personal: { name: "Persönlichkeit", color: "bg-purple-100 border-purple-200 text-purple-700" },
-                  leisure: { name: "Freizeit", color: "bg-yellow-100 border-yellow-200 text-yellow-700" },
-                  spiritual: { name: "Spiritualität", color: "bg-indigo-100 border-indigo-200 text-indigo-700" },
-                  environment: { name: "Umwelt", color: "bg-teal-100 border-teal-200 text-teal-700" },
-                }[areaId];
-
-                return area ? (
-                  <div
-                    key={areaId}
-                    className={`p-4 rounded-lg border-2 ${area.color} text-lg`}
-                  >
-                    <span className="font-medium">{area.name}</span>
-                  </div>
-                ) : null;
-              })}
+          <Card className="p-6 bg-white rounded-2xl shadow-lg border border-blue-100">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold text-blue-800">Big Five Persönlichkeitstest</h2>
+              <EditDialog title="Persönlichkeitstest wiederholen">
+                <PersonalityQuiz onComplete={() => {
+                  queryClient.invalidateQueries({ queryKey: ["big-five-results"] });
+                }} />
+              </EditDialog>
             </div>
-          </Card>
-
-          <Card className="p-6 bg-white rounded-2xl shadow-lg border border-blue-100 backdrop-blur-sm transition-all duration-300 hover:shadow-xl animate-slide-in">
-            <h2 className="text-xl font-semibold mb-4 text-blue-800">Big Five Persönlichkeitstest</h2>
-            {bigFiveResults ? (
-              <div className="space-y-4">
-                {Object.entries(bigFiveResults)
-                  .filter(([key]) => ["openness", "conscientiousness", "extraversion", "agreeableness", "neuroticism"].includes(key))
-                  .map(([trait, score]) => (
-                    <div key={trait} className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span className="font-medium text-blue-700">{getPersonalityTraitLabel(trait)}</span>
-                        <span className="text-sm text-blue-600">{Math.round(score as number)}%</span>
-                      </div>
-                      <Progress value={score as number} className="h-2" />
-                    </div>
-                  ))}
-                {bigFiveResults.pdf_url && (
-                  <div className="mt-4">
-                    <a
-                      href={bigFiveResults.pdf_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:text-blue-700 text-sm underline"
-                    >
-                      Detaillierte Ergebnisse anzeigen (PDF)
-                    </a>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <p className="text-blue-600">Noch keine Testergebnisse vorhanden.</p>
-            )}
-          </Card>
-
-          <Card className="p-6 bg-white rounded-2xl shadow-lg border border-blue-100 backdrop-blur-sm transition-all duration-300 hover:shadow-xl animate-slide-in">
-            <h2 className="text-xl font-semibold mb-4 text-blue-800">Deine Keystone Habits</h2>
             <div className="space-y-4">
-              {keystoneHabits?.map((habit, index) => (
-                <div key={index} className="p-4 border rounded-lg bg-blue-50/50">
-                  <h3 className="font-medium mb-2 text-blue-700">{habit.habit_name}</h3>
-                  <p className="text-blue-600 mb-2">{habit.description}</p>
-                  <p className="text-sm text-blue-500">Lebensbereich: {habit.life_area}</p>
-                  {habit.guideline && (
-                    <p className="text-sm text-blue-500 mt-2">Leitfaden: {habit.guideline}</p>
+              {bigFiveResults ? (
+                <div className="space-y-4">
+                  {Object.entries(bigFiveResults)
+                    .filter(([key]) => ["openness", "conscientiousness", "extraversion", "agreeableness", "neuroticism"].includes(key))
+                    .map(([trait, score]) => (
+                      <div key={trait} className="space-y-2">
+                        <div className="flex justify-between items-center">
+                          <span className="font-medium text-blue-700">{getPersonalityTraitLabel(trait)}</span>
+                          <span className="text-sm text-blue-600">{Math.round(score as number)}%</span>
+                        </div>
+                        <Progress value={score as number} className="h-2" />
+                      </div>
+                    ))}
+                  {bigFiveResults.pdf_url && (
+                    <div className="mt-4">
+                      <a
+                        href={bigFiveResults.pdf_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-700 text-sm underline"
+                      >
+                        Detaillierte Ergebnisse anzeigen (PDF)
+                      </a>
+                    </div>
                   )}
                 </div>
-              ))}
+              ) : (
+                <p className="text-blue-600">Noch keine Testergebnisse vorhanden.</p>
+              )}
             </div>
           </Card>
 
-          <Card className="p-6 bg-white rounded-2xl shadow-lg border border-blue-100 backdrop-blur-sm transition-all duration-300 hover:shadow-xl animate-slide-in">
-            <div className="flex justify-between items-center mb-6">
+          <Card className="p-6 bg-white rounded-2xl shadow-lg border border-blue-100">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold text-blue-800">Coaching Reflexion</h2>
+              <div className="flex gap-2">
+                <EditDialog title="Reflexion bearbeiten">
+                  <AddReflectionDialog />
+                </EditDialog>
+              </div>
+            </div>
+            <div className="space-y-4">
+              {coachingReflections ? (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <p className="text-sm text-blue-600">Energielevel</p>
+                      <Progress value={coachingReflections.energy_level * 10} />
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-sm text-blue-600">Stimmung</p>
+                      <Progress value={coachingReflections.mood_rating * 10} />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <h3 className="font-medium text-blue-700">Herausforderungen & Lösungen</h3>
+                    <div className="p-3 bg-blue-50 rounded-lg">
+                      <p className="text-sm text-blue-800">{coachingReflections.challenges}</p>
+                      <p className="text-sm text-blue-600 mt-2">{coachingReflections.solutions}</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <h3 className="font-medium text-blue-700">Werte & Stärken</h3>
+                    <div className="p-3 bg-blue-50 rounded-lg">
+                      <p className="text-sm text-blue-800">{coachingReflections.values_alignment}</p>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {coachingReflections.strengths_used?.map((strength: string) => (
+                          <span key={strength} className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs">
+                            {strength}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-blue-600">Noch keine Reflexionen vorhanden.</p>
+              )}
+            </div>
+          </Card>
+
+          <Card className="p-6 bg-white rounded-2xl shadow-lg border border-blue-100">
+            <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold text-blue-800">Zürcher Ressourcen Model (ZRM)</h2>
-              <AddZRMResourceDialog />
+              <div className="flex gap-2">
+                <EditDialog title="ZRM Ressourcen bearbeiten">
+                  <AddZRMResourceDialog />
+                </EditDialog>
+                <EditDialog title="Haltungsziele bearbeiten">
+                  <AddAttitudeGoalDialog />
+                </EditDialog>
+              </div>
             </div>
             <div className="space-y-6">
               <div className="space-y-4">
@@ -359,73 +357,40 @@ const Profile = () => {
             </div>
           </Card>
 
-          <Card className="p-6 bg-white rounded-2xl shadow-lg border border-blue-100 backdrop-blur-sm transition-all duration-300 hover:shadow-xl animate-slide-in">
+          <Card className="p-6 bg-white rounded-2xl shadow-lg border border-blue-100">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-blue-800">Coaching Reflexion</h2>
-              <AddReflectionDialog />
+              <h2 className="text-xl font-semibold text-blue-800">Deine ausgewählten Lebensbereiche</h2>
+              <div className="flex gap-2">
+                <EditDialog title="Lebensbereiche bearbeiten">
+                  <LifeAreasSelection onComplete={() => {
+                    queryClient.invalidateQueries({ queryKey: ["life-areas"] });
+                  }} />
+                </EditDialog>
+              </div>
             </div>
-            {coachingReflections ? (
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <p className="text-sm text-blue-600">Energielevel</p>
-                    <Progress value={coachingReflections.energy_level * 10} />
-                  </div>
-                  <div className="space-y-2">
-                    <p className="text-sm text-blue-600">Stimmung</p>
-                    <Progress value={coachingReflections.mood_rating * 10} />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <h3 className="font-medium text-blue-700">Herausforderungen & Lösungen</h3>
-                  <div className="p-3 bg-blue-50 rounded-lg">
-                    <p className="text-sm text-blue-800">{coachingReflections.challenges}</p>
-                    <p className="text-sm text-blue-600 mt-2">{coachingReflections.solutions}</p>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <h3 className="font-medium text-blue-700">Werte & Stärken</h3>
-                  <div className="p-3 bg-blue-50 rounded-lg">
-                    <p className="text-sm text-blue-800">{coachingReflections.values_alignment}</p>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {coachingReflections.strengths_used?.map((strength: string) => (
-                        <span key={strength} className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs">
-                          {strength}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <p className="text-blue-600">Noch keine Reflexionen vorhanden.</p>
-            )}
-          </Card>
-
-          <Card className="p-6 bg-white rounded-2xl shadow-lg border border-blue-100 backdrop-blur-sm transition-all duration-300 hover:shadow-xl animate-slide-in">
-            <h2 className="text-xl font-semibold mb-4 text-blue-800">Deine Onboarding Antworten</h2>
             <div className="space-y-4">
-              <div className="p-4 border rounded-lg bg-blue-50/50">
-                <h3 className="font-medium mb-2 text-blue-700">Motivation</h3>
-                <p className="text-blue-600">{getResponse("motivation")}</p>
-              </div>
-              <div className="p-4 border rounded-lg bg-blue-50/50">
-                <h3 className="font-medium mb-2 text-blue-700">Herausforderungen</h3>
-                <p className="text-blue-600">{getResponse("challenges")}</p>
-              </div>
-              <div className="p-4 border rounded-lg bg-blue-50/50">
-                <h3 className="font-medium mb-2 text-blue-700">Gewünschte Überzeugungen</h3>
-                <p className="text-blue-600">{getResponse("beliefs")}</p>
-              </div>
-              <div className="p-4 border rounded-lg bg-blue-50/50">
-                <h3 className="font-medium mb-2 text-blue-700">Schlüsselgewohnheiten</h3>
-                <p className="text-blue-600">{getResponse("keystone_habits")}</p>
-              </div>
-              <div className="p-4 border rounded-lg bg-blue-50/50">
-                <h3 className="font-medium mb-2 text-blue-700">Umsetzungsbedenken</h3>
-                <p className="text-blue-600">{getResponse("implementation")}</p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {lifeAreas?.map((areaId: string) => {
+                  const area = {
+                    health: { name: "Gesundheit", color: "bg-red-100 border-red-200 text-red-700" },
+                    relationships: { name: "Beziehungen", color: "bg-pink-100 border-pink-200 text-pink-700" },
+                    career: { name: "Karriere", color: "bg-blue-100 border-blue-200 text-blue-700" },
+                    finance: { name: "Finanzen", color: "bg-green-100 border-green-200 text-green-700" },
+                    personal: { name: "Persönlichkeit", color: "bg-purple-100 border-purple-200 text-purple-700" },
+                    leisure: { name: "Freizeit", color: "bg-yellow-100 border-yellow-200 text-yellow-700" },
+                    spiritual: { name: "Spiritualität", color: "bg-indigo-100 border-indigo-200 text-indigo-700" },
+                    environment: { name: "Umwelt", color: "bg-teal-100 border-teal-200 text-teal-700" },
+                  }[areaId];
+
+                  return area ? (
+                    <div
+                      key={areaId}
+                      className={`p-4 rounded-lg border-2 ${area.color} text-lg`}
+                    >
+                      <span className="font-medium">{area.name}</span>
+                    </div>
+                  ) : null;
+                })}
               </div>
             </div>
           </Card>
@@ -447,5 +412,132 @@ const EditableProfileBlock = ({ title, content, sectionKey, onUpdate }) => {
         </div>
       </div>
     </Card>
+  );
+};
+
+const EditDialog = ({ title, children }) => {
+  return (
+    <div className="relative">
+      <button
+        className="flex items-center gap-2 bg-blue-500 text-white rounded-lg px-4 py-2 hover:bg-blue-600"
+        onClick={() => {
+          // Handle dialog open
+        }}
+      >
+        <Pencil className="h-4 w-4" />
+        {title}
+      </button>
+      <div className="absolute top-12 right-0 bg-white rounded-lg shadow-lg p-4">
+        {children}
+      </div>
+    </div>
+  );
+};
+
+const LifeAreasSelection = ({ onComplete }) => {
+  return (
+    <div className="relative">
+      <button
+        className="flex items-center gap-2 bg-blue-500 text-white rounded-lg px-4 py-2 hover:bg-blue-600"
+        onClick={() => {
+          // Handle dialog open
+        }}
+      >
+        <Pencil className="h-4 w-4" />
+        Lebensbereiche bearbeiten
+      </button>
+      <div className="absolute top-12 right-0 bg-white rounded-lg shadow-lg p-4">
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h3 className="font-medium text-blue-700">Gesundheit</h3>
+            <input type="checkbox" />
+          </div>
+          <div className="flex justify-between items-center">
+            <h3 className="font-medium text-blue-700">Beziehungen</h3>
+            <input type="checkbox" />
+          </div>
+          <div className="flex justify-between items-center">
+            <h3 className="font-medium text-blue-700">Karriere</h3>
+            <input type="checkbox" />
+          </div>
+          <div className="flex justify-between items-center">
+            <h3 className="font-medium text-blue-700">Finanzen</h3>
+            <input type="checkbox" />
+          </div>
+          <div className="flex justify-between items-center">
+            <h3 className="font-medium text-blue-700">Persönlichkeit</h3>
+            <input type="checkbox" />
+          </div>
+          <div className="flex justify-between items-center">
+            <h3 className="font-medium text-blue-700">Freizeit</h3>
+            <input type="checkbox" />
+          </div>
+          <div className="flex justify-between items-center">
+            <h3 className="font-medium text-blue-700">Spiritualität</h3>
+            <input type="checkbox" />
+          </div>
+          <div className="flex justify-between items-center">
+            <h3 className="font-medium text-blue-700">Umwelt</h3>
+            <input type="checkbox" />
+          </div>
+        </div>
+        <button
+          className="flex items-center gap-2 bg-blue-500 text-white rounded-lg px-4 py-2 hover:bg-blue-600"
+          onClick={() => {
+            onComplete();
+          }}
+        >
+          Speichern
+        </button>
+      </div>
+    </div>
+  );
+};
+
+const PersonalityQuiz = ({ onComplete }) => {
+  return (
+    <div className="relative">
+      <button
+        className="flex items-center gap-2 bg-blue-500 text-white rounded-lg px-4 py-2 hover:bg-blue-600"
+        onClick={() => {
+          // Handle dialog open
+        }}
+      >
+        <Pencil className="h-4 w-4" />
+        Persönlichkeitstest wiederholen
+      </button>
+      <div className="absolute top-12 right-0 bg-white rounded-lg shadow-lg p-4">
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h3 className="font-medium text-blue-700">Offenheit für Erfahrungen</h3>
+            <input type="range" min="0" max="100" />
+          </div>
+          <div className="flex justify-between items-center">
+            <h3 className="font-medium text-blue-700">Gewissenhaftigkeit</h3>
+            <input type="range" min="0" max="100" />
+          </div>
+          <div className="flex justify-between items-center">
+            <h3 className="font-medium text-blue-700">Extraversion</h3>
+            <input type="range" min="0" max="100" />
+          </div>
+          <div className="flex justify-between items-center">
+            <h3 className="font-medium text-blue-700">Verträglichkeit</h3>
+            <input type="range" min="0" max="100" />
+          </div>
+          <div className="flex justify-between items-center">
+            <h3 className="font-medium text-blue-700">Neurotizismus</h3>
+            <input type="range" min="0" max="100" />
+          </div>
+        </div>
+        <button
+          className="flex items-center gap-2 bg-blue-500 text-white rounded-lg px-4 py-2 hover:bg-blue-600"
+          onClick={() => {
+            onComplete();
+          }}
+        >
+          Speichern
+        </button>
+      </div>
+    </div>
   );
 };
