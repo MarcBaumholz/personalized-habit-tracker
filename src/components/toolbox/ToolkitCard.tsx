@@ -6,8 +6,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { ToolkitCardActions } from "./ToolkitCardActions";
 import { Badge } from "@/components/ui/badge";
 import { HabitLoop } from "./HabitLoop";
-import { supabase } from "@/lib/supabase";
-import { toast } from "@/components/ui/toast";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 interface Toolkit {
   id?: string;
