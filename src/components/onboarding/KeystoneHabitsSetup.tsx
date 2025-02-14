@@ -69,7 +69,7 @@ export const KeystoneHabitsSetup = ({ onComplete }: { onComplete: () => void }) 
       if (!user) throw new Error("No user found");
 
       for (const habit of habits) {
-        // First create the normal habit
+        // Create the normal habit first
         const { data: habitData, error: habitError } = await supabase
           .from("habits")
           .insert({
@@ -81,6 +81,7 @@ export const KeystoneHabitsSetup = ({ onComplete }: { onComplete: () => void }) 
             difficulty: habit.difficulty,
             why_description: habit.why_description,
             why: habit.why,
+            is_keystone: true,
             phase: "implementation",
           })
           .select()
@@ -88,7 +89,7 @@ export const KeystoneHabitsSetup = ({ onComplete }: { onComplete: () => void }) 
 
         if (habitError) throw habitError;
 
-        // Then create the keystone habit linked to the normal habit
+        // Then create the keystone habit entry
         const { error: keystoneError } = await supabase
           .from("keystone_habits")
           .insert({

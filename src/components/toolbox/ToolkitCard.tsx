@@ -1,4 +1,3 @@
-
 import { Calendar, Plus, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LucideIcon } from "lucide-react";
@@ -7,6 +6,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { ToolkitCardActions } from "./ToolkitCardActions";
 import { Badge } from "@/components/ui/badge";
 import { HabitLoop } from "./HabitLoop";
+import { supabase } from "@/lib/supabase";
+import { toast } from "@/components/ui/toast";
 
 interface Toolkit {
   id?: string;
@@ -38,6 +39,61 @@ export const ToolkitCard = ({ toolkit, onSelect, onRemove, onAdd }: ToolkitCardP
   const Icon = toolkit.icon || Calendar;
 
   const showHabitLoop = toolkit.cue && toolkit.craving && toolkit.routine && toolkit.reward;
+
+  const handleAdd = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    // First create the habit
+    const { data: habitData, error: habitError } = await supabase
+      .from('habits')
+      .insert({
+        name: toolkit.name || toolkit.title,
+        category: toolkit.category || 'routine',
+        user_id: user.id,
+        cue: toolkit.cue,
+        craving: toolkit.craving,
+        reward: toolkit.reward,
+        why_description: toolkit.description,
+        minimal_dose: toolkit.minimal_dose,
+        life_area: toolkit.impact_area?.[0] || 'Persönlichkeit',
+        is_keystone: false,
+      })
+      .select()
+      .single();
+
+    if (habitError) {
+      toast({
+        title: "Fehler",
+        description: "Die Gewohnheit konnte nicht erstellt werden.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // If this is a building block, update its status
+    if (toolkit.type === 'building_block' && toolkit.id) {
+      const { error: updateError } = await supabase
+        .from('building_blocks')
+        .update({
+          is_converted: true,
+          converted_to_habit_id: habitData.id
+        })
+        .eq('id', toolkit.id);
+
+      if (updateError) {
+        console.error('Error updating building block:', updateError);
+      }
+    }
+
+    toast({
+      title: "Gewohnheit erstellt",
+      description: "Die neue Gewohnheit wurde erfolgreich hinzugefügt.",
+    });
+
+    onAdd?.(toolkit);
+  };
 
   return (
     <div 
@@ -136,10 +192,7 @@ export const ToolkitCard = ({ toolkit, onSelect, onRemove, onAdd }: ToolkitCardP
 
       <div className="absolute bottom-8 left-8 right-8">
         <Button 
-          onClick={(e) => {
-            e.stopPropagation();
-            onAdd?.(toolkit);
-          }}
+          onClick={handleAdd}
           className={cn(
             "w-full gap-2",
             "bg-blue-600 hover:bg-blue-700 text-white",
@@ -149,7 +202,7 @@ export const ToolkitCard = ({ toolkit, onSelect, onRemove, onAdd }: ToolkitCardP
           )}
         >
           <Plus className="h-6 w-6" />
-          {toolkit.id ? "Bearbeiten" : "Hinzufügen"}
+          {toolkit.id ? "Als Gewohnheit übernehmen" : "Hinzufügen"}
         </Button>
       </div>
     </div>
