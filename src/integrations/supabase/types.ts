@@ -218,6 +218,33 @@ export type Database = {
           },
         ]
       }
+      calendar_preferences: {
+        Row: {
+          created_at: string
+          default_view: string | null
+          end_time: string | null
+          id: string
+          start_time: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          default_view?: string | null
+          end_time?: string | null
+          id?: string
+          start_time?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          default_view?: string | null
+          end_time?: string | null
+          id?: string
+          start_time?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       coaching_reflections: {
         Row: {
           challenges: string | null
@@ -400,24 +427,42 @@ export type Database = {
       habit_schedules: {
         Row: {
           created_at: string
+          duration: unknown | null
           habit_id: string | null
           id: string
+          position_x: number | null
+          position_y: number | null
+          repeat_end_date: string | null
+          repeat_interval: number | null
+          repeat_type: string | null
           scheduled_date: string | null
           scheduled_time: string | null
           user_id: string | null
         }
         Insert: {
           created_at?: string
+          duration?: unknown | null
           habit_id?: string | null
           id?: string
+          position_x?: number | null
+          position_y?: number | null
+          repeat_end_date?: string | null
+          repeat_interval?: number | null
+          repeat_type?: string | null
           scheduled_date?: string | null
           scheduled_time?: string | null
           user_id?: string | null
         }
         Update: {
           created_at?: string
+          duration?: unknown | null
           habit_id?: string | null
           id?: string
+          position_x?: number | null
+          position_y?: number | null
+          repeat_end_date?: string | null
+          repeat_interval?: number | null
+          repeat_type?: string | null
           scheduled_date?: string | null
           scheduled_time?: string | null
           user_id?: string | null

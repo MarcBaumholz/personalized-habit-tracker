@@ -1,3 +1,4 @@
+
 import { Navigation } from "@/components/layout/Navigation";
 import { Card } from "@/components/ui/card";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
@@ -10,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ScheduleDialog } from "@/components/calendar/ScheduleDialog";
 import { ScheduleList } from "@/components/calendar/ScheduleList";
 import { WeeklyTimeboxing } from "@/components/calendar/WeeklyTimeboxing";
+import { DndContext, DragEndEvent, useDraggable, useDroppable } from "@dnd-kit/core";
 
 const Calendar = () => {
   const [date, setDate] = useState<Date | undefined>(new Date());
@@ -41,7 +43,14 @@ const Calendar = () => {
 
       const { data } = await supabase
         .from("habit_schedules")
-        .select("*, habits(*)")
+        .select(`
+          *,
+          habits (
+            id,
+            name,
+            category
+          )
+        `)
         .eq("user_id", user.id)
         .eq("scheduled_date", format(date || new Date(), "yyyy-MM-dd"));
 
@@ -49,54 +58,32 @@ const Calendar = () => {
     },
   });
 
-  const { data: todos } = useQuery({
-    queryKey: ["todos", date],
+  const { data: calendarPreferences } = useQuery({
+    queryKey: ["calendar-preferences"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
       const { data } = await supabase
-        .from("todos")
+        .from("calendar_preferences")
         .select("*")
         .eq("user_id", user.id)
-        .eq("due_date", format(date || new Date(), "yyyy-MM-dd"));
+        .single();
 
-      return data || [];
-    },
-  });
-
-  const updateTodoMutation = useMutation({
-    mutationFn: async ({ todoId, time }: { todoId: string, time: string }) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("No user found");
-
-      const { data, error } = await supabase
-        .from("todos")
-        .update({ scheduled_time: time })
-        .eq("id", todoId)
-        .eq("user_id", user.id);
-
-      if (error) throw error;
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["todos"] });
-    },
   });
 
-  const scheduleHabitMutation = useMutation({
-    mutationFn: async ({ habitId, time }: { habitId: string, time: string }) => {
+  const updateScheduleMutation = useMutation({
+    mutationFn: async ({ id, updates }: { id: string, updates: any }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
       const { data, error } = await supabase
         .from("habit_schedules")
-        .insert({
-          habit_id: habitId,
-          user_id: user.id,
-          scheduled_time: time,
-          scheduled_date: format(date || new Date(), "yyyy-MM-dd"),
-        });
+        .update(updates)
+        .eq("id", id)
+        .eq("user_id", user.id);
 
       if (error) throw error;
       return data;
@@ -104,72 +91,67 @@ const Calendar = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["habit-schedules"] });
       toast({
-        title: "Gewohnheit eingeplant",
-        description: "Die Gewohnheit wurde erfolgreich für diesen Tag eingeplant.",
+        title: "Zeitplan aktualisiert",
+        description: "Der Zeitplan wurde erfolgreich aktualisiert.",
       });
-      setSelectedHabit("");
-      setSelectedTime("");
     },
   });
 
-  const handleAssignTodo = (todoId: string, time: string) => {
-    updateTodoMutation.mutate({ todoId, time });
-  };
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (!over) return;
 
-  const handleAssignHabit = (habitId: string, time: string) => {
-    scheduleHabitMutation.mutate({ habitId, time });
+    // Extrahiere Zeit und Position aus der Drop-Zone ID
+    const [time, position] = over.id.toString().split('-');
+    
+    updateScheduleMutation.mutate({
+      id: active.id,
+      updates: {
+        scheduled_time: time,
+        position_x: parseInt(position.split(':')[0]),
+        position_y: parseInt(position.split(':')[1])
+      }
+    });
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 transition-all duration-500">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50">
       <Navigation />
-      <main className="container py-8 px-4 md:px-6 lg:px-8 animate-fade-in">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl md:text-3xl font-bold text-blue-800 bg-gradient-to-r from-blue-700 to-blue-900 bg-clip-text text-transparent">
-            Kalenderansicht
-          </h1>
-          <ScheduleDialog
-            habits={habits}
-            selectedHabit={selectedHabit}
-            selectedTime={selectedTime}
-            onHabitChange={setSelectedHabit}
-            onTimeChange={setSelectedTime}
-            onSchedule={() => {
-              if (selectedHabit && selectedTime) {
-                scheduleHabitMutation.mutate({
-                  habitId: selectedHabit,
-                  time: selectedTime,
-                });
-              }
-            }}
-          />
-        </div>
+      <DndContext onDragEnd={handleDragEnd}>
+        <main className="container py-8 px-4 md:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
+            <Card className="p-6">
+              <WeeklyTimeboxing
+                date={date}
+                schedules={schedules}
+                preferences={calendarPreferences}
+              />
+            </Card>
+            
+            <div className="space-y-6">
+              <Card className="p-6">
+                <CalendarComponent
+                  mode="single"
+                  selected={date}
+                  onSelect={setDate}
+                  className="rounded-md"
+                  locale={de}
+                />
+              </Card>
 
-        <div className="grid gap-6 md:grid-cols-[350px_1fr]">
-          <Card className="p-6 bg-white rounded-2xl shadow-lg border border-blue-100 backdrop-blur-sm transition-all duration-300 hover:shadow-xl animate-slide-in">
-            <CalendarComponent
-              mode="single"
-              selected={date}
-              onSelect={setDate}
-              className="rounded-md"
-              locale={de}
-            />
-          </Card>
-
-          <ScheduleList
-            date={date}
-            schedules={schedules}
-            todos={todos}
-            habits={habits}
-            onAssignTodo={handleAssignTodo}
-            onAssignHabit={handleAssignHabit}
-          />
-        </div>
-
-        <div className="mt-8">
-          <WeeklyTimeboxing />
-        </div>
-      </main>
+              <Card className="p-6">
+                <ScheduleList
+                  date={date}
+                  schedules={schedules}
+                  habits={habits}
+                  isDraggable
+                />
+              </Card>
+            </div>
+          </div>
+        </main>
+      </DndContext>
     </div>
   );
 };
