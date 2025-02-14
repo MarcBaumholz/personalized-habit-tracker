@@ -180,29 +180,43 @@ export type Database = {
       building_blocks: {
         Row: {
           category: string
+          converted_to_habit_id: string | null
           created_at: string
           description: string | null
           id: string
           impact_area: string[]
+          is_converted: boolean | null
           name: string
         }
         Insert: {
           category: string
+          converted_to_habit_id?: string | null
           created_at?: string
           description?: string | null
           id?: string
           impact_area?: string[]
+          is_converted?: boolean | null
           name: string
         }
         Update: {
           category?: string
+          converted_to_habit_id?: string | null
           created_at?: string
           description?: string | null
           id?: string
           impact_area?: string[]
+          is_converted?: boolean | null
           name?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "building_blocks_converted_to_habit_id_fkey"
+            columns: ["converted_to_habit_id"]
+            isOneToOne: false
+            referencedRelation: "habits"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       coaching_reflections: {
         Row: {
@@ -440,6 +454,7 @@ export type Database = {
           hook_trigger: string | null
           id: string
           identity: string | null
+          is_keystone: boolean | null
           last_completed_at: string | null
           last_motivation_check: string | null
           life_area: string | null
@@ -474,6 +489,7 @@ export type Database = {
           hook_trigger?: string | null
           id?: string
           identity?: string | null
+          is_keystone?: boolean | null
           last_completed_at?: string | null
           last_motivation_check?: string | null
           life_area?: string | null
@@ -508,6 +524,7 @@ export type Database = {
           hook_trigger?: string | null
           id?: string
           identity?: string | null
+          is_keystone?: boolean | null
           last_completed_at?: string | null
           last_motivation_check?: string | null
           life_area?: string | null
@@ -543,7 +560,7 @@ export type Database = {
           created_at: string
           description: string | null
           guideline: string | null
-          habit_id: string | null
+          habit_id: string
           habit_name: string
           id: string
           is_active: boolean | null
@@ -554,7 +571,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           guideline?: string | null
-          habit_id?: string | null
+          habit_id: string
           habit_name: string
           id?: string
           is_active?: boolean | null
@@ -565,7 +582,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           guideline?: string | null
-          habit_id?: string | null
+          habit_id?: string
           habit_name?: string
           id?: string
           is_active?: boolean | null
@@ -573,6 +590,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_keystone_habit"
+            columns: ["habit_id"]
+            isOneToOne: false
+            referencedRelation: "habits"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "keystone_habits_habit_id_fkey"
             columns: ["habit_id"]
