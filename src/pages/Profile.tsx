@@ -1,4 +1,3 @@
-
 import { Navigation } from "@/components/layout/Navigation";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
@@ -99,6 +98,36 @@ const Profile = () => {
     },
   });
 
+  const { data: zrmResources } = useQuery({
+    queryKey: ["zrm-resources"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
+
+      const { data } = await supabase
+        .from("zrm_resources")
+        .select("*")
+        .eq("user_id", user.id);
+
+      return data || [];
+    },
+  });
+
+  const { data: attitudeGoals } = useQuery({
+    queryKey: ["attitude-goals"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
+
+      const { data } = await supabase
+        .from("attitude_goals")
+        .select("*")
+        .eq("user_id", user.id);
+
+      return data || [];
+    },
+  });
+
   const getResponse = (key: string) => {
     return responses?.find(r => r.question_key === key)?.response || "";
   };
@@ -139,6 +168,22 @@ const Profile = () => {
         .eq("user_id", user.id);
 
       if (bigFiveError) throw bigFiveError;
+
+      // Delete ZRM resources
+      const { error: zrmError } = await supabase
+        .from("zrm_resources")
+        .delete()
+        .eq("user_id", user.id);
+
+      if (zrmError) throw zrmError;
+
+      // Delete attitude goals
+      const { error: goalsError } = await supabase
+        .from("attitude_goals")
+        .delete()
+        .eq("user_id", user.id);
+
+      if (goalsError) throw goalsError;
 
       toast({
         title: "Onboarding neu gestartet",
