@@ -10,6 +10,7 @@ import { BigFiveSection } from "@/components/profile/BigFiveSection";
 import { CoachingSection } from "@/components/profile/CoachingSection";
 import { ZRMSection } from "@/components/profile/ZRMSection";
 import { LifeAreasSection } from "@/components/profile/LifeAreasSection";
+import { KeystoneHabitsSection } from "@/components/profile/KeystoneHabitsSection";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -256,6 +257,7 @@ const Profile = () => {
             onUpdate={() => queryClient.invalidateQueries({ queryKey: ["onboarding-responses"] })}
           />
 
+          <KeystoneHabitsSection habits={keystoneHabits || []} />
           <BigFiveSection results={bigFiveResults} />
           <CoachingSection reflection={coachingReflections} />
           <ZRMSection resources={zrmResources || []} goals={attitudeGoals || []} />
