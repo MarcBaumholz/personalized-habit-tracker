@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ScheduleDialog } from "@/components/calendar/ScheduleDialog";
 import { ScheduleList } from "@/components/calendar/ScheduleList";
 import { WeeklyTimeboxing } from "@/components/calendar/WeeklyTimeboxing";
-import { DndContext, DragEndEvent, useDraggable, useDroppable } from "@dnd-kit/core";
+import { DndContext, DragEndEvent } from "@dnd-kit/core";
 
 const Calendar = () => {
   const [date, setDate] = useState<Date | undefined>(new Date());
@@ -106,7 +106,7 @@ const Calendar = () => {
     const [time, position] = over.id.toString().split('-');
     
     updateScheduleMutation.mutate({
-      id: active.id,
+      id: active.id.toString(), // Konvertiere UniqueIdentifier zu String
       updates: {
         scheduled_time: time,
         position_x: parseInt(position.split(':')[0]),
