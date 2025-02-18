@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useDraggable } from "@dnd-kit/core";
+import { DraggableScheduleItem } from "./DraggableScheduleItem";
 import {
   Dialog,
   DialogContent,
@@ -56,7 +56,6 @@ export const ScheduleList = ({
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedTodo, setSelectedTodo] = useState<Todo | null>(null);
 
-  // Fetch daily todos
   const { data: dailyTodos } = useQuery({
     queryKey: ["todos"],
     queryFn: async () => {
@@ -89,18 +88,12 @@ export const ScheduleList = ({
       </div>
 
       <div className="space-y-2">
-        {dailyTodos?.map((todo) => {
-          const draggable = isDraggable ? useDraggable({
-            id: todo.id,
-            data: { type: 'todo', ...todo }
-          }) : null;
-
-          return (
+        {dailyTodos?.map((todo) => (
+          isDraggable ? (
+            <DraggableScheduleItem key={todo.id} todo={todo} />
+          ) : (
             <div
               key={todo.id}
-              ref={draggable?.setNodeRef}
-              {...draggable?.listeners}
-              {...draggable?.attributes}
               className={`flex items-center gap-4 p-3 border rounded-lg cursor-pointer transition-colors
                 ${todo.scheduled_time ? 'bg-gray-50' : 'hover:bg-gray-50'}`}
             >
@@ -116,8 +109,8 @@ export const ScheduleList = ({
                 </div>
               </div>
             </div>
-          );
-        })}
+          )
+        ))}
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

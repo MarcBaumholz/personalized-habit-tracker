@@ -13,6 +13,12 @@ import { ScheduleList } from "@/components/calendar/ScheduleList";
 import { WeeklyTimeboxing } from "@/components/calendar/WeeklyTimeboxing";
 import { DndContext, DragEndEvent } from "@dnd-kit/core";
 
+const DEFAULT_PREFERENCES = {
+  start_time: '00:00:00',
+  end_time: '23:59:59',
+  default_view: 'week'
+};
+
 const Calendar = () => {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [selectedHabit, setSelectedHabit] = useState<string>("");
@@ -68,9 +74,9 @@ const Calendar = () => {
         .from("calendar_preferences")
         .select("*")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
-      return data;
+      return data || DEFAULT_PREFERENCES;
     },
   });
 
@@ -106,7 +112,7 @@ const Calendar = () => {
     const [time, position] = over.id.toString().split('-');
     
     updateScheduleMutation.mutate({
-      id: active.id.toString(), // Konvertiere UniqueIdentifier zu String
+      id: active.id.toString(),
       updates: {
         scheduled_time: time,
         position_x: parseInt(position.split(':')[0]),
