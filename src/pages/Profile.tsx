@@ -1,6 +1,7 @@
+import { useState } from "react";
 import { Navigation } from "@/components/layout/Navigation";
 import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Mail, UserPlus, UserCheck } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -11,11 +12,16 @@ import { CoachingSection } from "@/components/profile/CoachingSection";
 import { ZRMSection } from "@/components/profile/ZRMSection";
 import { LifeAreasSection } from "@/components/profile/LifeAreasSection";
 import { KeystoneHabitsSection } from "@/components/profile/KeystoneHabitsSection";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card } from "@/components/ui/card";
+import { ProfileHeader } from "@/components/profile/ProfileHeader";
 
 const Profile = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [isFollowing, setIsFollowing] = useState(false);
   
   const { data: responses } = useQuery({
     queryKey: ["onboarding-responses"],
@@ -29,6 +35,22 @@ const Profile = () => {
         .eq("user_id", user.id);
 
       return data || [];
+    },
+  });
+
+  const { data: userProfile } = useQuery({
+    queryKey: ["user-profile"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
+
+      const { data } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+      return data;
     },
   });
 
@@ -133,6 +155,14 @@ const Profile = () => {
     return responses?.find(r => r.question_key === key)?.response || "";
   };
 
+  const handleFollowToggle = () => {
+    setIsFollowing(!isFollowing);
+    toast({
+      title: isFollowing ? "Nicht mehr gefolgt" : "Du folgst jetzt diesem Profil",
+      description: isFollowing ? "Du folgst diesem Profil nicht mehr." : "Du wirst über Aktualisierungen informiert.",
+    });
+  };
+
   const handleRestartOnboarding = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -209,59 +239,80 @@ const Profile = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 transition-all duration-500">
       <Navigation />
       <main className="container py-8 px-4 md:px-6 lg:px-8 animate-fade-in">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-          <h1 className="text-2xl md:text-3xl font-bold text-blue-800 bg-gradient-to-r from-blue-700 to-blue-900 bg-clip-text text-transparent">
-            Dein Persönlichkeitsprofil
-          </h1>
-          <div className="flex gap-2">
-            <Button onClick={handleRestartOnboarding} variant="outline" className="hover:bg-blue-50 gap-2">
-              <RefreshCw className="h-4 w-4" />
-              Onboarding neu starten
-            </Button>
-          </div>
-        </div>
-        
-        <div className="grid gap-6">
-          <EditableProfileBlock
-            title="Motivation"
-            content={getResponse("motivation")}
-            sectionKey="motivation"
-            onUpdate={() => queryClient.invalidateQueries({ queryKey: ["onboarding-responses"] })}
-          />
+        <ProfileHeader 
+          profile={userProfile} 
+          isFollowing={isFollowing} 
+          onFollowToggle={handleFollowToggle} 
+          onRestartOnboarding={handleRestartOnboarding}
+        />
 
-          <EditableProfileBlock
-            title="Herausforderungen"
-            content={getResponse("challenges")}
-            sectionKey="challenges"
-            onUpdate={() => queryClient.invalidateQueries({ queryKey: ["onboarding-responses"] })}
-          />
-
-          <EditableProfileBlock
-            title="Neugier & Veränderung"
-            content={getResponse("curiosities")}
-            sectionKey="curiosities"
-            onUpdate={() => queryClient.invalidateQueries({ queryKey: ["onboarding-responses"] })}
-          />
-
-          <EditableProfileBlock
-            title="Werte & Normen"
-            content={getResponse("values")}
-            sectionKey="values"
-            onUpdate={() => queryClient.invalidateQueries({ queryKey: ["onboarding-responses"] })}
-          />
-
-          <EditableProfileBlock
-            title="Aktuelle Gewohnheiten"
-            content={getResponse("current_habits")}
-            sectionKey="current_habits"
-            onUpdate={() => queryClient.invalidateQueries({ queryKey: ["onboarding-responses"] })}
-          />
-
-          <KeystoneHabitsSection habits={keystoneHabits || []} />
-          <BigFiveSection results={bigFiveResults} />
-          <CoachingSection reflection={coachingReflections} />
-          <ZRMSection resources={zrmResources || []} goals={attitudeGoals || []} />
-          <LifeAreasSection areas={lifeAreas || []} />
+        <div className="mt-8">
+          <Tabs defaultValue="about" className="w-full">
+            <TabsList className="grid grid-cols-4 mb-6">
+              <TabsTrigger value="about">Über mich</TabsTrigger>
+              <TabsTrigger value="personality">Persönlichkeit</TabsTrigger>
+              <TabsTrigger value="habits">Gewohnheiten</TabsTrigger>
+              <TabsTrigger value="areas">Lebensbereiche</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="about" className="space-y-6 animate-fade-in">
+              <Card className="p-6 bg-white rounded-2xl shadow-sm border border-blue-100">
+                <h2 className="text-xl font-semibold text-blue-800 mb-4">Über mich</h2>
+                <div className="grid gap-6">
+                  <EditableProfileBlock
+                    title="Motivation"
+                    content={getResponse("motivation")}
+                    sectionKey="motivation"
+                    onUpdate={() => queryClient.invalidateQueries({ queryKey: ["onboarding-responses"] })}
+                  />
+                  <EditableProfileBlock
+                    title="Herausforderungen"
+                    content={getResponse("challenges")}
+                    sectionKey="challenges"
+                    onUpdate={() => queryClient.invalidateQueries({ queryKey: ["onboarding-responses"] })}
+                  />
+                  <EditableProfileBlock
+                    title="Neugier & Veränderung"
+                    content={getResponse("curiosities")}
+                    sectionKey="curiosities"
+                    onUpdate={() => queryClient.invalidateQueries({ queryKey: ["onboarding-responses"] })}
+                  />
+                </div>
+              </Card>
+              
+              <Card className="p-6 bg-white rounded-2xl shadow-sm border border-blue-100">
+                <h2 className="text-xl font-semibold text-blue-800 mb-4">Werte & Gewohnheiten</h2>
+                <div className="grid gap-6">
+                  <EditableProfileBlock
+                    title="Werte & Normen"
+                    content={getResponse("values")}
+                    sectionKey="values"
+                    onUpdate={() => queryClient.invalidateQueries({ queryKey: ["onboarding-responses"] })}
+                  />
+                  <EditableProfileBlock
+                    title="Aktuelle Gewohnheiten"
+                    content={getResponse("current_habits")}
+                    sectionKey="current_habits"
+                    onUpdate={() => queryClient.invalidateQueries({ queryKey: ["onboarding-responses"] })}
+                  />
+                </div>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="personality" className="space-y-6 animate-fade-in">
+              <BigFiveSection results={bigFiveResults} />
+              <CoachingSection reflection={coachingReflections} />
+              <ZRMSection resources={zrmResources || []} goals={attitudeGoals || []} />
+            </TabsContent>
+            
+            <TabsContent value="habits" className="animate-fade-in">
+              <KeystoneHabitsSection habits={keystoneHabits || []} />
+            </TabsContent>
+            
+            <TabsContent value="areas" className="animate-fade-in">
+              <LifeAreasSection areas={lifeAreas || []} />
+            </TabsContent>
+          </Tabs>
         </div>
       </main>
     </div>
