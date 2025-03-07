@@ -53,19 +53,23 @@ export const ToolboxCarousel = ({ toolkits = [], onSelect, onRemove, onAdd, acti
       // Skip if toolkit doesn't have an ID (like inspiration items)
       if (!toolkit.id) return;
 
-      let tableName = 'habits';
-      
       // Determine which table to update based on toolkit type
       if (toolkit.type === 'building_block') {
-        tableName = 'building_blocks';
+        const { error } = await supabase
+          .from('building_blocks')
+          .update({ is_favorite: !toolkit.is_favorite })
+          .eq('id', toolkit.id);
+        
+        if (error) throw error;
+      } else {
+        // Default to habits table for all other types
+        const { error } = await supabase
+          .from('habits')
+          .update({ is_favorite: !toolkit.is_favorite })
+          .eq('id', toolkit.id);
+        
+        if (error) throw error;
       }
-      
-      const { error } = await supabase
-        .from(tableName)
-        .update({ is_favorite: !toolkit.is_favorite })
-        .eq('id', toolkit.id);
-      
-      if (error) throw error;
       
       return { ...toolkit, is_favorite: !toolkit.is_favorite };
     },
