@@ -7,15 +7,25 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Save } from "lucide-react";
+import { Save, Pause } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ImplementationIntentions } from "@/components/habits/ImplementationIntentions";
+import { EmotionalAnchoring } from "@/components/toolbox/EmotionalAnchoring";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { HabitStacking } from "@/components/habits/HabitStacking";
 
 interface HabitDetailFormProps {
   habit: any;
   id: string | undefined;
   onUpdate?: () => void;
+}
+
+interface ImplementationIntention {
+  if: string;
+  then: string;
+  id: string;
 }
 
 export const HabitDetailForm = ({ habit, id, onUpdate }: HabitDetailFormProps) => {
@@ -38,7 +48,16 @@ export const HabitDetailForm = ({ habit, id, onUpdate }: HabitDetailFormProps) =
     craving: "",
     reward: "",
     lifeArea: "",
+    minimal_dose: "", // Added field for minimal dose
+    implementation_intentions: [] as ImplementationIntention[], // Added field for implementation intentions
   });
+  const [isPaused, setIsPaused] = useState(false);
+  const [pauseData, setPauseData] = useState({
+    reason: "",
+    duration: "1",
+    endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Default 7 days
+  });
+  const [showPauseDialog, setShowPauseDialog] = useState(false);
 
   useEffect(() => {
     if (habit) {
@@ -59,7 +78,11 @@ export const HabitDetailForm = ({ habit, id, onUpdate }: HabitDetailFormProps) =
         craving: habit.craving || "",
         reward: habit.reward || "",
         lifeArea: habit.life_area || "",
+        minimal_dose: habit.minimal_dose || "", // Load minimal dose
+        implementation_intentions: [], // We'll load these separately
       });
+      
+      setIsPaused(habit.is_paused || false);
     }
   }, [habit]);
 
@@ -86,6 +109,65 @@ export const HabitDetailForm = ({ habit, id, onUpdate }: HabitDetailFormProps) =
     },
   });
 
+  const pauseHabitMutation = useMutation({
+    mutationFn: async (pauseInfo: any) => {
+      const { data, error } = await supabase
+        .from("habits")
+        .update({
+          is_paused: true,
+          pause_reason: pauseInfo.reason,
+          pause_until: pauseInfo.duration === "indefinite" ? null : pauseInfo.endDate,
+        })
+        .eq("id", id);
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["habit", id] });
+      queryClient.invalidateQueries({ queryKey: ["habits"] });
+      toast({
+        title: "Gewohnheit pausiert",
+        description: pauseData.duration === "indefinite" 
+          ? "Deine Gewohnheit wurde auf unbestimmte Zeit pausiert." 
+          : `Deine Gewohnheit wurde bis zum ${new Date(pauseData.endDate).toLocaleDateString()} pausiert.`,
+      });
+      setIsPaused(true);
+      setShowPauseDialog(false);
+      if (onUpdate) {
+        onUpdate();
+      }
+    },
+  });
+
+  const resumeHabitMutation = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase
+        .from("habits")
+        .update({
+          is_paused: false,
+          pause_reason: null,
+          pause_until: null,
+        })
+        .eq("id", id);
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["habit", id] });
+      queryClient.invalidateQueries({ queryKey: ["habits"] });
+      toast({
+        title: "Gewohnheit fortgesetzt",
+        description: "Deine Gewohnheit wurde erfolgreich fortgesetzt.",
+      });
+      setIsPaused(false);
+      if (onUpdate) {
+        onUpdate();
+      }
+    },
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     updateHabitMutation.mutate({
@@ -105,20 +187,160 @@ export const HabitDetailForm = ({ habit, id, onUpdate }: HabitDetailFormProps) =
       craving: habitData.craving,
       reward: habitData.reward,
       life_area: habitData.lifeArea,
+      minimal_dose: habitData.minimal_dose, // Save minimal dose
     });
+  };
+
+  const handlePauseHabit = () => {
+    if (!pauseData.reason) {
+      toast({
+        title: "Grund fehlt",
+        description: "Bitte gib einen Grund für die Pause an.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    pauseHabitMutation.mutate({
+      reason: pauseData.reason,
+      duration: pauseData.duration,
+      endDate: pauseData.endDate,
+    });
+  };
+
+  const handleResumeHabit = () => {
+    resumeHabitMutation.mutate();
+  };
+
+  const handleImplementationIntentionsSave = (intentions: ImplementationIntention[]) => {
+    setHabitData({ ...habitData, implementation_intentions: intentions });
+    // Here you would typically save these to the database as well
   };
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Gewohnheit bearbeiten</CardTitle>
+      <CardHeader className="flex flex-row items-center justify-between bg-white">
+        <div>
+          <CardTitle>Gewohnheit bearbeiten</CardTitle>
+        </div>
+        <div className="flex gap-2">
+          {isPaused ? (
+            <Button 
+              variant="outline" 
+              className="border-green-200 text-green-700 hover:bg-green-50 hover:text-green-800" 
+              onClick={handleResumeHabit}
+            >
+              Fortsetzen
+            </Button>
+          ) : (
+            <Dialog open={showPauseDialog} onOpenChange={setShowPauseDialog}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="border-amber-200 text-amber-700 hover:bg-amber-50 hover:text-amber-800">
+                  <Pause className="h-4 w-4 mr-2" />
+                  Pausieren
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Gewohnheit pausieren</DialogTitle>
+                  <DialogDescription>
+                    Gib einen Grund an, warum du diese Gewohnheit pausieren möchtest und wie lange.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="pause-reason">Grund für die Pause</Label>
+                    <Textarea
+                      id="pause-reason"
+                      value={pauseData.reason}
+                      onChange={(e) => setPauseData({ ...pauseData, reason: e.target.value })}
+                      placeholder="z.B. Urlaub, Krankheit, Zeitmangel"
+                      className="h-20"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="pause-duration">Dauer der Pause</Label>
+                    <Select
+                      value={pauseData.duration}
+                      onValueChange={(value) => {
+                        if (value === "1") {
+                          setPauseData({
+                            ...pauseData,
+                            duration: value,
+                            endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+                          });
+                        } else if (value === "2") {
+                          setPauseData({
+                            ...pauseData,
+                            duration: value,
+                            endDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+                          });
+                        } else if (value === "3") {
+                          setPauseData({
+                            ...pauseData,
+                            duration: value,
+                            endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+                          });
+                        } else {
+                          setPauseData({
+                            ...pauseData,
+                            duration: value,
+                            endDate: ""
+                          });
+                        }
+                      }}
+                    >
+                      <SelectTrigger id="pause-duration">
+                        <SelectValue placeholder="Wähle eine Dauer" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1">1 Woche</SelectItem>
+                        <SelectItem value="2">2 Wochen</SelectItem>
+                        <SelectItem value="3">1 Monat</SelectItem>
+                        <SelectItem value="custom">Benutzerdefiniert</SelectItem>
+                        <SelectItem value="indefinite">Auf unbestimmte Zeit</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  {pauseData.duration === "custom" && (
+                    <div className="space-y-2">
+                      <Label htmlFor="pause-end-date">Ende der Pause</Label>
+                      <Input
+                        id="pause-end-date"
+                        type="date"
+                        value={pauseData.endDate}
+                        onChange={(e) => setPauseData({ ...pauseData, endDate: e.target.value })}
+                        min={new Date().toISOString().split('T')[0]}
+                      />
+                    </div>
+                  )}
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setShowPauseDialog(false)}>
+                    Abbrechen
+                  </Button>
+                  <Button 
+                    variant="default"
+                    className="bg-amber-600 hover:bg-amber-700"
+                    onClick={handlePauseHabit}
+                  >
+                    Gewohnheit pausieren
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="basic">
-          <TabsList className="grid grid-cols-3 mb-4">
+          <TabsList className="grid grid-cols-5 mb-4">
             <TabsTrigger value="basic">Grundlagen</TabsTrigger>
             <TabsTrigger value="details">Details</TabsTrigger>
             <TabsTrigger value="advanced">Fortgeschritten</TabsTrigger>
+            <TabsTrigger value="intentions">Wenn-Dann</TabsTrigger>
+            <TabsTrigger value="zrm">ZRM & Stacking</TabsTrigger>
           </TabsList>
           
           <TabsContent value="basic" className="space-y-4">
@@ -174,6 +396,22 @@ export const HabitDetailForm = ({ habit, id, onUpdate }: HabitDetailFormProps) =
                 id="why"
                 value={habitData.why}
                 onChange={(e) => setHabitData({ ...habitData, why: e.target.value })}
+                className="h-20"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="minimal_dose" className="text-green-700 flex items-center">
+                Minimale Dosis
+                <span className="ml-2 text-xs text-gray-500 font-normal">
+                  (für Tage mit wenig Zeit/Energie, mit ⭐ markierbar)
+                </span>
+              </Label>
+              <Textarea
+                id="minimal_dose"
+                value={habitData.minimal_dose}
+                onChange={(e) => setHabitData({ ...habitData, minimal_dose: e.target.value })}
+                placeholder="z.B. Nur 5 Minuten meditieren statt 20 Minuten"
                 className="h-20"
               />
             </div>
@@ -300,6 +538,20 @@ export const HabitDetailForm = ({ habit, id, onUpdate }: HabitDetailFormProps) =
                   <SelectItem value="none">Keine Erinnerung</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="intentions">
+            <ImplementationIntentions 
+              initialIntentions={habitData.implementation_intentions}
+              onSave={handleImplementationIntentionsSave}
+            />
+          </TabsContent>
+
+          <TabsContent value="zrm" className="space-y-6">
+            <div className="grid grid-cols-1 gap-6">
+              <EmotionalAnchoring habitId={id} />
+              <HabitStacking habitId={id} />
             </div>
           </TabsContent>
         </Tabs>

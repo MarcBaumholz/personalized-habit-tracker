@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,7 +7,7 @@ import { Check, Star, ChevronLeft, ChevronRight, BarChart2, Calendar, PieChart }
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RechartsPieChart, Pie, Cell, Legend } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RechartsPieChart, Pie, Cell, Legend, AreaChart, Area } from 'recharts';
 
 const COMPLETION_COLORS = {
   "check": {
@@ -29,9 +28,20 @@ const COMPLETION_COLORS = {
 
 const WEEKDAYS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
 const CHART_COLORS = ["#3b82f6", "#22c55e", "#f59e0b", "#ef4444", "#8b5cf6"];
+const PHASE_COLORS = {
+  phase1: "#bbdefb", // Light blue for Phase 1 (day 0-30)
+  phase2: "#90caf9", // Medium blue for Phase 2 (day 31-66)
+  phase3: "#2196f3", // Darker blue for Phase 3 (day 67+)
+};
+
+const PHASE_DESCRIPTIONS = {
+  phase1: "Phase 1 (Tag 0-30): Aktive Unterstützung, Trigger und externe Belohnungen",
+  phase2: "Phase 2 (Tag 31-66): Reduzierung von Hinweisen, Fokus auf Eigenverantwortung",
+  phase3: "Phase 3 (ab Tag 67): Automatisierung des Verhaltens erreicht",
+};
 
 export const YearlyActivity = () => {
-  const [activeView, setActiveView] = useState<"yearly" | "weekly" | "category">("yearly");
+  const [activeView, setActiveView] = useState<"yearly" | "weekly" | "category" | "phases">("yearly");
   const [activeHabitIndex, setActiveHabitIndex] = useState(0);
 
   const { data: habitsData } = useQuery({
@@ -96,10 +106,39 @@ export const YearlyActivity = () => {
           };
         });
 
+        let consecutiveDays = 0;
+        const phase = {
+          phase1: days.filter(() => consecutiveDays < 30),
+          phase2: days.filter(() => consecutiveDays >= 30 && consecutiveDays < 66),
+          phase3: days.filter(() => consecutiveDays >= 66),
+          currentPhase: 'phase1',
+          completionCount: 0
+        };
+
+        const sortedDays = [...days].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        let tempConsecutive = 0;
+        sortedDays.forEach(day => {
+          if (day.completions.check > 0 || day.completions.star > 0) {
+            tempConsecutive++;
+          } else {
+            tempConsecutive = 0;
+          }
+          consecutiveDays = Math.max(consecutiveDays, tempConsecutive);
+        });
+
+        phase.completionCount = consecutiveDays;
+        
+        if (consecutiveDays >= 66) {
+          phase.currentPhase = 'phase3';
+        } else if (consecutiveDays >= 30) {
+          phase.currentPhase = 'phase2';
+        }
+
         return {
           id: habit.id,
           name: habit.name,
-          days
+          days,
+          phase
         };
       });
     }
@@ -337,6 +376,95 @@ export const YearlyActivity = () => {
     );
   };
 
+  const renderPhasesView = () => {
+    if (!habitsData || habitsData.length === 0) return null;
+    
+    const habit = habitsData[activeHabitIndex];
+    if (!habit) return null;
+
+    const phaseVisualizationData = [
+      { name: 'Tag 0-30', value: 30, phase: 'phase1', description: PHASE_DESCRIPTIONS.phase1 },
+      { name: 'Tag 31-66', value: 36, phase: 'phase2', description: PHASE_DESCRIPTIONS.phase2 },
+      { name: 'Ab Tag 67', value: 34, phase: 'phase3', description: PHASE_DESCRIPTIONS.phase3 },
+    ];
+
+    const completionCount = habit.phase.completionCount || 0;
+    
+    const markerPosition = Math.min(completionCount, 100);
+
+    return (
+      <div className="space-y-6">
+        <div className="mb-4">
+          <h3 className="text-lg font-medium mb-2">66-Tage Gewohnheitsbildungsmodell</h3>
+          <p className="text-sm text-gray-600">
+            Nach wissenschaftlichen Erkenntnissen (Lally et al.) dauert es durchschnittlich 66 Tage, 
+            um eine neue Gewohnheit zu etablieren. In dieser Zeit durchläufst du drei Phasen.
+          </p>
+        </div>
+
+        <div className="bg-gray-50 p-4 rounded-lg mb-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium">Dein Fortschritt: {completionCount} Tage</span>
+            <span className="text-sm font-medium">
+              Aktuelle Phase: {
+                completionCount < 30 ? "Phase 1 (Aufbau)" : 
+                completionCount < 66 ? "Phase 2 (Festigung)" : 
+                "Phase 3 (Automatisierung)"
+              }
+            </span>
+          </div>
+
+          <div className="h-6 bg-gray-200 rounded-full overflow-hidden relative">
+            <div 
+              className="absolute h-full bg-blue-200" 
+              style={{ width: '30%', left: '0%' }}
+              title={PHASE_DESCRIPTIONS.phase1}
+            />
+            <div 
+              className="absolute h-full bg-blue-400" 
+              style={{ width: '36%', left: '30%' }}
+              title={PHASE_DESCRIPTIONS.phase2}
+            />
+            <div 
+              className="absolute h-full bg-blue-600" 
+              style={{ width: '34%', left: '66%' }}
+              title={PHASE_DESCRIPTIONS.phase3}
+            />
+            <div 
+              className="absolute h-full w-2 bg-green-500 z-10" 
+              style={{ left: `${markerPosition}%` }}
+              title={`Aktueller Fortschritt: ${completionCount} Tage`}
+            />
+          </div>
+
+          <div className="flex justify-between mt-1 text-xs text-gray-500">
+            <span>Start</span>
+            <span>Tag 30</span>
+            <span>Tag 66</span>
+            <span>100+</span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4">
+          {phaseVisualizationData.map((phase) => (
+            <div 
+              key={phase.phase} 
+              className={`p-4 rounded-lg ${
+                phase.phase === 'phase1' && completionCount < 30 ? 'bg-blue-50 border border-blue-200' : 
+                phase.phase === 'phase2' && completionCount >= 30 && completionCount < 66 ? 'bg-blue-50 border border-blue-200' : 
+                phase.phase === 'phase3' && completionCount >= 66 ? 'bg-blue-50 border border-blue-200' : 
+                'bg-white border border-gray-200'
+              }`}
+            >
+              <h4 className="font-medium mb-2">{phase.name}</h4>
+              <p className="text-sm text-gray-600">{phase.description}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <Card className="border shadow-sm bg-white overflow-hidden">
       <CardHeader className="bg-blue-50 pb-4 pt-5 px-6">
@@ -371,7 +499,7 @@ export const YearlyActivity = () => {
       </CardHeader>
       <CardContent className="p-0">
         <div className="border-b border-gray-100 bg-blue-50">
-          <div className="flex px-6 py-2">
+          <div className="flex px-6 py-2 overflow-x-auto">
             <Button 
               variant={activeView === "yearly" ? "default" : "ghost"}
               size="sm" 
@@ -405,6 +533,17 @@ export const YearlyActivity = () => {
               <PieChart className="h-4 w-4 mr-2" />
               Kategorien
             </Button>
+            <Button 
+              variant={activeView === "phases" ? "default" : "ghost"}
+              size="sm" 
+              className={activeView === "phases" 
+                ? "rounded-full bg-blue-600 hover:bg-blue-700 text-white" 
+                : "rounded-full text-gray-600 hover:text-blue-700 hover:bg-blue-50"}
+              onClick={() => setActiveView("phases")}
+            >
+              <BarChart2 className="h-4 w-4 mr-2" />
+              66-Tage Modell
+            </Button>
           </div>
         </div>
         
@@ -422,6 +561,7 @@ export const YearlyActivity = () => {
               {activeView === "yearly" && renderYearlyView()}
               {activeView === "weekly" && renderWeeklyView()}
               {activeView === "category" && renderCategoryView()}
+              {activeView === "phases" && renderPhasesView()}
             </>
           )}
         </div>
