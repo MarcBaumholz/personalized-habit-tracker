@@ -1,4 +1,3 @@
-
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +11,8 @@ import { HabitReflection } from "@/components/habits/detail/HabitReflection";
 import { PastReflections } from "@/components/habits/detail/PastReflections";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { HabitFormationTracker } from "@/components/habits/HabitFormationTracker";
+import { HabitToolbox } from "@/components/habits/HabitToolbox";
 
 const HabitDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -118,6 +119,10 @@ const HabitDetail = () => {
             
             <TabsContent value="details" className="space-y-6">
               <HabitDetailForm habit={habit} id={id} onUpdate={refetchHabit} />
+              <HabitFormationTracker 
+                streak={habit.streak_count || 0} 
+                habitName={habit.name} 
+              />
               <HabitOverview 
                 identity={habit.identity || ""} 
                 context={habit.context || ""} 
@@ -136,6 +141,7 @@ const HabitDetail = () => {
             
             <TabsContent value="planning" className="space-y-6">
               <HabitSchedules schedules={schedules || []} />
+              <HabitToolbox habitId={id || ""} onUpdate={handleToolboxUpdate} />
               <HabitToolboxes 
                 toolboxes={toolboxes || []} 
                 habitId={id || ""} 
@@ -148,6 +154,10 @@ const HabitDetail = () => {
             {/* Left Column - Habit Details and Schedules */}
             <div className="space-y-6">
               <HabitDetailForm habit={habit} id={id} onUpdate={refetchHabit} />
+              <HabitFormationTracker 
+                streak={habit.streak_count || 0} 
+                habitName={habit.name} 
+              />
               <HabitSchedules schedules={schedules || []} />
               <HabitOverview 
                 identity={habit.identity || ""} 
@@ -162,6 +172,7 @@ const HabitDetail = () => {
 
             {/* Right Column - Toolboxes and Reflections */}
             <div className="space-y-6">
+              <HabitToolbox habitId={id || ""} onUpdate={handleToolboxUpdate} />
               <HabitToolboxes 
                 toolboxes={toolboxes || []} 
                 habitId={id || ""} 

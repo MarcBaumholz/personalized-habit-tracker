@@ -5,8 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Trash2, Save } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface ImplementationIntention {
   if: string;
@@ -16,6 +18,7 @@ interface ImplementationIntention {
 
 interface ImplementationIntentionsProps {
   initialIntentions?: ImplementationIntention[];
+  habitId?: string; 
   onSave?: (intentions: ImplementationIntention[]) => void;
   title?: string;
   description?: string;
@@ -24,17 +27,133 @@ interface ImplementationIntentionsProps {
 
 export const ImplementationIntentions = ({
   initialIntentions = [],
+  habitId,
   onSave,
   title = "Wenn-Dann Pläne",
   description = "Definiere konkrete Situationen und wie du darauf reagieren wirst.",
   readOnly = false,
 }: ImplementationIntentionsProps) => {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [intentions, setIntentions] = useState<ImplementationIntention[]>(
     initialIntentions.length > 0
       ? initialIntentions
       : [{ if: "", then: "", id: crypto.randomUUID() }]
   );
+
+  // Get existing implementation intentions if any
+  const { data: existingIntentions } = useQuery({
+    queryKey: ["implementation-intentions", habitId],
+    queryFn: async () => {
+      if (!habitId) return [];
+      
+      const { data } = await supabase
+        .from("habit_toolboxes")
+        .select("*")
+        .eq("habit_id", habitId)
+        .eq("type", "implementation_intention");
+      
+      if (data && data.length > 0) {
+        try {
+          // Attempt to parse steps as implementation intentions
+          const parsedIntentions = data.map(item => {
+            try {
+              const steps = typeof item.steps === 'string' 
+                ? JSON.parse(item.steps) 
+                : item.steps;
+              
+              return {
+                id: item.id,
+                intentions: steps.map((step: any) => ({
+                  if: step.if || "",
+                  then: step.then || "",
+                  id: step.id || crypto.randomUUID()
+                }))
+              };
+            } catch (e) {
+              console.error("Error parsing intentions:", e);
+              return {
+                id: item.id,
+                intentions: [{ if: "", then: "", id: crypto.randomUUID() }]
+              };
+            }
+          });
+          
+          if (parsedIntentions[0]?.intentions?.length > 0) {
+            setIntentions(parsedIntentions[0].intentions);
+          }
+          
+          return data;
+        } catch (e) {
+          console.error("Error processing intentions:", e);
+        }
+      }
+      
+      return data || [];
+    },
+    enabled: !!habitId
+  });
+
+  // Save implementation intentions
+  const saveIntentionsMutation = useMutation({
+    mutationFn: async () => {
+      if (!habitId) throw new Error("No habit ID provided");
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
+
+      // Check if we need to update or insert
+      if (existingIntentions && existingIntentions.length > 0) {
+        // Update existing record
+        const { data, error } = await supabase
+          .from("habit_toolboxes")
+          .update({
+            steps: intentions,
+            description: "Wenn-Dann Pläne für automatisierte Reaktionen"
+          })
+          .eq("id", existingIntentions[0].id);
+
+        if (error) throw error;
+        return data;
+      } else {
+        // Create new record
+        const { data, error } = await supabase
+          .from("habit_toolboxes")
+          .insert({
+            habit_id: habitId,
+            user_id: user.id,
+            type: "implementation_intention",
+            title: "Implementation Intentions",
+            description: "Wenn-Dann Pläne für automatisierte Reaktionen",
+            category: "Habit Automatisierung",
+            steps: intentions
+          });
+
+        if (error) throw error;
+        return data;
+      }
+    },
+    onSuccess: () => {
+      toast({
+        title: "Pläne gespeichert",
+        description: "Deine Wenn-Dann Pläne wurden erfolgreich gespeichert.",
+      });
+      
+      queryClient.invalidateQueries({ queryKey: ["implementation-intentions", habitId] });
+      
+      if (onSave) {
+        onSave(intentions);
+      }
+    },
+    onError: (error) => {
+      console.error("Error saving implementation intentions:", error);
+      toast({
+        title: "Fehler beim Speichern",
+        description: "Die Wenn-Dann Pläne konnten nicht gespeichert werden.",
+        variant: "destructive",
+      });
+    }
+  });
 
   const handleAddIntention = () => {
     setIntentions([...intentions, { if: "", then: "", id: crypto.randomUUID() }]);
@@ -75,11 +194,15 @@ export const ImplementationIntentions = ({
       return;
     }
 
-    onSave?.(intentions);
-    toast({
-      title: "Pläne gespeichert",
-      description: "Deine Wenn-Dann Pläne wurden erfolgreich gespeichert.",
-    });
+    if (habitId) {
+      saveIntentionsMutation.mutate();
+    } else if (onSave) {
+      onSave(intentions);
+      toast({
+        title: "Pläne gespeichert",
+        description: "Deine Wenn-Dann Pläne wurden erfolgreich gespeichert.",
+      });
+    }
   };
 
   return (

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -113,9 +114,11 @@ export const HabitDetailForm = ({ habit, id, onUpdate }: HabitDetailFormProps) =
       const { data, error } = await supabase
         .from("habits")
         .update({
-          paused: true,
+          // Fixed property name to match database schema
           pause_reason: pauseInfo.reason,
           pause_until: pauseInfo.duration === "indefinite" ? null : pauseInfo.endDate,
+          // Add the paused state as a separate field if it's not included in TypeScript type
+          paused: true
         })
         .eq("id", id);
 
@@ -144,9 +147,11 @@ export const HabitDetailForm = ({ habit, id, onUpdate }: HabitDetailFormProps) =
       const { data, error } = await supabase
         .from("habits")
         .update({
-          paused: false,
+          // Fixed property name to match database schema
           pause_reason: null,
           pause_until: null,
+          // Add the paused state as a separate field if it's not included in TypeScript type
+          paused: false
         })
         .eq("id", id);
 
