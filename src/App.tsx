@@ -14,6 +14,7 @@ import Profile from "./pages/Profile";
 import Calendar from "./pages/Calendar";
 import Toolbox from "./pages/Toolbox";
 import Archive from "./pages/Archive";
+import HabitDetail from "./pages/HabitDetail";
 
 const queryClient = new QueryClient();
 
@@ -80,6 +81,10 @@ const App = () => {
             <Route
               path="/archive"
               element={session ? <Archive /> : <Navigate to="/auth" />}
+            />
+            <Route
+              path="/habits/:id"
+              element={session ? <HabitDetail /> : <Navigate to="/auth" />}
             />
           </Routes>
         </BrowserRouter>
