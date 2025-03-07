@@ -1,14 +1,13 @@
-
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format, startOfYear, eachDayOfInterval, endOfYear, getDay, subYears, addDays } from "date-fns";
 import { de } from "date-fns/locale";
-import { Check, Star, ChevronLeft, ChevronRight } from "lucide-react";
+import { Check, Star, ChevronLeft, ChevronRight, BarChart2, Calendar, PieChart } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RechartsPieChart, Pie, Cell, Legend } from 'recharts';
 
 const COMPLETION_COLORS = {
   "check": {
@@ -53,7 +52,6 @@ export const YearlyActivity = () => {
 
       if (!habits) return [];
 
-      // Generate the full year of data for each habit
       const end = new Date();
       const start = subYears(end, 1);
       const allDays = eachDayOfInterval({ start, end });
@@ -77,7 +75,6 @@ export const YearlyActivity = () => {
           const dateStr = format(date, 'yyyy-MM-dd');
           const completions = completionMap.get(dateStr) || { check: 0, star: 0 };
           
-          // Determine color based on completion counts
           let colorType = 'check';
           let intensity = 0;
           
@@ -107,7 +104,6 @@ export const YearlyActivity = () => {
     }
   });
 
-  // Weekly progress data
   const { data: weeklyData } = useQuery({
     queryKey: ["weekly-progress"],
     queryFn: async () => {
@@ -127,7 +123,7 @@ export const YearlyActivity = () => {
       if (completions) {
         completions.forEach((completion: any) => {
           const date = new Date(completion.completed_date);
-          const dayOfWeek = (date.getDay() + 6) % 7; // Adjusting to Monday = 0
+          const dayOfWeek = (date.getDay() + 6) % 7;
           weeklyStats[dayOfWeek].completions += 1;
         });
       }
@@ -136,7 +132,6 @@ export const YearlyActivity = () => {
     }
   });
 
-  // Category distribution data
   const { data: categoryData } = useQuery({
     queryKey: ["category-distribution"],
     queryFn: async () => {
@@ -164,8 +159,6 @@ export const YearlyActivity = () => {
   const getCompletionColor = (colorType: string, intensity: number) => {
     return COMPLETION_COLORS[colorType as keyof typeof COMPLETION_COLORS][intensity as keyof typeof COMPLETION_COLORS["check"]];
   };
-
-  if (!habitsData) return null;
 
   const navigateHabit = (direction: 'prev' | 'next') => {
     if (habitsData.length === 0) return;
@@ -342,34 +335,11 @@ export const YearlyActivity = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <Card className="p-6 bg-gray-950">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex gap-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="bg-gray-800 border-gray-700 hover:bg-gray-700"
-              onClick={() => setActiveView("yearly")}
-            >
-              Jahresübersicht
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="bg-gray-800 border-gray-700 hover:bg-gray-700"
-              onClick={() => setActiveView("weekly")}
-            >
-              Wöchentlich
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="bg-gray-800 border-gray-700 hover:bg-gray-700"
-              onClick={() => setActiveView("category")}
-            >
-              Kategorien
-            </Button>
+    <Card className="border-none shadow-md bg-gray-950 overflow-hidden">
+      <CardHeader className="bg-gray-900 pb-4 pt-5 px-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <CardTitle className="text-xl text-white">Aktivitätsübersicht</CardTitle>
           </div>
           <div className="flex items-center gap-2">
             <Button 
@@ -377,27 +347,82 @@ export const YearlyActivity = () => {
               size="sm" 
               className="bg-gray-800 border-gray-700 hover:bg-gray-700 h-8 w-8 p-0" 
               onClick={() => navigateHabit('prev')}
+              disabled={!habitsData || habitsData.length <= 1}
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <span className="text-sm text-gray-400">
-              {activeHabitIndex + 1} / {habitsData.length}
+            <span className="text-sm text-gray-400 min-w-[60px] text-center">
+              {habitsData ? `${activeHabitIndex + 1} / ${habitsData.length}` : '0 / 0'}
             </span>
             <Button 
               variant="outline" 
               size="sm" 
               className="bg-gray-800 border-gray-700 hover:bg-gray-700 h-8 w-8 p-0" 
               onClick={() => navigateHabit('next')}
+              disabled={!habitsData || habitsData.length <= 1}
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
         </div>
-
-        {activeView === "yearly" && renderYearlyView()}
-        {activeView === "weekly" && renderWeeklyView()}
-        {activeView === "category" && renderCategoryView()}
-      </Card>
-    </div>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="border-b border-gray-800 bg-gray-900">
+          <div className="flex px-6 py-2">
+            <Button 
+              variant={activeView === "yearly" ? "default" : "ghost"}
+              size="sm" 
+              className={activeView === "yearly" 
+                ? "rounded-full bg-blue-600 hover:bg-blue-700 text-white" 
+                : "rounded-full text-gray-400 hover:text-white hover:bg-gray-800"}
+              onClick={() => setActiveView("yearly")}
+            >
+              <Calendar className="h-4 w-4 mr-2" />
+              Jahresübersicht
+            </Button>
+            <Button 
+              variant={activeView === "weekly" ? "default" : "ghost"}
+              size="sm" 
+              className={activeView === "weekly" 
+                ? "rounded-full bg-blue-600 hover:bg-blue-700 text-white" 
+                : "rounded-full text-gray-400 hover:text-white hover:bg-gray-800"}
+              onClick={() => setActiveView("weekly")}
+            >
+              <BarChart2 className="h-4 w-4 mr-2" />
+              Wöchentlich
+            </Button>
+            <Button 
+              variant={activeView === "category" ? "default" : "ghost"}
+              size="sm" 
+              className={activeView === "category" 
+                ? "rounded-full bg-blue-600 hover:bg-blue-700 text-white" 
+                : "rounded-full text-gray-400 hover:text-white hover:bg-gray-800"}
+              onClick={() => setActiveView("category")}
+            >
+              <PieChart className="h-4 w-4 mr-2" />
+              Kategorien
+            </Button>
+          </div>
+        </div>
+        
+        <div className="p-6">
+          {!habitsData ? (
+            <div className="flex items-center justify-center h-[300px]">
+              <p className="text-gray-400">Daten werden geladen...</p>
+            </div>
+          ) : habitsData.length === 0 ? (
+            <div className="flex items-center justify-center h-[300px]">
+              <p className="text-gray-400">Keine Gewohnheiten vorhanden</p>
+            </div>
+          ) : (
+            <>
+              {activeView === "yearly" && renderYearlyView()}
+              {activeView === "weekly" && renderWeeklyView()}
+              {activeView === "category" && renderCategoryView()}
+            </>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 };
