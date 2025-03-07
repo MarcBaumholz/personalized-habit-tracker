@@ -4,8 +4,8 @@ import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ToolboxHeaderProps {
-  activeTab: 'routines' | 'community' | 'inspiration' | 'building-blocks';
-  onTabChange: (tab: 'routines' | 'community' | 'inspiration' | 'building-blocks') => void;
+  activeTab: 'favorites' | 'community' | 'inspiration' | 'building-blocks';
+  onTabChange: (tab: 'favorites' | 'community' | 'inspiration' | 'building-blocks') => void;
 }
 
 export const ToolboxHeader = ({ activeTab, onTabChange }: ToolboxHeaderProps) => {
@@ -26,10 +26,10 @@ export const ToolboxHeader = ({ activeTab, onTabChange }: ToolboxHeaderProps) =>
       
       <div className="flex border-b border-gray-200 w-full md:w-[500px] bg-white rounded-t-lg shadow-sm">
         <TabButton
-          isActive={activeTab === 'routines'}
-          onClick={() => onTabChange('routines')}
+          isActive={activeTab === 'favorites'}
+          onClick={() => onTabChange('favorites')}
           icon={<Star className="h-5 w-5" />}
-          label="Routinen"
+          label="Favoriten"
           isMobile={isMobile}
         />
         <TabButton

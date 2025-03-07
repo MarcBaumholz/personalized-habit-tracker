@@ -58,7 +58,7 @@ export const ToolboxCarousel = ({ toolkits = [], onSelect, onRemove, onAdd, acti
       // Determine which table to update based on toolkit type
       if (toolkit.type === 'building_block') {
         tableName = 'building_blocks';
-      } else if (activeTab === 'routines') {
+      } else if (activeTab === 'favorites') {
         tableName = 'habits';
       }
       
@@ -76,6 +76,7 @@ export const ToolboxCarousel = ({ toolkits = [], onSelect, onRemove, onAdd, acti
       
       queryClient.invalidateQueries({ queryKey: ['building-blocks'] });
       queryClient.invalidateQueries({ queryKey: ['active-routines'] });
+      queryClient.invalidateQueries({ queryKey: ['favorite-toolkits'] });
       
       toast({
         title: updatedToolkit.is_favorite ? "Zu Favoriten hinzugefügt" : "Aus Favoriten entfernt",

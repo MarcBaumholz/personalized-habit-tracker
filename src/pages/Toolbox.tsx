@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { ArrowRight, Award, CheckCircle2, Info, Users, Video } from "lucide-react";
+import { ArrowRight, Award, CheckCircle2, Info, Users, Video, Star } from "lucide-react";
 import { toast as sonnerToast } from "sonner";
 import { CommunityChallenges } from "@/components/community/CommunityChallenges";
 import {
@@ -31,6 +31,7 @@ interface BuildingBlock {
   category: string;
   impact_area: string[];
   created_at: string;
+  is_favorite?: boolean;
 }
 
 const courses = [
@@ -283,7 +284,7 @@ const INSPIRATION_TOOLKITS = [
 
 const Toolbox = () => {
   const [selectedToolkit, setSelectedToolkit] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<'routines' | 'community' | 'inspiration' | 'education'>('routines');
+  const [activeTab, setActiveTab] = useState<'favorites' | 'community' | 'inspiration' | 'building-blocks' | 'education'>('favorites');
   const [selectedModule, setSelectedModule] = useState<any>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -304,6 +305,40 @@ const Toolbox = () => {
     },
   });
 
+  const { data: favoriteToolkits } = useQuery({
+    queryKey: ["favorite-toolkits"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
+
+      // Get favorite habits
+      const { data: favoriteHabits } = await supabase
+        .from("habits")
+        .select("*, habit_completions(*)")
+        .eq("user_id", user.id)
+        .eq("is_favorite", true)
+        .order("created_at", { ascending: false });
+
+      // Get favorite building blocks
+      const { data: favoriteBlocks } = await supabase
+        .from("building_blocks")
+        .select("*")
+        .eq("is_favorite", true)
+        .order("created_at", { ascending: false });
+
+      // Format building blocks to match the same structure as habits
+      const formattedBlocks = (favoriteBlocks || []).map(block => ({
+        ...block,
+        type: 'building_block',
+        title: block.name,
+        steps: block.impact_area,
+      }));
+
+      // Combine both types of favorites
+      return [...(favoriteHabits || []), ...formattedBlocks];
+    },
+  });
+
   const { data: buildingBlocks } = useQuery<BuildingBlock[]>({
     queryKey: ["building-blocks"],
     queryFn: async () => {
@@ -319,8 +354,8 @@ const Toolbox = () => {
 
   const getActiveToolkits = () => {
     switch (activeTab) {
-      case 'routines':
-        return activeRoutines || [];
+      case 'favorites':
+        return favoriteToolkits || [];
       case 'building-blocks':
         return buildingBlocks || [];
       case 'inspiration':
@@ -341,7 +376,7 @@ const Toolbox = () => {
 
       const habitData = {
         user_id: user.id,
-        name: toolkit.title,
+        name: toolkit.title || toolkit.name,
         category: toolkit.category || "routine",
         cue: toolkit.cue,
         craving: toolkit.craving,
@@ -349,15 +384,17 @@ const Toolbox = () => {
         reward: toolkit.reward,
         minimal_dose: toolkit.minimal_dose,
         building_blocks: toolkit.building_blocks,
+        is_favorite: true, // Set new tools as favorites by default
       };
 
       await supabase.from("habits").insert(habitData);
 
       queryClient.invalidateQueries({ queryKey: ["active-routines"] });
+      queryClient.invalidateQueries({ queryKey: ["favorite-toolkits"] });
 
       toast({
         title: "Routine hinzugefügt",
-        description: `${toolkit.title} wurde zu deinen Routinen hinzugefügt.`,
+        description: `${toolkit.title || toolkit.name} wurde zu deinen Routinen hinzugefügt.`,
       });
     } catch (error) {
       toast({
@@ -379,6 +416,7 @@ const Toolbox = () => {
 
       queryClient.invalidateQueries({ queryKey: ["active-routines"] });
       queryClient.invalidateQueries({ queryKey: ["habits"] });
+      queryClient.invalidateQueries({ queryKey: ["favorite-toolkits"] });
 
       toast({
         title: "Routine entfernt",
@@ -424,10 +462,11 @@ const Toolbox = () => {
       </h1>
       <TabsList className="bg-blue-100/50 rounded-xl p-1">
         <TabsTrigger
-          value="routines"
+          value="favorites"
           className="rounded-lg px-4 py-2 data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow"
         >
-          Routinen
+          <Star className="h-4 w-4 mr-2" />
+          Favoriten
         </TabsTrigger>
         <TabsTrigger
           value="inspiration"
@@ -459,7 +498,7 @@ const Toolbox = () => {
           <Tabs value={activeTab} onValueChange={(value: any) => setActiveTab(value)} className="w-full">
             <TabsHeader />
             
-            <TabsContent value="routines" className="animate-fade-in">
+            <TabsContent value="favorites" className="animate-fade-in">
               <div className="relative py-6 sm:py-10">
                 <ToolboxCarousel
                   toolkits={getActiveToolkits()}
@@ -476,6 +515,18 @@ const Toolbox = () => {
             </TabsContent>
             
             <TabsContent value="inspiration" className="animate-fade-in">
+              <div className="relative py-6 sm:py-10">
+                <ToolboxCarousel
+                  toolkits={getActiveToolkits()}
+                  onSelect={setSelectedToolkit}
+                  onRemove={removeRoutine}
+                  onAdd={addToolkitToProfile}
+                  activeTab={activeTab}
+                />
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="building-blocks" className="animate-fade-in">
               <div className="relative py-6 sm:py-10">
                 <ToolboxCarousel
                   toolkits={getActiveToolkits()}
