@@ -14,8 +14,8 @@ import { WeeklyTimeboxing } from "@/components/calendar/WeeklyTimeboxing";
 import { DndContext, DragEndEvent } from "@dnd-kit/core";
 
 const DEFAULT_PREFERENCES = {
-  start_time: '00:00:00',
-  end_time: '23:59:59',
+  start_time: '06:00:00',
+  end_time: '21:00:00',
   default_view: 'week'
 };
 
@@ -126,32 +126,35 @@ const Calendar = () => {
       <Navigation />
       <DndContext onDragEnd={handleDragEnd}>
         <main className="container py-8 px-4 md:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
-            <Card className="p-6">
-              <WeeklyTimeboxing
-                date={date}
-                schedules={schedules}
-                preferences={calendarPreferences}
-              />
-            </Card>
-            
-            <div className="space-y-6">
-              <Card className="p-6">
-                <CalendarComponent
-                  mode="single"
-                  selected={date}
-                  onSelect={setDate}
-                  className="rounded-md"
-                  locale={de}
-                />
-              </Card>
+          <div className="space-y-6">
+            <h1 className="text-3xl font-bold text-blue-800">Kalenderansicht</h1>
+            <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-6">
+              <div className="space-y-6">
+                <Card className="p-6">
+                  <CalendarComponent
+                    mode="single"
+                    selected={date}
+                    onSelect={setDate}
+                    className="rounded-md"
+                    locale={de}
+                  />
+                </Card>
 
+                <Card className="p-6">
+                  <ScheduleList
+                    date={date}
+                    schedules={schedules}
+                    habits={habits}
+                    isDraggable
+                  />
+                </Card>
+              </div>
+              
               <Card className="p-6">
-                <ScheduleList
+                <WeeklyTimeboxing
                   date={date}
                   schedules={schedules}
-                  habits={habits}
-                  isDraggable
+                  preferences={calendarPreferences}
                 />
               </Card>
             </div>
