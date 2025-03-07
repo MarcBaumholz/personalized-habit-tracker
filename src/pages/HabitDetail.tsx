@@ -11,6 +11,7 @@ import { HabitToolboxes } from "@/components/habits/detail/HabitToolboxes";
 import { HabitReflection } from "@/components/habits/detail/HabitReflection";
 import { PastReflections } from "@/components/habits/detail/PastReflections";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const HabitDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -103,25 +104,62 @@ const HabitDetail = () => {
           progress={calculateProgress(habit)} 
         />
 
-        <div className="grid md:grid-cols-2 gap-6">
-          {/* Left Column - Habit Details and Schedules */}
-          <div className="space-y-6">
-            <HabitDetailForm habit={habit} id={id} />
-            <HabitSchedules schedules={schedules || []} />
-            <HabitOverview 
-              identity={habit.identity || ""} 
-              context={habit.context || ""} 
-              smartGoal={habit.smart_goal || ""}
-            />
-          </div>
+        {isMobile ? (
+          <Tabs defaultValue="details" className="mb-12">
+            <TabsList className="grid grid-cols-3 mb-4">
+              <TabsTrigger value="details">Details</TabsTrigger>
+              <TabsTrigger value="tracking">Tracking</TabsTrigger>
+              <TabsTrigger value="planning">Planung</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="details" className="space-y-6">
+              <HabitDetailForm habit={habit} id={id} />
+              <HabitOverview 
+                identity={habit.identity || ""} 
+                context={habit.context || ""} 
+                smartGoal={habit.smart_goal || ""}
+                frequency={habit.frequency}
+                category={habit.category}
+                streakCount={habit.streak_count}
+                difficulty={habit.difficulty}
+              />
+            </TabsContent>
+            
+            <TabsContent value="tracking" className="space-y-6">
+              <HabitReflection habitId={id || ""} />
+              <PastReflections />
+            </TabsContent>
+            
+            <TabsContent value="planning" className="space-y-6">
+              <HabitSchedules schedules={schedules || []} />
+              <HabitToolboxes toolboxes={toolboxes || []} />
+            </TabsContent>
+          </Tabs>
+        ) : (
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* Left Column - Habit Details and Schedules */}
+            <div className="space-y-6">
+              <HabitDetailForm habit={habit} id={id} />
+              <HabitSchedules schedules={schedules || []} />
+              <HabitOverview 
+                identity={habit.identity || ""} 
+                context={habit.context || ""} 
+                smartGoal={habit.smart_goal || ""}
+                frequency={habit.frequency}
+                category={habit.category}
+                streakCount={habit.streak_count}
+                difficulty={habit.difficulty}
+              />
+            </div>
 
-          {/* Right Column - Toolboxes and Reflections */}
-          <div className="space-y-6">
-            <HabitToolboxes toolboxes={toolboxes || []} />
-            <HabitReflection habitId={id || ""} />
-            <PastReflections />
+            {/* Right Column - Toolboxes and Reflections */}
+            <div className="space-y-6">
+              <HabitToolboxes toolboxes={toolboxes || []} />
+              <HabitReflection habitId={id || ""} />
+              <PastReflections />
+            </div>
           </div>
-        </div>
+        )}
       </main>
     </div>
   );
