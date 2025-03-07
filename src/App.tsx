@@ -12,7 +12,6 @@ import Onboarding from "./pages/Onboarding";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import Calendar from "./pages/Calendar";
-import Education from "./pages/Education";
 import Toolbox from "./pages/Toolbox";
 import Archive from "./pages/Archive";
 
@@ -73,10 +72,6 @@ const App = () => {
             <Route
               path="/calendar"
               element={session ? <Calendar /> : <Navigate to="/auth" />}
-            />
-            <Route
-              path="/education"
-              element={session ? <Education /> : <Navigate to="/auth" />}
             />
             <Route
               path="/toolbox"
