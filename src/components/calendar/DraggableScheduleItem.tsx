@@ -8,12 +8,16 @@ interface DraggableScheduleItemProps {
     scheduled_time?: string;
     category?: string;
   };
+  isHabit?: boolean;
 }
 
-export const DraggableScheduleItem = ({ todo }: DraggableScheduleItemProps) => {
+export const DraggableScheduleItem = ({ todo, isHabit = false }: DraggableScheduleItemProps) => {
   const { attributes, listeners, setNodeRef } = useDraggable({
     id: todo.id,
-    data: { type: 'todo', ...todo }
+    data: { 
+      type: isHabit ? 'habit' : 'todo', 
+      ...todo 
+    }
   });
 
   return (
@@ -21,8 +25,8 @@ export const DraggableScheduleItem = ({ todo }: DraggableScheduleItemProps) => {
       ref={setNodeRef}
       {...listeners}
       {...attributes}
-      className={`flex items-center gap-4 p-3 border rounded-lg cursor-pointer transition-colors
-        ${todo.scheduled_time ? 'bg-gray-50' : 'hover:bg-gray-50'}`}
+      className={`flex items-center gap-4 p-3 border rounded-lg cursor-move transition-colors
+        ${isHabit ? 'bg-blue-50 hover:bg-blue-100' : todo.scheduled_time ? 'bg-green-50 hover:bg-green-100' : 'hover:bg-gray-50'}`}
     >
       <span className="font-medium min-w-[60px]">
         {todo.scheduled_time || "---"}

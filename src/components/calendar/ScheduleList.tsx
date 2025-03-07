@@ -79,6 +79,11 @@ export const ScheduleList = ({
     setIsDialogOpen(true);
   };
 
+  // Combine todos from props and fetched todos, removing duplicates
+  const allTodos = [...(todos || []), ...(dailyTodos || [])].filter((todo, index, self) => 
+    index === self.findIndex((t) => t.id === todo.id)
+  );
+
   return (
     <Card className="p-6">
       <div className="flex justify-between items-center mb-4">
@@ -88,7 +93,7 @@ export const ScheduleList = ({
       </div>
 
       <div className="space-y-2">
-        {dailyTodos?.map((todo) => (
+        {allTodos?.map((todo) => (
           isDraggable ? (
             <DraggableScheduleItem key={todo.id} todo={todo} />
           ) : (
@@ -96,6 +101,7 @@ export const ScheduleList = ({
               key={todo.id}
               className={`flex items-center gap-4 p-3 border rounded-lg cursor-pointer transition-colors
                 ${todo.scheduled_time ? 'bg-gray-50' : 'hover:bg-gray-50'}`}
+              onClick={() => handleTimeSelect(todo)}
             >
               <span className="font-medium min-w-[60px]">
                 {todo.scheduled_time || "---"}
@@ -106,6 +112,37 @@ export const ScheduleList = ({
                   {todo.category && (
                     <span className="text-sm text-gray-500">{todo.category}</span>
                   )}
+                </div>
+              </div>
+            </div>
+          )
+        ))}
+
+        {/* Display habits as well */}
+        {schedules?.map((schedule) => (
+          isDraggable ? (
+            <DraggableScheduleItem 
+              key={`schedule-${schedule.id}`} 
+              todo={{
+                id: schedule.id,
+                title: schedule.habits.name,
+                scheduled_time: schedule.scheduled_time,
+                category: "Gewohnheit"
+              }} 
+              isHabit
+            />
+          ) : (
+            <div
+              key={`schedule-${schedule.id}`}
+              className="flex items-center gap-4 p-3 border rounded-lg bg-gray-50"
+            >
+              <span className="font-medium min-w-[60px]">
+                {schedule.scheduled_time}
+              </span>
+              <div className="flex-1">
+                <div className="flex items-center justify-between">
+                  <span>{schedule.habits.name}</span>
+                  <span className="text-sm text-gray-500">Gewohnheit</span>
                 </div>
               </div>
             </div>

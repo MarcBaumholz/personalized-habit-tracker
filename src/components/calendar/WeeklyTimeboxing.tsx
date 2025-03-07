@@ -3,10 +3,12 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Calendar } from "lucide-react";
-import { format, startOfWeek, addDays, getISOWeek, parse, addWeeks, subWeeks } from "date-fns";
+import { format, startOfWeek, addDays, getISOWeek, addWeeks, subWeeks } from "date-fns";
 import { de } from "date-fns/locale";
-import { useToast } from "@/hooks/use-toast";
 import { useDroppable } from "@dnd-kit/core";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface TimeSlot {
   time: string;
@@ -43,6 +45,8 @@ const TIME_SLOTS: TimeSlot[] = [
 interface WeeklyTimeboxingProps {
   date?: Date;
   schedules?: any[];
+  todos?: any[];
+  onTimeSlotClick?: (time: string, date: Date) => void;
   preferences?: {
     start_time: string;
     end_time: string;
@@ -50,8 +54,16 @@ interface WeeklyTimeboxingProps {
   };
 }
 
-export const WeeklyTimeboxing = ({ date = new Date(), schedules = [], preferences }: WeeklyTimeboxingProps) => {
+export const WeeklyTimeboxing = ({ 
+  date = new Date(), 
+  schedules = [], 
+  todos = [],
+  onTimeSlotClick,
+  preferences 
+}: WeeklyTimeboxingProps) => {
   const [currentWeek, setCurrentWeek] = useState(date);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   const weekStart = startOfWeek(currentWeek, { weekStartsOn: 1 });
   const weekNumber = getISOWeek(weekStart);
@@ -79,13 +91,19 @@ export const WeeklyTimeboxing = ({ date = new Date(), schedules = [], preference
     setCurrentWeek(addWeeks(currentWeek, 1));
   };
 
+  const handleCellClick = (time: string, day: Date) => {
+    if (onTimeSlotClick) {
+      onTimeSlotClick(time, day);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Calendar className="h-6 w-6 text-blue-600" />
           <h2 className="text-2xl font-bold text-blue-800">
-            März 2025
+            {format(currentWeek, "MMMM yyyy", { locale: de })}
           </h2>
         </div>
         <div className="flex items-center space-x-2">
@@ -123,17 +141,17 @@ export const WeeklyTimeboxing = ({ date = new Date(), schedules = [], preference
           ))}
 
           {visibleTimeSlots.map((slot, timeIndex) => (
-            <>
+            <React.Fragment key={`timeslot-${slot.time}`}>
               <div 
-                key={`time-${slot.time}`} 
                 className="border-b border-r py-4 px-2 h-20 text-blue-600 text-center"
               >
                 {slot.displayTime}
               </div>
 
               {weekDays.map((day, dayIndex) => {
+                const droppableId = getDroppableId(slot.time, dayIndex, timeIndex);
                 const { setNodeRef } = useDroppable({
-                  id: getDroppableId(slot.time, dayIndex, timeIndex)
+                  id: droppableId
                 });
 
                 const matchingSchedules = schedules.filter(schedule => 
@@ -141,32 +159,53 @@ export const WeeklyTimeboxing = ({ date = new Date(), schedules = [], preference
                   schedule.scheduled_time === slot.time
                 );
 
-                const hasSchedule = matchingSchedules.length > 0;
-                const bgClass = hasSchedule ? 'bg-green-50' : 'hover:bg-gray-50';
+                // Check for todos scheduled at this time slot
+                const matchingTodos = todos.filter(todo => 
+                  todo.scheduled_time === slot.time && 
+                  format(new Date(todo.scheduled_date || new Date()), "yyyy-MM-dd") === format(day, "yyyy-MM-dd")
+                );
+
+                const hasItems = matchingSchedules.length > 0 || matchingTodos.length > 0;
+                const bgClass = hasItems ? 'bg-green-50' : 'hover:bg-gray-50';
 
                 return (
                   <div
                     key={`${day.toISOString()}-${slot.time}`}
                     ref={setNodeRef}
-                    className={`border-b border-r h-20 group ${bgClass}`}
+                    className={`border-b border-r h-20 group relative ${bgClass} cursor-pointer`}
+                    onClick={() => handleCellClick(slot.time, day)}
                   >
                     {matchingSchedules.map(schedule => (
                       <div
-                        key={schedule.id}
+                        key={`schedule-${schedule.id}`}
                         style={{
                           position: 'absolute',
-                          left: `${schedule.position_x || 0}px`,
-                          top: `${schedule.position_y || 0}px`
+                          left: `${schedule.position_x || 5}px`,
+                          top: `${schedule.position_y || 5}px`
                         }}
-                        className="px-3 py-1 text-sm"
+                        className="px-3 py-1 text-sm bg-blue-100 rounded-md"
                       >
-                        {schedule.habits?.name}
+                        {schedule.habits?.name || "Gewohnheit"}
+                      </div>
+                    ))}
+                    
+                    {matchingTodos.map(todo => (
+                      <div
+                        key={`todo-${todo.id}`}
+                        style={{
+                          position: 'absolute',
+                          left: `${todo.position_x || 5}px`,
+                          top: `${(todo.position_y || 5) + 30}px`
+                        }}
+                        className="px-3 py-1 text-sm bg-green-100 rounded-md"
+                      >
+                        {todo.title || "Todo"}
                       </div>
                     ))}
                   </div>
                 );
               })}
-            </>
+            </React.Fragment>
           ))}
         </div>
       </div>
