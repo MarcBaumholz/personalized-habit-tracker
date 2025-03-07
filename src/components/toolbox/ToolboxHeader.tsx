@@ -72,7 +72,7 @@ const TabButton = ({ isActive, onClick, icon, label, isMobile }: TabButtonProps)
       "px-6 py-4 text-base font-medium transition-all duration-200 relative",
       "hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-t-lg",
       isActive 
-        ? "text-blue-700 bg-white" 
+        ? "text-blue-600 bg-white" 
         : "text-gray-600 hover:bg-white/50"
     )}
     onClick={onClick}
@@ -82,7 +82,7 @@ const TabButton = ({ isActive, onClick, icon, label, isMobile }: TabButtonProps)
       {!isMobile && label}
     </div>
     {isActive && (
-      <span className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-blue-500 to-blue-400" />
+      <span className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-blue-600 to-blue-400" />
     )}
   </button>
 );

@@ -91,7 +91,7 @@ export const Navigation = () => {
         <div className="flex items-center justify-between w-full">
           <div className="flex items-center space-x-4">
             <Link to="/" className="mr-2">
-              <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-800">
+              <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-400">
                 HabitJourney
               </span>
             </Link>
