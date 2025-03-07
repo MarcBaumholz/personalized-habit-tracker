@@ -76,7 +76,7 @@ export const HabitStacking = ({ habitId, onSave }: HabitStackingProps) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
-      const stackData = {
+      const stackPayload = {
         habit_id: habitId,
         user_id: user.id,
         type: "stack",
@@ -90,7 +90,7 @@ export const HabitStacking = ({ habitId, onSave }: HabitStackingProps) => {
         // Update existing stack
         const { data, error } = await supabase
           .from("habit_toolboxes")
-          .update(stackData)
+          .update(stackPayload)
           .eq("id", existingStack.id);
 
         if (error) throw error;
@@ -99,7 +99,7 @@ export const HabitStacking = ({ habitId, onSave }: HabitStackingProps) => {
         // Create new stack
         const { data, error } = await supabase
           .from("habit_toolboxes")
-          .insert(stackData);
+          .insert(stackPayload);
 
         if (error) throw error;
         return data;

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -82,7 +81,7 @@ export const HabitDetailForm = ({ habit, id, onUpdate }: HabitDetailFormProps) =
         implementation_intentions: [], // We'll load these separately
       });
       
-      setIsPaused(habit.is_paused || false);
+      setIsPaused(habit.paused || false);
     }
   }, [habit]);
 
@@ -114,7 +113,7 @@ export const HabitDetailForm = ({ habit, id, onUpdate }: HabitDetailFormProps) =
       const { data, error } = await supabase
         .from("habits")
         .update({
-          is_paused: true,
+          paused: true,
           pause_reason: pauseInfo.reason,
           pause_until: pauseInfo.duration === "indefinite" ? null : pauseInfo.endDate,
         })
@@ -145,7 +144,7 @@ export const HabitDetailForm = ({ habit, id, onUpdate }: HabitDetailFormProps) =
       const { data, error } = await supabase
         .from("habits")
         .update({
-          is_paused: false,
+          paused: false,
           pause_reason: null,
           pause_until: null,
         })
