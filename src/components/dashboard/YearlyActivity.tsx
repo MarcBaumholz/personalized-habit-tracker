@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,23 +12,23 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 
 const COMPLETION_COLORS = {
   "check": {
-    0: "#1e293b", // No completions
-    1: "#166534", // Light green
-    2: "#16a34a", // Medium green
-    3: "#22c55e", // Strong green
+    0: "#f1f5f9", // No completions - light gray
+    1: "#dcfce7", // Light green
+    2: "#bbf7d0", // Medium green
+    3: "#86efac", // Strong green
     4: "#4ade80", // Very strong green
   },
   "star": {
-    0: "#1e293b", // No completions
-    1: "#854d0e", // Light yellow
-    2: "#ca8a04", // Medium yellow
-    3: "#eab308", // Strong yellow
+    0: "#f1f5f9", // No completions - light gray
+    1: "#fef9c3", // Light yellow
+    2: "#fde68a", // Medium yellow
+    3: "#fcd34d", // Strong yellow
     4: "#facc15", // Very strong yellow
   }
 };
 
 const WEEKDAYS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
-const CHART_COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8"];
+const CHART_COLORS = ["#3b82f6", "#22c55e", "#f59e0b", "#ef4444", "#8b5cf6"];
 
 export const YearlyActivity = () => {
   const [activeView, setActiveView] = useState<"yearly" | "weekly" | "category">("yearly");
@@ -161,7 +162,7 @@ export const YearlyActivity = () => {
   };
 
   const navigateHabit = (direction: 'prev' | 'next') => {
-    if (habitsData.length === 0) return;
+    if (!habitsData || habitsData.length === 0) return;
     
     if (direction === 'prev') {
       setActiveHabitIndex(prev => (prev === 0 ? habitsData.length - 1 : prev - 1));
@@ -171,6 +172,8 @@ export const YearlyActivity = () => {
   };
 
   const renderYearlyView = () => {
+    if (!habitsData || habitsData.length === 0) return null;
+    
     const habit = habitsData[activeHabitIndex];
     if (!habit) return null;
 
@@ -178,16 +181,16 @@ export const YearlyActivity = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
-            <h3 className="text-lg font-medium text-white">{habit.name}</h3>
+            <h3 className="text-lg font-medium">{habit.name}</h3>
           </div>
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1">
               <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: COMPLETION_COLORS.check[4] }} />
-              <span className="text-xs text-gray-400">Vollständig</span>
+              <span className="text-xs text-gray-600">Vollständig</span>
             </div>
             <div className="flex items-center gap-1">
               <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: COMPLETION_COLORS.star[4] }} />
-              <span className="text-xs text-gray-400">Teilweise</span>
+              <span className="text-xs text-gray-600">Teilweise</span>
             </div>
           </div>
         </div>
@@ -201,7 +204,7 @@ export const YearlyActivity = () => {
                   const date = addDays(subYears(new Date(), 1), i * 30);
                   return (
                     <div key={i} className="w-10 text-center">
-                      <span className="text-xs text-gray-400">
+                      <span className="text-xs text-gray-500">
                         {format(date, 'MMM', { locale: de })}
                       </span>
                     </div>
@@ -213,7 +216,7 @@ export const YearlyActivity = () => {
             <div className="flex gap-1">
               <div className="w-8 flex flex-col justify-around">
                 {WEEKDAYS.map((day) => (
-                  <span key={day} className="text-xs text-gray-400 h-3">
+                  <span key={day} className="text-xs text-gray-500 h-3">
                     {day}
                   </span>
                 ))}
@@ -241,7 +244,7 @@ export const YearlyActivity = () => {
         </ScrollArea>
 
         <div className="mt-4 flex justify-end gap-4">
-          <div className="flex items-center gap-1 text-sm text-gray-400">
+          <div className="flex items-center gap-1 text-sm text-gray-500">
             Weniger
             {[0, 1, 2, 3, 4].map((level) => (
               <div
@@ -262,24 +265,24 @@ export const YearlyActivity = () => {
 
     return (
       <div className="space-y-4">
-        <h2 className="text-lg font-semibold mb-4 text-white">Wöchentlicher Fortschritt</h2>
+        <h2 className="text-lg font-semibold mb-4">Wöchentlicher Fortschritt</h2>
         <div className="h-[250px] md:h-[300px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart 
               data={weeklyData}
               margin={{ top: 5, right: 10, left: -20, bottom: 5 }}
             >
-              <CartesianGrid strokeDasharray="3 3" stroke="#444" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
               <XAxis 
                 dataKey="name" 
-                tick={{ fontSize: 12, fill: "#ccc" }}
+                tick={{ fontSize: 12, fill: "#333" }}
                 interval={0}
               />
               <YAxis 
-                tick={{ fontSize: 12, fill: "#ccc" }}
+                tick={{ fontSize: 12, fill: "#333" }}
                 width={30}
               />
-              <Tooltip contentStyle={{ backgroundColor: "#222", borderColor: "#444" }} />
+              <Tooltip contentStyle={{ backgroundColor: "#fff", borderColor: "#ddd" }} />
               <Line 
                 type="monotone" 
                 dataKey="completions" 
@@ -298,10 +301,10 @@ export const YearlyActivity = () => {
 
     return (
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold mb-4 text-white">Kategorienverteilung</h3>
+        <h3 className="text-lg font-semibold mb-4">Kategorienverteilung</h3>
         <div className="h-[250px] md:h-[300px]">
           <ResponsiveContainer width="100%" height="100%">
-            <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+            <RechartsPieChart>
               <Pie
                 data={categoryData}
                 cx="50%"
@@ -325,9 +328,9 @@ export const YearlyActivity = () => {
                 layout="horizontal"
                 verticalAlign="bottom"
                 align="center"
-                wrapperStyle={{ fontSize: '12px', color: '#ccc' }}
+                wrapperStyle={{ fontSize: '12px', color: '#333' }}
               />
-            </PieChart>
+            </RechartsPieChart>
           </ResponsiveContainer>
         </div>
       </div>
@@ -335,29 +338,29 @@ export const YearlyActivity = () => {
   };
 
   return (
-    <Card className="border-none shadow-md bg-gray-950 overflow-hidden">
-      <CardHeader className="bg-gray-900 pb-4 pt-5 px-6">
+    <Card className="border shadow-sm bg-white overflow-hidden">
+      <CardHeader className="bg-blue-50 pb-4 pt-5 px-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <CardTitle className="text-xl text-white">Aktivitätsübersicht</CardTitle>
+            <CardTitle className="text-xl text-blue-800">Aktivitätsübersicht</CardTitle>
           </div>
           <div className="flex items-center gap-2">
             <Button 
               variant="outline" 
               size="sm" 
-              className="bg-gray-800 border-gray-700 hover:bg-gray-700 h-8 w-8 p-0" 
+              className="bg-white border-gray-200 hover:bg-gray-50 h-8 w-8 p-0" 
               onClick={() => navigateHabit('prev')}
               disabled={!habitsData || habitsData.length <= 1}
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <span className="text-sm text-gray-400 min-w-[60px] text-center">
+            <span className="text-sm text-gray-600 min-w-[60px] text-center">
               {habitsData ? `${activeHabitIndex + 1} / ${habitsData.length}` : '0 / 0'}
             </span>
             <Button 
               variant="outline" 
               size="sm" 
-              className="bg-gray-800 border-gray-700 hover:bg-gray-700 h-8 w-8 p-0" 
+              className="bg-white border-gray-200 hover:bg-gray-50 h-8 w-8 p-0" 
               onClick={() => navigateHabit('next')}
               disabled={!habitsData || habitsData.length <= 1}
             >
@@ -367,14 +370,14 @@ export const YearlyActivity = () => {
         </div>
       </CardHeader>
       <CardContent className="p-0">
-        <div className="border-b border-gray-800 bg-gray-900">
+        <div className="border-b border-gray-100 bg-blue-50">
           <div className="flex px-6 py-2">
             <Button 
               variant={activeView === "yearly" ? "default" : "ghost"}
               size="sm" 
               className={activeView === "yearly" 
                 ? "rounded-full bg-blue-600 hover:bg-blue-700 text-white" 
-                : "rounded-full text-gray-400 hover:text-white hover:bg-gray-800"}
+                : "rounded-full text-gray-600 hover:text-blue-700 hover:bg-blue-50"}
               onClick={() => setActiveView("yearly")}
             >
               <Calendar className="h-4 w-4 mr-2" />
@@ -385,7 +388,7 @@ export const YearlyActivity = () => {
               size="sm" 
               className={activeView === "weekly" 
                 ? "rounded-full bg-blue-600 hover:bg-blue-700 text-white" 
-                : "rounded-full text-gray-400 hover:text-white hover:bg-gray-800"}
+                : "rounded-full text-gray-600 hover:text-blue-700 hover:bg-blue-50"}
               onClick={() => setActiveView("weekly")}
             >
               <BarChart2 className="h-4 w-4 mr-2" />
@@ -396,7 +399,7 @@ export const YearlyActivity = () => {
               size="sm" 
               className={activeView === "category" 
                 ? "rounded-full bg-blue-600 hover:bg-blue-700 text-white" 
-                : "rounded-full text-gray-400 hover:text-white hover:bg-gray-800"}
+                : "rounded-full text-gray-600 hover:text-blue-700 hover:bg-blue-50"}
               onClick={() => setActiveView("category")}
             >
               <PieChart className="h-4 w-4 mr-2" />
@@ -408,11 +411,11 @@ export const YearlyActivity = () => {
         <div className="p-6">
           {!habitsData ? (
             <div className="flex items-center justify-center h-[300px]">
-              <p className="text-gray-400">Daten werden geladen...</p>
+              <p className="text-gray-500">Daten werden geladen...</p>
             </div>
           ) : habitsData.length === 0 ? (
             <div className="flex items-center justify-center h-[300px]">
-              <p className="text-gray-400">Keine Gewohnheiten vorhanden</p>
+              <p className="text-gray-500">Keine Gewohnheiten vorhanden</p>
             </div>
           ) : (
             <>
