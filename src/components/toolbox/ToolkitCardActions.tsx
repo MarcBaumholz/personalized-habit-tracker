@@ -1,5 +1,5 @@
 
-import { Settings2, Trash2, Users } from "lucide-react";
+import { Settings2, Trash2, Users, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -12,10 +12,19 @@ interface ToolkitCardActionsProps {
   id?: string;
   onRemove?: (id: string) => void;
   onSelect?: (toolkit: any) => void;
+  onToggleFavorite?: (toolkit: any) => void;
+  isFavorite?: boolean;
   toolkit: any;
 }
 
-export const ToolkitCardActions = ({ id, onRemove, onSelect, toolkit }: ToolkitCardActionsProps) => {
+export const ToolkitCardActions = ({ 
+  id, 
+  onRemove, 
+  onSelect, 
+  onToggleFavorite,
+  isFavorite, 
+  toolkit 
+}: ToolkitCardActionsProps) => {
   return (
     <div className="absolute top-6 right-6 flex items-center gap-3">
       {id && (
@@ -61,6 +70,31 @@ export const ToolkitCardActions = ({ id, onRemove, onSelect, toolkit }: ToolkitC
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
+          
+          {onToggleFavorite && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleFavorite(toolkit);
+                    }}
+                    variant="ghost"
+                    size="sm"
+                    className="h-10 w-10 p-0 hover:bg-yellow-50 bg-white"
+                  >
+                    <Star 
+                      className={`h-5 w-5 ${isFavorite ? 'text-yellow-500 fill-yellow-500' : 'text-gray-600'} hover:text-yellow-600`} 
+                    />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{isFavorite ? 'Aus Favoriten entfernen' : 'Zu Favoriten hinzufügen'}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
         </div>
       )}
       

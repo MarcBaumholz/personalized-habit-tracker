@@ -1,3 +1,4 @@
+
 import { Calendar, Plus, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LucideIcon } from "lucide-react";
@@ -26,6 +27,7 @@ interface Toolkit {
   minimal_dose?: string;
   impact_area?: string[];
   building_blocks?: string[];
+  is_favorite?: boolean;
 }
 
 interface ToolkitCardProps {
@@ -33,9 +35,10 @@ interface ToolkitCardProps {
   onSelect?: (toolkit: Toolkit) => void;
   onRemove?: (id: string) => void;
   onAdd?: (toolkit: Toolkit) => void;
+  onToggleFavorite?: (toolkit: Toolkit) => void;
 }
 
-export const ToolkitCard = ({ toolkit, onSelect, onRemove, onAdd }: ToolkitCardProps) => {
+export const ToolkitCard = ({ toolkit, onSelect, onRemove, onAdd, onToggleFavorite }: ToolkitCardProps) => {
   const Icon = toolkit.icon || Calendar;
 
   const showHabitLoop = toolkit.cue && toolkit.craving && toolkit.routine && toolkit.reward;
@@ -95,6 +98,13 @@ export const ToolkitCard = ({ toolkit, onSelect, onRemove, onAdd }: ToolkitCardP
     onAdd?.(toolkit);
   };
 
+  const handleToggleFavorite = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onToggleFavorite) {
+      onToggleFavorite(toolkit);
+    }
+  };
+
   return (
     <div 
       onClick={() => onSelect?.(toolkit)}
@@ -110,6 +120,8 @@ export const ToolkitCard = ({ toolkit, onSelect, onRemove, onAdd }: ToolkitCardP
         id={toolkit.id}
         onRemove={onRemove}
         onSelect={onSelect}
+        onToggleFavorite={handleToggleFavorite}
+        isFavorite={toolkit.is_favorite}
         toolkit={toolkit}
       />
 
@@ -124,6 +136,12 @@ export const ToolkitCard = ({ toolkit, onSelect, onRemove, onAdd }: ToolkitCardP
               <Badge variant="outline" className="text-base font-medium">
                 <Star className="h-4 w-4 text-yellow-500 mr-2" />
                 Building Block
+              </Badge>
+            )}
+            {toolkit.is_favorite && (
+              <Badge variant="favorite" className="text-base font-medium">
+                <Star className="h-4 w-4 fill-yellow-500 mr-2" />
+                Favorit
               </Badge>
             )}
           </div>

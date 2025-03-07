@@ -9,8 +9,9 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { EmptyToolboxState } from "./EmptyToolboxState";
 import { CarouselNavButton } from "./CarouselNavButton";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface BuildingBlock {
   id: string;
@@ -19,6 +20,7 @@ interface BuildingBlock {
   category: string;
   impact_area: string[];
   created_at: string;
+  is_favorite?: boolean;
 }
 
 interface ToolboxCarouselProps {
@@ -31,6 +33,8 @@ interface ToolboxCarouselProps {
 
 export const ToolboxCarousel = ({ toolkits = [], onSelect, onRemove, onAdd, activeTab }: ToolboxCarouselProps) => {
   const isMobile = useIsMobile();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: buildingBlocks } = useQuery<BuildingBlock[]>({
     queryKey: ['building-blocks'],
@@ -43,6 +47,53 @@ export const ToolboxCarousel = ({ toolkits = [], onSelect, onRemove, onAdd, acti
       return (data as BuildingBlock[]) || [];
     },
   });
+
+  const toggleFavoriteMutation = useMutation({
+    mutationFn: async (toolkit: any) => {
+      // Skip if toolkit doesn't have an ID (like inspiration items)
+      if (!toolkit.id) return;
+
+      let tableName = 'habits';
+      
+      // Determine which table to update based on toolkit type
+      if (toolkit.type === 'building_block') {
+        tableName = 'building_blocks';
+      } else if (activeTab === 'routines') {
+        tableName = 'habits';
+      }
+      
+      const { error } = await supabase
+        .from(tableName)
+        .update({ is_favorite: !toolkit.is_favorite })
+        .eq('id', toolkit.id);
+      
+      if (error) throw error;
+      
+      return { ...toolkit, is_favorite: !toolkit.is_favorite };
+    },
+    onSuccess: (updatedToolkit) => {
+      if (!updatedToolkit) return;
+      
+      queryClient.invalidateQueries({ queryKey: ['building-blocks'] });
+      queryClient.invalidateQueries({ queryKey: ['active-routines'] });
+      
+      toast({
+        title: updatedToolkit.is_favorite ? "Zu Favoriten hinzugefügt" : "Aus Favoriten entfernt",
+        description: `"${updatedToolkit.title || updatedToolkit.name}" wurde ${updatedToolkit.is_favorite ? "zu deinen Favoriten hinzugefügt" : "aus deinen Favoriten entfernt"}.`,
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Fehler",
+        description: "Der Favoritenstatus konnte nicht geändert werden.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const handleToggleFavorite = (toolkit: any) => {
+    toggleFavoriteMutation.mutate(toolkit);
+  };
 
   const combinedToolkits = activeTab === 'inspiration' 
     ? [...toolkits, ...(buildingBlocks || []).map(block => ({
@@ -85,6 +136,7 @@ export const ToolboxCarousel = ({ toolkits = [], onSelect, onRemove, onAdd, acti
                     onSelect={onSelect}
                     onRemove={onRemove}
                     onAdd={onAdd}
+                    onToggleFavorite={handleToggleFavorite}
                   />
                 </div>
               </CarouselItem>
