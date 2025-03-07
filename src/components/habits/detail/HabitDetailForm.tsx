@@ -15,9 +15,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 interface HabitDetailFormProps {
   habit: any;
   id: string | undefined;
+  onUpdate?: () => void;
 }
 
-export const HabitDetailForm = ({ habit, id }: HabitDetailFormProps) => {
+export const HabitDetailForm = ({ habit, id, onUpdate }: HabitDetailFormProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [habitData, setHabitData] = useState({
@@ -79,6 +80,9 @@ export const HabitDetailForm = ({ habit, id }: HabitDetailFormProps) => {
         title: "Gewohnheit aktualisiert",
         description: "Deine Änderungen wurden erfolgreich gespeichert.",
       });
+      if (onUpdate) {
+        onUpdate();
+      }
     },
   });
 

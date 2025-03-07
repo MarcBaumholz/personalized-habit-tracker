@@ -57,6 +57,7 @@ export const ToolkitCard = ({ toolkit, onSelect, onRemove, onAdd, onToggleFavori
         user_id: user.id,
         cue: toolkit.cue,
         craving: toolkit.craving,
+        routine: toolkit.routine,
         reward: toolkit.reward,
         why_description: toolkit.description,
         minimal_dose: toolkit.minimal_dose,
@@ -98,13 +99,6 @@ export const ToolkitCard = ({ toolkit, onSelect, onRemove, onAdd, onToggleFavori
     onAdd?.(toolkit);
   };
 
-  const handleToggleFavorite = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (onToggleFavorite) {
-      onToggleFavorite(toolkit);
-    }
-  };
-
   return (
     <div 
       onClick={() => onSelect?.(toolkit)}
@@ -120,7 +114,7 @@ export const ToolkitCard = ({ toolkit, onSelect, onRemove, onAdd, onToggleFavori
         id={toolkit.id}
         onRemove={onRemove}
         onSelect={onSelect}
-        onToggleFavorite={handleToggleFavorite}
+        onToggleFavorite={onToggleFavorite}
         isFavorite={toolkit.is_favorite}
         toolkit={toolkit}
       />

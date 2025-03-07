@@ -7,6 +7,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
 
 interface ToolkitCardActionsProps {
   id?: string;
@@ -15,6 +16,7 @@ interface ToolkitCardActionsProps {
   onToggleFavorite?: (toolkit: any) => void;
   isFavorite?: boolean;
   toolkit: any;
+  usageCount?: number;
 }
 
 export const ToolkitCardActions = ({ 
@@ -23,7 +25,8 @@ export const ToolkitCardActions = ({
   onSelect, 
   onToggleFavorite,
   isFavorite, 
-  toolkit 
+  toolkit,
+  usageCount = 0
 }: ToolkitCardActionsProps) => {
   return (
     <div className="absolute top-6 right-6 flex items-center gap-3">
@@ -100,7 +103,7 @@ export const ToolkitCardActions = ({
       
       <div className="flex items-center gap-2 text-base bg-white/90 px-4 py-2 rounded-full shadow-sm border border-gray-200">
         <Users className="h-5 w-5 text-blue-600" />
-        <span className="font-medium text-gray-700">2.9k</span>
+        <span className="font-medium text-gray-700">{usageCount || '2.9k'}</span>
       </div>
     </div>
   );

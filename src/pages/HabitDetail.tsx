@@ -17,7 +17,7 @@ const HabitDetail = () => {
   const { id } = useParams<{ id: string }>();
   const isMobile = useIsMobile();
   
-  const { data: habit, isLoading } = useQuery({
+  const { data: habit, isLoading, refetch: refetchHabit } = useQuery({
     queryKey: ["habit", id],
     queryFn: async () => {
       if (!id) return null;
@@ -37,21 +37,25 @@ const HabitDetail = () => {
     },
   });
 
-  const { data: toolboxes } = useQuery({
+  const { data: toolboxes, refetch: refetchToolboxes } = useQuery({
     queryKey: ["habit-toolboxes", id],
     queryFn: async () => {
       if (!id) return [];
       
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("No user found");
+      const { data, error } = await supabase
+        .from("habit_toolboxes")
+        .select("*")
+        .eq("habit_id", id)
+        .order("created_at", { ascending: false });
 
-      // Placeholder - in a real app, fetch toolboxes related to this habit
-      return [
-        { id: "1", title: "Habit-Stacking", description: "Verbinde neue Gewohnheiten mit bereits etablierten" },
-        { id: "2", title: "Implementation Intentions", description: "Wenn-Dann Pläne für deine Gewohnheit" }
-      ];
+      if (error) throw error;
+      return data || [];
     },
   });
+
+  const handleToolboxUpdate = () => {
+    refetchToolboxes();
+  };
 
   const { data: schedules } = useQuery({
     queryKey: ["habit-schedules", id],
@@ -113,7 +117,7 @@ const HabitDetail = () => {
             </TabsList>
             
             <TabsContent value="details" className="space-y-6">
-              <HabitDetailForm habit={habit} id={id} />
+              <HabitDetailForm habit={habit} id={id} onUpdate={refetchHabit} />
               <HabitOverview 
                 identity={habit.identity || ""} 
                 context={habit.context || ""} 
@@ -132,14 +136,18 @@ const HabitDetail = () => {
             
             <TabsContent value="planning" className="space-y-6">
               <HabitSchedules schedules={schedules || []} />
-              <HabitToolboxes toolboxes={toolboxes || []} />
+              <HabitToolboxes 
+                toolboxes={toolboxes || []} 
+                habitId={id || ""} 
+                onToolboxUpdate={handleToolboxUpdate}
+              />
             </TabsContent>
           </Tabs>
         ) : (
           <div className="grid md:grid-cols-2 gap-6">
             {/* Left Column - Habit Details and Schedules */}
             <div className="space-y-6">
-              <HabitDetailForm habit={habit} id={id} />
+              <HabitDetailForm habit={habit} id={id} onUpdate={refetchHabit} />
               <HabitSchedules schedules={schedules || []} />
               <HabitOverview 
                 identity={habit.identity || ""} 
@@ -154,7 +162,11 @@ const HabitDetail = () => {
 
             {/* Right Column - Toolboxes and Reflections */}
             <div className="space-y-6">
-              <HabitToolboxes toolboxes={toolboxes || []} />
+              <HabitToolboxes 
+                toolboxes={toolboxes || []} 
+                habitId={id || ""} 
+                onToolboxUpdate={handleToolboxUpdate}
+              />
               <HabitReflection habitId={id || ""} />
               <PastReflections />
             </div>

@@ -186,6 +186,7 @@ export type Database = {
           id: string
           impact_area: string[]
           is_converted: boolean | null
+          is_favorite: boolean | null
           name: string
         }
         Insert: {
@@ -196,6 +197,7 @@ export type Database = {
           id?: string
           impact_area?: string[]
           is_converted?: boolean | null
+          is_favorite?: boolean | null
           name: string
         }
         Update: {
@@ -206,6 +208,7 @@ export type Database = {
           id?: string
           impact_area?: string[]
           is_converted?: boolean | null
+          is_favorite?: boolean | null
           name?: string
         }
         Relationships: [
@@ -484,6 +487,68 @@ export type Database = {
           },
         ]
       }
+      habit_toolboxes: {
+        Row: {
+          category: string
+          craving: string | null
+          created_at: string
+          cue: string | null
+          description: string
+          habit_id: string
+          id: string
+          is_favorite: boolean | null
+          minimal_dose: string | null
+          reward: string | null
+          routine: string | null
+          steps: string[] | null
+          title: string
+          type: string | null
+          user_id: string
+        }
+        Insert: {
+          category?: string
+          craving?: string | null
+          created_at?: string
+          cue?: string | null
+          description: string
+          habit_id: string
+          id?: string
+          is_favorite?: boolean | null
+          minimal_dose?: string | null
+          reward?: string | null
+          routine?: string | null
+          steps?: string[] | null
+          title: string
+          type?: string | null
+          user_id: string
+        }
+        Update: {
+          category?: string
+          craving?: string | null
+          created_at?: string
+          cue?: string | null
+          description?: string
+          habit_id?: string
+          id?: string
+          is_favorite?: boolean | null
+          minimal_dose?: string | null
+          reward?: string | null
+          routine?: string | null
+          steps?: string[] | null
+          title?: string
+          type?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "habit_toolboxes_habit_id_fkey"
+            columns: ["habit_id"]
+            isOneToOne: false
+            referencedRelation: "habits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       habits: {
         Row: {
           category: string
@@ -499,6 +564,7 @@ export type Database = {
           hook_trigger: string | null
           id: string
           identity: string | null
+          is_favorite: boolean | null
           is_keystone: boolean | null
           last_completed_at: string | null
           last_motivation_check: string | null
@@ -534,6 +600,7 @@ export type Database = {
           hook_trigger?: string | null
           id?: string
           identity?: string | null
+          is_favorite?: boolean | null
           is_keystone?: boolean | null
           last_completed_at?: string | null
           last_motivation_check?: string | null
@@ -569,6 +636,7 @@ export type Database = {
           hook_trigger?: string | null
           id?: string
           identity?: string | null
+          is_favorite?: boolean | null
           is_keystone?: boolean | null
           last_completed_at?: string | null
           last_motivation_check?: string | null
