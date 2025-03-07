@@ -343,63 +343,61 @@ export const YearlyActivity = () => {
 
   return (
     <div className="space-y-6">
-      {habitsData.map((habit, index) => (
-        <Card key={habit.id} className="p-6 bg-gray-950">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex gap-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="bg-gray-800 border-gray-700 hover:bg-gray-700"
-                onClick={() => setActiveView("yearly")}
-              >
-                Jahresübersicht
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="bg-gray-800 border-gray-700 hover:bg-gray-700"
-                onClick={() => setActiveView("weekly")}
-              >
-                Wöchentlich
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="bg-gray-800 border-gray-700 hover:bg-gray-700"
-                onClick={() => setActiveView("category")}
-              >
-                Kategorien
-              </Button>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="bg-gray-800 border-gray-700 hover:bg-gray-700 h-8 w-8 p-0" 
-                onClick={() => navigateHabit('prev')}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <span className="text-sm text-gray-400">
-                {activeHabitIndex + 1} / {habitsData.length}
-              </span>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="bg-gray-800 border-gray-700 hover:bg-gray-700 h-8 w-8 p-0" 
-                onClick={() => navigateHabit('next')}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
+      <Card className="p-6 bg-gray-950">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="bg-gray-800 border-gray-700 hover:bg-gray-700"
+              onClick={() => setActiveView("yearly")}
+            >
+              Jahresübersicht
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="bg-gray-800 border-gray-700 hover:bg-gray-700"
+              onClick={() => setActiveView("weekly")}
+            >
+              Wöchentlich
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="bg-gray-800 border-gray-700 hover:bg-gray-700"
+              onClick={() => setActiveView("category")}
+            >
+              Kategorien
+            </Button>
           </div>
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="bg-gray-800 border-gray-700 hover:bg-gray-700 h-8 w-8 p-0" 
+              onClick={() => navigateHabit('prev')}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <span className="text-sm text-gray-400">
+              {activeHabitIndex + 1} / {habitsData.length}
+            </span>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="bg-gray-800 border-gray-700 hover:bg-gray-700 h-8 w-8 p-0" 
+              onClick={() => navigateHabit('next')}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
 
-          {activeView === "yearly" && renderYearlyView()}
-          {activeView === "weekly" && renderWeeklyView()}
-          {activeView === "category" && renderCategoryView()}
-        </Card>
-      ))}
+        {activeView === "yearly" && renderYearlyView()}
+        {activeView === "weekly" && renderWeeklyView()}
+        {activeView === "category" && renderCategoryView()}
+      </Card>
     </div>
   );
 };
