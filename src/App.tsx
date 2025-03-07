@@ -15,6 +15,7 @@ import Calendar from "./pages/Calendar";
 import Toolbox from "./pages/Toolbox";
 import Archive from "./pages/Archive";
 import HabitDetail from "./pages/HabitDetail";
+import { ChallengeDetail } from "./components/community/ChallengeDetail";
 
 const queryClient = new QueryClient();
 
@@ -85,6 +86,10 @@ const App = () => {
             <Route
               path="/habits/:id"
               element={session ? <HabitDetail /> : <Navigate to="/auth" />}
+            />
+            <Route
+              path="/community-challenge/:id"
+              element={session ? <ChallengeDetail /> : <Navigate to="/auth" />}
             />
           </Routes>
         </BrowserRouter>

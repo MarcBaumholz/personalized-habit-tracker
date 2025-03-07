@@ -1,3 +1,4 @@
+
 import { Navigation } from "@/components/layout/Navigation";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -13,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { ArrowRight, Award, CheckCircle2, Info, Users, Video } from "lucide-react";
 import { toast as sonnerToast } from "sonner";
+import { CommunityChallenges } from "@/components/community/CommunityChallenges";
 import {
   Dialog,
   DialogContent,
@@ -281,7 +283,7 @@ const INSPIRATION_TOOLKITS = [
 
 const Toolbox = () => {
   const [selectedToolkit, setSelectedToolkit] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<'routines' | 'community' | 'inspiration' | 'building-blocks' | 'education'>('routines');
+  const [activeTab, setActiveTab] = useState<'routines' | 'community' | 'inspiration' | 'education'>('routines');
   const [selectedModule, setSelectedModule] = useState<any>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -417,7 +419,8 @@ const Toolbox = () => {
   const TabsHeader = () => (
     <div className="flex justify-between items-center mb-8">
       <h1 className="text-2xl font-bold text-blue-800">
-        {activeTab === 'education' ? 'Lernbereich' : 'Toolbox'}
+        {activeTab === 'education' ? 'Lernbereich' : 
+         activeTab === 'community' ? 'Community Challenges' : 'Toolbox'}
       </h1>
       <TabsList className="bg-blue-100/50 rounded-xl p-1">
         <TabsTrigger
@@ -431,6 +434,12 @@ const Toolbox = () => {
           className="rounded-lg px-4 py-2 data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow"
         >
           Inspiration
+        </TabsTrigger>
+        <TabsTrigger
+          value="community"
+          className="rounded-lg px-4 py-2 data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow"
+        >
+          Community
         </TabsTrigger>
         <TabsTrigger
           value="education"
@@ -475,6 +484,12 @@ const Toolbox = () => {
                   onAdd={addToolkitToProfile}
                   activeTab={activeTab}
                 />
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="community" className="animate-fade-in">
+              <div className="py-6 sm:py-10">
+                <CommunityChallenges />
               </div>
             </TabsContent>
             
