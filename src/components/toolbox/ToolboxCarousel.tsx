@@ -58,8 +58,6 @@ export const ToolboxCarousel = ({ toolkits = [], onSelect, onRemove, onAdd, acti
       // Determine which table to update based on toolkit type
       if (toolkit.type === 'building_block') {
         tableName = 'building_blocks';
-      } else if (activeTab === 'favorites') {
-        tableName = 'habits';
       }
       
       const { error } = await supabase
