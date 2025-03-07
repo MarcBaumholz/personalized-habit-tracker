@@ -1,6 +1,7 @@
 
 import { Navigation } from "@/components/layout/Navigation";
 import { HabitJourney } from "@/components/habits/HabitJourney";
+import { TodoList } from "@/components/dashboard/TodoList";
 import { Progress } from "@/components/ui/progress";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -61,30 +62,26 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-white">
       <Navigation />
-      <main className="container max-w-5xl mx-auto py-8 px-4">
-        {/* Progress Section - Simplified */}
-        <Card className="mb-8 p-6 shadow-sm border-0 bg-blue-50 rounded-xl">
-          <div className="space-y-4">
-            <h2 className="text-2xl font-bold text-blue-800">Dein Fortschritt</h2>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-blue-700">Gesamtfortschritt</span>
-              <span className="font-bold text-blue-800">{calculateOverallProgress()}%</span>
-            </div>
-            <Progress 
-              value={calculateOverallProgress()} 
-              className="h-2 bg-blue-100"
-            />
-            <p className="text-blue-600 flex items-center gap-1 text-sm">
-              Du bist auf einem guten Weg
-              <ChevronRight className="h-4 w-4" />
-            </p>
+      <main className="container max-w-7xl mx-auto py-6 px-4">
+        {/* Clean, smaller progress section */}
+        <Card className="mb-6 p-4 shadow-sm border-0 bg-blue-50 rounded-lg">
+          <div className="flex items-center justify-between">
+            <span className="font-medium text-blue-700">Fortschritt</span>
+            <span className="font-bold text-blue-800">{calculateOverallProgress()}%</span>
           </div>
+          <Progress 
+            value={calculateOverallProgress()} 
+            className="h-2 bg-blue-100 mt-2"
+          />
         </Card>
 
-        {/* Main Content - Focus on Habits only */}
-        <div className="space-y-8">
-          <Card className="p-6 shadow-sm border-0 rounded-xl">
+        {/* Two-column layout with habits and todos */}
+        <div className="grid md:grid-cols-2 gap-6">
+          <Card className="p-5 shadow-sm border-0 rounded-lg">
             <HabitJourney />
+          </Card>
+          <Card className="p-5 shadow-sm border-0 rounded-lg">
+            <TodoList />
           </Card>
         </div>
       </main>
