@@ -19,7 +19,8 @@ import {
   Calendar, 
   CheckCircle,
   Star,
-  BellDot
+  BellDot,
+  Package
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
