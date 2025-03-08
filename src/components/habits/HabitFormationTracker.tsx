@@ -96,7 +96,13 @@ export const HabitFormationTracker = ({ streak, habitName, className }: HabitFor
           </div>
           
           <div className="relative">
-            <Progress value={progressPercentage} className="h-3" indicatorClassName={currentColors.progressColor} />
+            {/* Fixed: Removed indicatorClassName and used className with the dynamic color */}
+            <Progress value={progressPercentage} className="h-3" 
+              // Apply the progress color as a class directly
+              style={{ 
+                "--progress-background": currentColors.progressColor.replace("bg-", "var(--")+")",
+              } as React.CSSProperties}
+            />
             
             {/* Phase markers */}
             <div className="absolute top-0 left-[45.5%] h-3 border-l border-dotted border-gray-400"></div>

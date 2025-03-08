@@ -102,13 +102,17 @@ export const ImplementationIntentions = ({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
+      // Convert intentions to a format that can be stored in Supabase
+      // Store as JSON string to avoid type issues
+      const stepsAsString = JSON.stringify(intentions);
+
       // Check if we need to update or insert
       if (existingIntentions && existingIntentions.length > 0) {
         // Update existing record
         const { data, error } = await supabase
           .from("habit_toolboxes")
           .update({
-            steps: intentions,
+            steps: stepsAsString,
             description: "Wenn-Dann Pläne für automatisierte Reaktionen"
           })
           .eq("id", existingIntentions[0].id);
@@ -126,7 +130,7 @@ export const ImplementationIntentions = ({
             title: "Implementation Intentions",
             description: "Wenn-Dann Pläne für automatisierte Reaktionen",
             category: "Habit Automatisierung",
-            steps: intentions
+            steps: stepsAsString
           });
 
         if (error) throw error;

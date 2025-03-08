@@ -29,11 +29,16 @@ export const MinimalDoseCalculator = ({ habitId, onSave }: MinimalDoseCalculator
     queryFn: async () => {
       if (!habitId) return null;
       
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("habits")
         .select("minimal_dose")
         .eq("id", habitId)
         .single();
+      
+      if (error) {
+        console.error("Error fetching minimal dose:", error);
+        return null;
+      }
       
       if (data && data.minimal_dose) {
         try {
