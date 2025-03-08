@@ -569,8 +569,12 @@ export type Database = {
           last_completed_at: string | null
           last_motivation_check: string | null
           life_area: string | null
+          minimal_dose: string | null
           monthly_streak: number | null
           name: string
+          pause_reason: string | null
+          pause_until: string | null
+          paused: boolean | null
           phase: string | null
           reminder_time: string | null
           reminder_type: string | null
@@ -605,8 +609,12 @@ export type Database = {
           last_completed_at?: string | null
           last_motivation_check?: string | null
           life_area?: string | null
+          minimal_dose?: string | null
           monthly_streak?: number | null
           name: string
+          pause_reason?: string | null
+          pause_until?: string | null
+          paused?: boolean | null
           phase?: string | null
           reminder_time?: string | null
           reminder_type?: string | null
@@ -641,8 +649,12 @@ export type Database = {
           last_completed_at?: string | null
           last_motivation_check?: string | null
           life_area?: string | null
+          minimal_dose?: string | null
           monthly_streak?: number | null
           name?: string
+          pause_reason?: string | null
+          pause_until?: string | null
+          paused?: boolean | null
           phase?: string | null
           reminder_time?: string | null
           reminder_type?: string | null

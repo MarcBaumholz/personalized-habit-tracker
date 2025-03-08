@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -58,13 +57,22 @@ export const ImplementationIntentions = ({
           // Attempt to parse steps as implementation intentions
           const parsedIntentions = data.map(item => {
             try {
-              const steps = typeof item.steps === 'string' 
-                ? JSON.parse(item.steps) 
-                : item.steps;
+              const stepsValue = item.steps;
+              let parsedSteps;
+              
+              // Handle both string and array cases for steps
+              if (typeof stepsValue === 'string') {
+                parsedSteps = JSON.parse(stepsValue);
+              } else if (Array.isArray(stepsValue)) {
+                parsedSteps = stepsValue;
+              } else {
+                // Default to empty array if steps is not in expected format
+                parsedSteps = [];
+              }
               
               return {
                 id: item.id,
-                intentions: steps.map((step: any) => ({
+                intentions: parsedSteps.map((step: any) => ({
                   if: step.if || "",
                   then: step.then || "",
                   id: step.id || crypto.randomUUID()
@@ -103,8 +111,8 @@ export const ImplementationIntentions = ({
       if (!user) throw new Error("No user found");
 
       // Convert intentions to a format that can be stored in Supabase
-      // Store as JSON string to avoid type issues
-      const stepsAsString = JSON.stringify(intentions);
+      // Make sure to convert the intentions array to JSON string
+      const intentionsJSON = JSON.stringify(intentions);
 
       // Check if we need to update or insert
       if (existingIntentions && existingIntentions.length > 0) {
@@ -112,7 +120,7 @@ export const ImplementationIntentions = ({
         const { data, error } = await supabase
           .from("habit_toolboxes")
           .update({
-            steps: stepsAsString,
+            steps: intentionsJSON,
             description: "Wenn-Dann Pläne für automatisierte Reaktionen"
           })
           .eq("id", existingIntentions[0].id);
@@ -130,7 +138,7 @@ export const ImplementationIntentions = ({
             title: "Implementation Intentions",
             description: "Wenn-Dann Pläne für automatisierte Reaktionen",
             category: "Habit Automatisierung",
-            steps: stepsAsString
+            steps: intentionsJSON
           });
 
         if (error) throw error;
