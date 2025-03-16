@@ -1,19 +1,32 @@
 
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, Calendar, ChevronLeft, Info, Award, CheckCircle2, Lightbulb, Flag } from "lucide-react";
+import { ArrowLeft, Calendar, ChevronLeft, Info, Award, CheckCircle2, Lightbulb, Flag, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { format } from "date-fns";
+import { de } from "date-fns/locale";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { 
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface HabitDetailHeaderProps {
   habitName: string;
   progress: number;
   streak: number;
+  habitId?: string;
 }
 
-export const HabitDetailHeader = ({ habitName, progress, streak }: HabitDetailHeaderProps) => {
+export const HabitDetailHeader = ({ habitName, progress, streak, habitId }: HabitDetailHeaderProps) => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   // Determine which phase the habit is in
   const phase = streak <= 30 
@@ -52,6 +65,40 @@ export const HabitDetailHeader = ({ habitName, progress, streak }: HabitDetailHe
     }
   };
 
+  const createHabitScheduleMutation = useMutation({
+    mutationFn: async ({ date, time }: { date: string, time: string }) => {
+      if (!habitId) return null;
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
+
+      const { data, error } = await supabase
+        .from("habit_schedules")
+        .insert({
+          user_id: user.id,
+          habit_id: habitId,
+          scheduled_date: date,
+          scheduled_time: time,
+          position_x: 5,
+          position_y: 5
+        });
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["habit-schedules"] });
+      toast({
+        title: "Gewohnheit eingeplant",
+        description: "Die Gewohnheit wurde erfolgreich zum Kalender hinzugefügt.",
+      });
+    },
+  });
+
+  const handleAddToCalendar = (date: string, time: string) => {
+    createHabitScheduleMutation.mutate({ date, time });
+  };
+
   return (
     <div className="mb-8">
       <Button 
@@ -67,10 +114,96 @@ export const HabitDetailHeader = ({ habitName, progress, streak }: HabitDetailHe
         <h1 className="text-2xl sm:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-blue-500">
           {habitName}
         </h1>
-        <Button variant="outline" className="flex items-center gap-2">
-          <Calendar className="h-4 w-4" />
-          <span>Zum Kalender hinzufügen</span>
-        </Button>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" className="flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              <span>Zum Kalender hinzufügen</span>
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-80 p-0" align="end">
+            <div className="p-3 border-b bg-blue-50">
+              <h3 className="font-medium">Wann möchtest du diese Gewohnheit planen?</h3>
+            </div>
+            <div className="p-4 space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-sm font-medium mb-1 block">Datum</label>
+                  <input 
+                    type="date" 
+                    className="w-full rounded-md border border-input px-3 py-2 text-sm"
+                    defaultValue={format(new Date(), "yyyy-MM-dd")}
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-1 block">Uhrzeit</label>
+                  <input 
+                    type="time" 
+                    className="w-full rounded-md border border-input px-3 py-2 text-sm"
+                    defaultValue="08:00"
+                  />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-3 gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => handleAddToCalendar(
+                    format(new Date(), "yyyy-MM-dd"),
+                    "08:00"
+                  )}
+                >
+                  <span>Morgen</span>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => handleAddToCalendar(
+                    format(new Date(), "yyyy-MM-dd"),
+                    "12:00"
+                  )}
+                >
+                  <span>Mittag</span>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => handleAddToCalendar(
+                    format(new Date(), "yyyy-MM-dd"),
+                    "18:00"
+                  )}
+                >
+                  <span>Abend</span>
+                </Button>
+              </div>
+              
+              <Button 
+                className="w-full"
+                onClick={() => {
+                  const dateInput = document.querySelector('input[type="date"]') as HTMLInputElement;
+                  const timeInput = document.querySelector('input[type="time"]') as HTMLInputElement;
+                  
+                  if (dateInput && timeInput) {
+                    handleAddToCalendar(dateInput.value, timeInput.value);
+                  }
+                }}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Zum Kalender hinzufügen
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                className="w-full"
+                onClick={() => navigate('/calendar')}
+              >
+                <Calendar className="h-4 w-4 mr-2" />
+                Zur Kalenderansicht
+              </Button>
+            </div>
+          </PopoverContent>
+        </Popover>
       </div>
       
       <div className={cn("p-4 rounded-lg mb-4", currentColors.bgColor)}>

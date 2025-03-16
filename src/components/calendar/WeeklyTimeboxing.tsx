@@ -2,13 +2,19 @@
 import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Calendar } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar, Plus } from "lucide-react";
 import { format, startOfWeek, addDays, getISOWeek, addWeeks, subWeeks } from "date-fns";
 import { de } from "date-fns/locale";
 import { useDroppable } from "@dnd-kit/core";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { 
+  Popover,
+  PopoverContent,
+  PopoverTrigger 
+} from "@/components/ui/popover";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface TimeSlot {
   time: string;
@@ -46,22 +52,29 @@ interface WeeklyTimeboxingProps {
   date?: Date;
   schedules?: any[];
   todos?: any[];
+  habits?: any[];
   onTimeSlotClick?: (time: string, date: Date) => void;
   preferences?: {
     start_time: string;
     end_time: string;
     default_view: string;
   };
+  onScheduleHabit?: (habit: any, time: string, day: Date) => void;
+  onScheduleTodo?: (todo: any, time: string, day: Date) => void;
 }
 
 export const WeeklyTimeboxing = ({ 
   date = new Date(), 
   schedules = [], 
   todos = [],
+  habits = [],
   onTimeSlotClick,
-  preferences 
+  preferences,
+  onScheduleHabit,
+  onScheduleTodo
 }: WeeklyTimeboxingProps) => {
   const [currentWeek, setCurrentWeek] = useState(date);
+  const [selectedTimeCell, setSelectedTimeCell] = useState<{ time: string, day: Date } | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -92,8 +105,24 @@ export const WeeklyTimeboxing = ({
   };
 
   const handleCellClick = (time: string, day: Date) => {
+    setSelectedTimeCell({ time, day });
+    
     if (onTimeSlotClick) {
       onTimeSlotClick(time, day);
+    }
+  };
+
+  const handleQuickScheduleHabit = (habit: any) => {
+    if (selectedTimeCell && onScheduleHabit) {
+      onScheduleHabit(habit, selectedTimeCell.time, selectedTimeCell.day);
+      setSelectedTimeCell(null);
+    }
+  };
+
+  const handleQuickScheduleTodo = (todo: any) => {
+    if (selectedTimeCell && onScheduleTodo) {
+      onScheduleTodo(todo, selectedTimeCell.time, selectedTimeCell.day);
+      setSelectedTimeCell(null);
     }
   };
 
@@ -166,7 +195,12 @@ export const WeeklyTimeboxing = ({
                 );
 
                 const hasItems = matchingSchedules.length > 0 || matchingTodos.length > 0;
-                const bgClass = hasItems ? 'bg-green-50' : 'hover:bg-gray-50';
+                const isSelected = selectedTimeCell && 
+                                  selectedTimeCell.time === slot.time && 
+                                  format(selectedTimeCell.day, "yyyy-MM-dd") === format(day, "yyyy-MM-dd");
+                const bgClass = isSelected 
+                  ? 'bg-blue-100 border-2 border-blue-400' 
+                  : (hasItems ? 'bg-green-50' : 'hover:bg-gray-50');
 
                 return (
                   <div
@@ -202,6 +236,12 @@ export const WeeklyTimeboxing = ({
                         {todo.title || "Todo"}
                       </div>
                     ))}
+
+                    {!hasItems && (
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                        <Plus className="h-6 w-6 text-blue-400" />
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -209,6 +249,71 @@ export const WeeklyTimeboxing = ({
           ))}
         </div>
       </div>
+
+      {selectedTimeCell && (
+        <Popover open={!!selectedTimeCell} onOpenChange={(open) => !open && setSelectedTimeCell(null)}>
+          <PopoverTrigger asChild>
+            <div className="hidden">Trigger</div>
+          </PopoverTrigger>
+          <PopoverContent className="w-80 p-0" align="center">
+            <div className="p-3 border-b bg-blue-50">
+              <h3 className="font-medium">
+                Termin für {format(selectedTimeCell.day, "dd.MM.yyyy", { locale: de })} um {selectedTimeCell.time} Uhr
+              </h3>
+            </div>
+            <Tabs defaultValue="habits" className="w-full">
+              <TabsList className="grid w-full grid-cols-2 rounded-none">
+                <TabsTrigger value="habits">Gewohnheiten</TabsTrigger>
+                <TabsTrigger value="todos">Todos</TabsTrigger>
+              </TabsList>
+              <TabsContent value="habits" className="max-h-[300px] overflow-y-auto">
+                {habits && habits.length > 0 ? (
+                  <div className="space-y-2 p-3">
+                    {habits.map((habit) => (
+                      <div 
+                        key={habit.id}
+                        className="p-2 bg-blue-50 rounded-md flex justify-between items-center hover:bg-blue-100 cursor-pointer"
+                        onClick={() => handleQuickScheduleHabit(habit)}
+                      >
+                        <div className="truncate">{habit.name}</div>
+                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0">
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-6 text-center text-gray-500">
+                    <p>Keine Gewohnheiten verfügbar</p>
+                  </div>
+                )}
+              </TabsContent>
+              <TabsContent value="todos" className="max-h-[300px] overflow-y-auto">
+                {todos && todos.length > 0 ? (
+                  <div className="space-y-2 p-3">
+                    {todos.filter(todo => !todo.scheduled_time).map((todo) => (
+                      <div 
+                        key={todo.id}
+                        className="p-2 bg-green-50 rounded-md flex justify-between items-center hover:bg-green-100 cursor-pointer"
+                        onClick={() => handleQuickScheduleTodo(todo)}
+                      >
+                        <div className="truncate">{todo.title}</div>
+                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0">
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-6 text-center text-gray-500">
+                    <p>Keine offenen Todos verfügbar</p>
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
+          </PopoverContent>
+        </Popover>
+      )}
     </div>
   );
 };

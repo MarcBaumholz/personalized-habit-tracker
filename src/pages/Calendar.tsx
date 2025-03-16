@@ -222,23 +222,23 @@ const Calendar = () => {
     setSelectedDay(day);
   };
 
-  const handleScheduleTodo = (todo: any, time: string) => {
+  const handleScheduleTodo = (todo: any, time: string, day: Date) => {
     updateTodoScheduleMutation.mutate({
       id: todo.id,
       updates: {
         scheduled_time: time,
-        scheduled_date: format(date || new Date(), "yyyy-MM-dd"),
+        scheduled_date: format(day, "yyyy-MM-dd"),
         position_x: 5,
         position_y: 5
       }
     });
   };
 
-  const handleScheduleHabit = (habit: any, time: string) => {
+  const handleScheduleHabit = (habit: any, time: string, day: Date) => {
     createHabitScheduleMutation.mutate({
       habitId: habit.id,
       time: time,
-      day: date || new Date()
+      day: day
     });
   };
 
@@ -321,8 +321,11 @@ const Calendar = () => {
                   date={date}
                   schedules={schedules}
                   todos={todoSchedules}
+                  habits={habits}
                   preferences={calendarPreferences}
                   onTimeSlotClick={handleTimeSlotClick}
+                  onScheduleHabit={handleScheduleHabit}
+                  onScheduleTodo={handleScheduleTodo}
                 />
               </Card>
             </div>
