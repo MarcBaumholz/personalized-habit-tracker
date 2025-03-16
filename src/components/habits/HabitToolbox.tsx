@@ -1,31 +1,41 @@
 
-import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ImplementationIntentions } from "@/components/habits/ImplementationIntentions";
 import { HabitStacking } from "@/components/habits/HabitStacking";
 import { EmotionalAnchoring } from "@/components/toolbox/EmotionalAnchoring";
 import { MinimalDoseCalculator } from "@/components/habits/MinimalDoseCalculator";
-import { Hammer, ArrowRightLeft, Brain, Star, Sparkles } from "lucide-react";
+import { Hammer, ArrowRightLeft, Brain, Star } from "lucide-react";
 
 interface HabitToolboxProps {
   habitId: string;
   onUpdate?: () => void;
+  activeTab?: string;
+  onTabChange?: (value: string) => void;
 }
 
-export const HabitToolbox = ({ habitId, onUpdate }: HabitToolboxProps) => {
-  const [activeTab, setActiveTab] = useState("intentions");
+export const HabitToolbox = ({ habitId, onUpdate, activeTab = "intentions", onTabChange }: HabitToolboxProps) => {
+  const handleTabChange = (value: string) => {
+    if (onTabChange) {
+      onTabChange(value);
+    }
+  };
 
   return (
     <Card className="shadow-sm border">
       <CardHeader className="bg-white pb-2">
-        <CardTitle className="text-xl">Habit Toolbox</CardTitle>
+        <CardTitle className="text-xl">Aktives Werkzeug</CardTitle>
         <CardDescription>
           Wissenschaftlich fundierte Werkzeuge zur besseren Gewohnheitsbildung
         </CardDescription>
       </CardHeader>
       <CardContent className="p-0">
-        <Tabs defaultValue="intentions" value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs 
+          defaultValue={activeTab} 
+          value={activeTab} 
+          onValueChange={handleTabChange} 
+          className="w-full"
+        >
           <TabsList className="grid grid-cols-4 w-full rounded-none p-0 h-auto">
             <TabsTrigger value="intentions" className="py-3 rounded-none data-[state=active]:bg-blue-50">
               <div className="flex flex-col items-center gap-1">

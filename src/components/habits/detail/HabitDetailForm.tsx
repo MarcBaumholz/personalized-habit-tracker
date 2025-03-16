@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,21 +11,12 @@ import { Save, Pause } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ImplementationIntentions } from "@/components/habits/ImplementationIntentions";
-import { EmotionalAnchoring } from "@/components/toolbox/EmotionalAnchoring";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { HabitStacking } from "@/components/habits/HabitStacking";
 
 interface HabitDetailFormProps {
   habit: any;
   id: string | undefined;
   onUpdate?: () => void;
-}
-
-interface ImplementationIntention {
-  if: string;
-  then: string;
-  id: string;
 }
 
 export const HabitDetailForm = ({ habit, id, onUpdate }: HabitDetailFormProps) => {
@@ -47,8 +39,7 @@ export const HabitDetailForm = ({ habit, id, onUpdate }: HabitDetailFormProps) =
     craving: "",
     reward: "",
     lifeArea: "",
-    minimal_dose: "", // Added field for minimal dose
-    implementation_intentions: [] as ImplementationIntention[], // Added field for implementation intentions
+    minimal_dose: "",
   });
   const [isPaused, setIsPaused] = useState(false);
   const [pauseData, setPauseData] = useState({
@@ -77,8 +68,7 @@ export const HabitDetailForm = ({ habit, id, onUpdate }: HabitDetailFormProps) =
         craving: habit.craving || "",
         reward: habit.reward || "",
         lifeArea: habit.life_area || "",
-        minimal_dose: habit.minimal_dose || "", // Load minimal dose
-        implementation_intentions: [], // We'll load these separately
+        minimal_dose: habit.minimal_dose || "",
       });
       
       setIsPaused(habit.paused || false);
@@ -186,7 +176,7 @@ export const HabitDetailForm = ({ habit, id, onUpdate }: HabitDetailFormProps) =
       craving: habitData.craving,
       reward: habitData.reward,
       life_area: habitData.lifeArea,
-      minimal_dose: habitData.minimal_dose, // Save minimal dose
+      minimal_dose: habitData.minimal_dose,
     });
   };
 
@@ -209,11 +199,6 @@ export const HabitDetailForm = ({ habit, id, onUpdate }: HabitDetailFormProps) =
 
   const handleResumeHabit = () => {
     resumeHabitMutation.mutate();
-  };
-
-  const handleImplementationIntentionsSave = (intentions: ImplementationIntention[]) => {
-    setHabitData({ ...habitData, implementation_intentions: intentions });
-    // Here you would typically save these to the database as well
   };
 
   return (
@@ -334,12 +319,10 @@ export const HabitDetailForm = ({ habit, id, onUpdate }: HabitDetailFormProps) =
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="basic">
-          <TabsList className="grid grid-cols-5 mb-4">
+          <TabsList className="grid grid-cols-3 mb-4">
             <TabsTrigger value="basic">Grundlagen</TabsTrigger>
             <TabsTrigger value="details">Details</TabsTrigger>
             <TabsTrigger value="advanced">Fortgeschritten</TabsTrigger>
-            <TabsTrigger value="intentions">Wenn-Dann</TabsTrigger>
-            <TabsTrigger value="zrm">ZRM & Stacking</TabsTrigger>
           </TabsList>
           
           <TabsContent value="basic" className="space-y-4">
@@ -537,21 +520,6 @@ export const HabitDetailForm = ({ habit, id, onUpdate }: HabitDetailFormProps) =
                   <SelectItem value="none">Keine Erinnerung</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="intentions">
-            <ImplementationIntentions 
-              initialIntentions={habitData.implementation_intentions}
-              onSave={handleImplementationIntentionsSave}
-              habitId={id}
-            />
-          </TabsContent>
-
-          <TabsContent value="zrm" className="space-y-6">
-            <div className="grid grid-cols-1 gap-6">
-              <EmotionalAnchoring habitId={id} />
-              <HabitStacking habitId={id} />
             </div>
           </TabsContent>
         </Tabs>
