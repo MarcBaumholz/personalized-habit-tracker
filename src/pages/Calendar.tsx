@@ -8,21 +8,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
-import { ScheduleDialog } from "@/components/calendar/ScheduleDialog";
 import { ScheduleList } from "@/components/calendar/ScheduleList";
 import { WeeklyTimeboxing } from "@/components/calendar/WeeklyTimeboxing";
 import { DndContext, DragEndEvent } from "@dnd-kit/core";
 import { useTodos } from "@/hooks/useTodos";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogClose,
-} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CalendarRange, Settings } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 const DEFAULT_PREFERENCES = {
   start_time: '06:00:00',
@@ -36,8 +32,6 @@ const Calendar = () => {
   const [selectedTodo, setSelectedTodo] = useState<string>("");
   const [selectedTime, setSelectedTime] = useState<string>("");
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
-  const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
-  const [scheduleType, setScheduleType] = useState<"habit" | "todo">("habit");
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { todos } = useTodos();
@@ -180,9 +174,6 @@ const Calendar = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["habit-schedules"] });
-      setIsScheduleDialogOpen(false);
-      setSelectedHabit("");
-      setSelectedTime("");
       toast({
         title: "Gewohnheit eingeplant",
         description: "Die Gewohnheit wurde erfolgreich eingeplant.",
@@ -229,39 +220,82 @@ const Calendar = () => {
   const handleTimeSlotClick = (time: string, day: Date) => {
     setSelectedTime(time);
     setSelectedDay(day);
-    setIsScheduleDialogOpen(true);
   };
 
-  const handleSchedule = () => {
-    if (scheduleType === "habit" && selectedHabit && selectedTime && selectedDay) {
-      createHabitScheduleMutation.mutate({
-        habitId: selectedHabit,
-        time: selectedTime,
-        day: selectedDay
-      });
-    } else if (scheduleType === "todo" && selectedTodo && selectedTime && selectedDay) {
-      updateTodoScheduleMutation.mutate({
-        id: selectedTodo,
-        updates: {
-          scheduled_time: selectedTime,
-          scheduled_date: format(selectedDay, "yyyy-MM-dd"),
-          position_x: 5,
-          position_y: 5
-        }
-      });
-    }
+  const handleScheduleTodo = (todo: any, time: string) => {
+    updateTodoScheduleMutation.mutate({
+      id: todo.id,
+      updates: {
+        scheduled_time: time,
+        scheduled_date: format(date || new Date(), "yyyy-MM-dd"),
+        position_x: 5,
+        position_y: 5
+      }
+    });
+  };
+
+  const handleScheduleHabit = (habit: any, time: string) => {
+    createHabitScheduleMutation.mutate({
+      habitId: habit.id,
+      time: time,
+      day: date || new Date()
+    });
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50">
       <Navigation />
       <DndContext onDragEnd={handleDragEnd}>
-        <main className="container py-8 px-4 md:px-6 lg:px-8">
+        <main className="container py-6 px-4 md:px-6 lg:px-8">
           <div className="space-y-6">
-            <h1 className="text-3xl font-bold text-blue-800">Kalenderansicht</h1>
-            <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-6">
+            <div className="flex items-center justify-between">
+              <h1 className="text-3xl font-bold text-blue-800 flex items-center">
+                <CalendarRange className="h-8 w-8 mr-2 text-blue-600" />
+                Kalenderansicht
+              </h1>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-8 gap-1">
+                    <Settings className="h-4 w-4" />
+                    <span className="hidden sm:inline">Einstellungen</span>
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80">
+                  <div className="grid gap-4">
+                    <div className="space-y-2">
+                      <h4 className="font-medium leading-none">Kalendereinstellungen</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Passen Sie die Anzeige des Kalenders an
+                      </p>
+                    </div>
+                    <div className="grid gap-2">
+                      <div className="grid grid-cols-3 items-center gap-4">
+                        <label htmlFor="startTime">Startzeit</label>
+                        <input
+                          id="startTime"
+                          type="time"
+                          className="col-span-2 h-8 rounded-md border border-input bg-background px-3"
+                          defaultValue={calendarPreferences?.start_time?.slice(0, 5) || "06:00"}
+                        />
+                      </div>
+                      <div className="grid grid-cols-3 items-center gap-4">
+                        <label htmlFor="endTime">Endzeit</label>
+                        <input
+                          id="endTime"
+                          type="time"
+                          className="col-span-2 h-8 rounded-md border border-input bg-background px-3"
+                          defaultValue={calendarPreferences?.end_time?.slice(0, 5) || "21:00"}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-[350px_1fr] gap-6">
               <div className="space-y-6">
-                <Card className="p-6">
+                <Card className="p-4 shadow-sm border-blue-100">
                   <CalendarComponent
                     mode="single"
                     selected={date}
@@ -271,18 +305,18 @@ const Calendar = () => {
                   />
                 </Card>
 
-                <Card className="p-6">
-                  <ScheduleList
-                    date={date}
-                    schedules={schedules}
-                    todos={todos}
-                    habits={habits}
-                    isDraggable
-                  />
-                </Card>
+                <ScheduleList
+                  date={date}
+                  schedules={schedules}
+                  todos={todos}
+                  habits={habits}
+                  isDraggable
+                  onScheduleTodo={handleScheduleTodo}
+                  onScheduleHabit={handleScheduleHabit}
+                />
               </div>
               
-              <Card className="p-6">
+              <Card className="p-4 shadow-sm border-blue-100">
                 <WeeklyTimeboxing
                   date={date}
                   schedules={schedules}
@@ -295,89 +329,6 @@ const Calendar = () => {
           </div>
         </main>
       </DndContext>
-
-      <Dialog open={isScheduleDialogOpen} onOpenChange={setIsScheduleDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Termin einplanen</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Typ</label>
-              <div className="flex space-x-2">
-                <Button 
-                  variant={scheduleType === "habit" ? "default" : "outline"} 
-                  onClick={() => setScheduleType("habit")}
-                >
-                  Gewohnheit
-                </Button>
-                <Button 
-                  variant={scheduleType === "todo" ? "default" : "outline"} 
-                  onClick={() => setScheduleType("todo")}
-                >
-                  Todo
-                </Button>
-              </div>
-            </div>
-
-            {scheduleType === "habit" ? (
-              <div>
-                <label className="block text-sm font-medium mb-1">Gewohnheit</label>
-                <Select value={selectedHabit} onValueChange={setSelectedHabit}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Gewohnheit auswählen" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {habits?.map((habit) => (
-                      <SelectItem key={habit.id} value={habit.id}>
-                        {habit.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            ) : (
-              <div>
-                <label className="block text-sm font-medium mb-1">Todo</label>
-                <Select value={selectedTodo} onValueChange={setSelectedTodo}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Todo auswählen" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {todos?.map((todo) => (
-                      <SelectItem key={todo.id} value={todo.id}>
-                        {todo.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            <div>
-              <label className="block text-sm font-medium mb-1">Datum & Zeit</label>
-              <div className="text-sm mb-2">
-                {selectedDay ? format(selectedDay, "dd.MM.yyyy", { locale: de }) : "Kein Datum ausgewählt"} {selectedTime}
-              </div>
-            </div>
-
-            <div className="flex justify-end space-x-2">
-              <Button variant="outline" onClick={() => setIsScheduleDialogOpen(false)}>
-                Abbrechen
-              </Button>
-              <Button 
-                onClick={handleSchedule} 
-                disabled={(scheduleType === "habit" && !selectedHabit) || 
-                          (scheduleType === "todo" && !selectedTodo) || 
-                          !selectedTime || 
-                          !selectedDay}
-              >
-                Einplanen
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
