@@ -5,7 +5,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Navigation } from "@/components/layout/Navigation";
 import { HabitDetailHeader } from "@/components/habits/detail/HabitDetailHeader";
 import { HabitDetailForm } from "@/components/habits/detail/HabitDetailForm";
-import { HabitFormationTracker } from "@/components/habits/HabitFormationTracker";
 import { HabitReflection } from "@/components/habits/detail/HabitReflection";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -95,7 +94,8 @@ const HabitDetail = () => {
       <main className="container max-w-7xl mx-auto py-6 px-4">
         <HabitDetailHeader 
           habitName={habit.name} 
-          progress={calculateProgress(habit)} 
+          progress={calculateProgress(habit)}
+          streak={habit.streak_count || 0}
         />
 
         {isMobile ? (
@@ -108,10 +108,6 @@ const HabitDetail = () => {
             
             <TabsContent value="details" className="space-y-6">
               <HabitDetailForm habit={habit} id={id} onUpdate={refetchHabit} />
-              <HabitFormationTracker 
-                streak={habit.streak_count || 0} 
-                habitName={habit.name} 
-              />
             </TabsContent>
             
             <TabsContent value="tracking" className="space-y-6">
@@ -137,10 +133,6 @@ const HabitDetail = () => {
             {/* Left Column - Habit Details and Tracking */}
             <div className="space-y-6">
               <HabitDetailForm habit={habit} id={id} onUpdate={refetchHabit} />
-              <HabitFormationTracker 
-                streak={habit.streak_count || 0} 
-                habitName={habit.name} 
-              />
               <HabitReflection habitId={id || ""} />
             </div>
 
