@@ -170,6 +170,7 @@ export const WeeklyTimeboxing = ({
           ))}
 
           {visibleTimeSlots.map((slot, timeIndex) => (
+            // Fixed: Removed data-lov-id from React.Fragment
             <React.Fragment key={`timeslot-${slot.time}`}>
               <div 
                 className="border-b border-r py-4 px-2 h-20 text-blue-600 text-center"

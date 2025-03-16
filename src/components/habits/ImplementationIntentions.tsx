@@ -111,8 +111,12 @@ export const ImplementationIntentions = ({
       if (!user) throw new Error("No user found");
 
       // Convert intentions to a format that can be stored in Supabase
-      // Make sure to convert the intentions array to JSON string
-      const intentionsJSON = JSON.stringify(intentions);
+      // Fixed: Make sure it's an array for Supabase
+      const intentionsArray = intentions.map(intent => ({ 
+        if: intent.if, 
+        then: intent.then, 
+        id: intent.id 
+      }));
 
       // Check if we need to update or insert
       if (existingIntentions && existingIntentions.length > 0) {
@@ -120,7 +124,7 @@ export const ImplementationIntentions = ({
         const { data, error } = await supabase
           .from("habit_toolboxes")
           .update({
-            steps: intentionsJSON,
+            steps: intentionsArray,
             description: "Wenn-Dann Pläne für automatisierte Reaktionen"
           })
           .eq("id", existingIntentions[0].id);
@@ -138,7 +142,7 @@ export const ImplementationIntentions = ({
             title: "Implementation Intentions",
             description: "Wenn-Dann Pläne für automatisierte Reaktionen",
             category: "Habit Automatisierung",
-            steps: intentionsJSON
+            steps: intentionsArray
           });
 
         if (error) throw error;

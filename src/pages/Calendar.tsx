@@ -1,4 +1,3 @@
-
 import { Navigation } from "@/components/layout/Navigation";
 import { Card } from "@/components/ui/card";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
@@ -8,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
-import { ScheduleList } from "@/components/calendar/ScheduleList";
+import ScheduleList from "@/components/calendar/ScheduleList";
 import { WeeklyTimeboxing } from "@/components/calendar/WeeklyTimeboxing";
 import { DndContext, DragEndEvent } from "@dnd-kit/core";
 import { useTodos } from "@/hooks/useTodos";
@@ -186,15 +185,12 @@ const Calendar = () => {
     
     if (!over) return;
 
-    // Extract time and position from the drop-zone ID
     const [time, position] = over.id.toString().split('-');
     
-    // Check if this is a todo or a habit
     const itemId = active.id.toString();
     const itemType = active.data?.current?.type;
     
     if (itemType === 'todo') {
-      // It's a todo being dragged
       updateTodoScheduleMutation.mutate({
         id: itemId,
         updates: {
@@ -205,7 +201,6 @@ const Calendar = () => {
         }
       });
     } else {
-      // It's a habit being dragged
       updateScheduleMutation.mutate({
         id: itemId,
         updates: {
