@@ -1,20 +1,21 @@
-
 import { Navigation } from "@/components/layout/Navigation";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { AddHabitDialog } from "@/components/habits/AddHabitDialog";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Brain, Target, Calendar, List, BookOpen, Clock, Lightbulb, Package } from "lucide-react";
+import { Brain, Target, Calendar, List, BookOpen, Clock, Lightbulb, Package, Users, Search, Filter, Plus } from "lucide-react";
 import { ToolboxHeader } from "@/components/toolbox/ToolboxHeader";
 import { ToolboxCarousel } from "@/components/toolbox/ToolboxCarousel";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { ArrowRight, Award, CheckCircle2, Info, Users, Video, Star } from "lucide-react";
+import { ArrowRight, Award, CheckCircle2, Info, Video, Star } from "lucide-react";
 import { toast as sonnerToast } from "sonner";
 import { CommunityChallenges } from "@/components/community/CommunityChallenges";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -32,6 +33,21 @@ interface BuildingBlock {
   impact_area: string[];
   created_at: string;
   is_favorite?: boolean;
+}
+
+interface InspirationToolkit {
+  id: string;
+  title: string;
+  description: string;
+  icon: any;
+  category: string;
+  example: string;
+  steps: string[];
+  cue?: string;
+  craving?: string;
+  routine?: string;
+  reward?: string;
+  minimal_dose?: string;
 }
 
 const courses = [
@@ -173,12 +189,13 @@ const courses = [
   }
 ];
 
-const INSPIRATION_TOOLKITS = [
+const INSPIRATION_TOOLKITS: InspirationToolkit[] = [
   {
     id: "morning-routine",
     title: "Morgenroutine",
     description: "Optimaler Start in den Tag",
     icon: Calendar,
+    category: "Routine",
     example: "Meditation um 6:00 Uhr für 10 Minuten",
     steps: [
       "Wähle eine feste Uhrzeit",
@@ -196,6 +213,7 @@ const INSPIRATION_TOOLKITS = [
     title: "Deep Work",
     description: "Maximale Produktivität durch fokussierte Arbeit",
     icon: Brain,
+    category: "Produktivität",
     example: "2 Stunden fokussierte Arbeit ohne Ablenkungen",
     steps: [
       "Blocke feste Zeiten",
@@ -213,6 +231,7 @@ const INSPIRATION_TOOLKITS = [
     title: "Habit Tracking",
     description: "Gewohnheiten systematisch verfolgen",
     icon: List,
+    category: "Organisation",
     example: "Tägliches Tracking in einer Habit-Matrix",
     steps: [
       "Definiere messbare Kriterien",
@@ -225,6 +244,7 @@ const INSPIRATION_TOOLKITS = [
     title: "PARA Methode",
     description: "Digitale Organisation",
     icon: Package,
+    category: "Organisation",
     example: "Projekte, Areas, Ressourcen, Archive",
     steps: [
       "Kategorisiere deine Informationen",
@@ -237,6 +257,7 @@ const INSPIRATION_TOOLKITS = [
     title: "Habit Stacking",
     description: "Gewohnheiten verknüpfen",
     icon: Package,
+    category: "Produktivität",
     example: "Nach dem Aufwachen direkt Wasser trinken",
     steps: [
       "Identifiziere bestehende Gewohnheiten",
@@ -249,6 +270,7 @@ const INSPIRATION_TOOLKITS = [
     title: "Timeboxing",
     description: "Zeitblöcke effektiv nutzen",
     icon: Clock,
+    category: "Produktivität",
     example: "45 Minuten fokussierte Arbeit + 15 Minuten Pause",
     steps: [
       "Plane deine Zeitblöcke im Voraus",
@@ -261,6 +283,7 @@ const INSPIRATION_TOOLKITS = [
     title: "Wissensmanagement",
     description: "Systematisches Lernen",
     icon: BookOpen,
+    category: "Bildung",
     example: "Tägliche Lernnotizen in einem Second Brain",
     steps: [
       "Erfasse neue Erkenntnisse sofort",
@@ -273,6 +296,7 @@ const INSPIRATION_TOOLKITS = [
     title: "Kreative Routine",
     description: "Inspiration und Kreativität fördern",
     icon: Lightbulb,
+    category: "Kreativität",
     example: "Tägliches Brainstorming",
     steps: [
       "Schaffe eine inspirierende Umgebung",
@@ -286,6 +310,7 @@ const Toolbox = () => {
   const [selectedToolkit, setSelectedToolkit] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<'favorites' | 'community' | 'inspiration' | 'building-blocks' | 'education'>('favorites');
   const [selectedModule, setSelectedModule] = useState<any>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -368,6 +393,12 @@ const Toolbox = () => {
         return [];
     }
   };
+  
+  const filteredInspiration = INSPIRATION_TOOLKITS.filter(toolkit => 
+    toolkit.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    toolkit.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    toolkit.category.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const addToolkitToProfile = async (toolkit: any) => {
     try {
@@ -490,6 +521,87 @@ const Toolbox = () => {
     </div>
   );
 
+  const InspirationCard = ({ toolkit }: { toolkit: InspirationToolkit }) => {
+    const Icon = toolkit.icon;
+    
+    return (
+      <Card className="p-6 hover:shadow-md transition-shadow border border-blue-100/60 cursor-pointer h-full">
+        <div className="flex flex-col h-full">
+          <div className="mb-4 flex justify-between items-start">
+            <div>
+              <Badge variant="outline" className="mb-2 text-blue-700 bg-blue-50 hover:bg-blue-100 border-blue-200">
+                {toolkit.category}
+              </Badge>
+              <h3 className="font-bold text-xl text-gray-800 mb-1">{toolkit.title}</h3>
+              <p className="text-gray-600 text-sm mb-4">{toolkit.description}</p>
+            </div>
+            <div className="p-3 bg-blue-50 rounded-xl">
+              <Icon className="h-6 w-6 text-blue-600" />
+            </div>
+          </div>
+
+          {toolkit.example && (
+            <div className="bg-gray-50 p-3 rounded-md mb-4">
+              <p className="text-sm text-gray-700">
+                <span className="font-medium">Beispiel:</span> {toolkit.example}
+              </p>
+            </div>
+          )}
+
+          <div className="space-y-2 mb-auto">
+            <h4 className="font-medium text-gray-700 text-sm">Schritte zur Umsetzung:</h4>
+            <ul className="list-disc text-sm space-y-1 pl-5 text-gray-600">
+              {toolkit.steps.map((step, index) => (
+                <li key={index}>{step}</li>
+              ))}
+            </ul>
+          </div>
+
+          {(toolkit.cue || toolkit.routine || toolkit.reward) && (
+            <div className="bg-blue-50 p-3 rounded-md my-4 text-sm">
+              <h4 className="font-medium text-gray-700 mb-2">Habit Loop:</h4>
+              <div className="grid grid-cols-2 gap-2">
+                {toolkit.cue && (
+                  <div>
+                    <span className="font-medium">Auslöser:</span> {toolkit.cue}
+                  </div>
+                )}
+                {toolkit.craving && (
+                  <div>
+                    <span className="font-medium">Verlangen:</span> {toolkit.craving}
+                  </div>
+                )}
+                {toolkit.routine && (
+                  <div>
+                    <span className="font-medium">Routine:</span> {toolkit.routine}
+                  </div>
+                )}
+                {toolkit.reward && (
+                  <div>
+                    <span className="font-medium">Belohnung:</span> {toolkit.reward}
+                  </div>
+                )}
+              </div>
+              {toolkit.minimal_dose && (
+                <div className="mt-2">
+                  <span className="font-medium">Minimale Dosis:</span> {toolkit.minimal_dose}
+                </div>
+              )}
+            </div>
+          )}
+
+          <Button 
+            className="mt-4 w-full"
+            onClick={() => addToolkitToProfile(toolkit)}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Zu meinen Routinen hinzufügen
+          </Button>
+        </div>
+      </Card>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       <Navigation />
@@ -515,14 +627,45 @@ const Toolbox = () => {
             </TabsContent>
             
             <TabsContent value="inspiration" className="animate-fade-in">
-              <div className="relative py-6 sm:py-10">
-                <ToolboxCarousel
-                  toolkits={getActiveToolkits()}
-                  onSelect={setSelectedToolkit}
-                  onRemove={removeRoutine}
-                  onAdd={addToolkitToProfile}
-                  activeTab={activeTab}
-                />
+              <div className="space-y-8">
+                <div className="flex flex-col sm:flex-row justify-between gap-4">
+                  <div className="relative max-w-md">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+                    <Input
+                      placeholder="Inspiration durchsuchen..."
+                      className="pl-9 w-full"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm">
+                      <Filter className="h-4 w-4 mr-2" />
+                      Filter
+                    </Button>
+                    <Button size="sm">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Eigene Routine erstellen
+                    </Button>
+                  </div>
+                </div>
+                
+                <Card>
+                  <CardContent className="p-6">
+                    <h3 className="font-bold text-xl mb-6">Inspirationen für deine Gewohnheiten</h3>
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {filteredInspiration.length > 0 ? (
+                        filteredInspiration.map((toolkit) => (
+                          <InspirationCard key={toolkit.id} toolkit={toolkit} />
+                        ))
+                      ) : (
+                        <div className="col-span-full text-center py-8">
+                          <p className="text-gray-500">Keine Inspiration gefunden.</p>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             </TabsContent>
             
