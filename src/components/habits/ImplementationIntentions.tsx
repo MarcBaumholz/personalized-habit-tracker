@@ -11,12 +11,12 @@ import { useToast } from "@/hooks/use-toast";
 import { v4 as uuidv4 } from "uuid";
 
 interface ImplementationIntention {
-  id: string;
   if: string;
   then: string;
+  id: string;
 }
 
-export interface ImplementationIntentionsProps {
+interface ImplementationIntentionsProps {
   habitId: string;
 }
 
@@ -24,11 +24,7 @@ export const ImplementationIntentions = ({ habitId }: ImplementationIntentionsPr
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [intentions, setIntentions] = useState<ImplementationIntention[]>([
-    {
-      if: "",
-      then: "",
-      id: uuidv4()
-    }
+    { if: "", then: "", id: uuidv4() },
   ]);
 
   // Query to fetch existing intentions
@@ -40,7 +36,7 @@ export const ImplementationIntentions = ({ habitId }: ImplementationIntentionsPr
         .select("*")
         .eq("habit_id", habitId)
         .eq("type", "intentions");
-      
+
       if (error) throw error;
       return data || [];
     },
@@ -56,48 +52,43 @@ export const ImplementationIntentions = ({ habitId }: ImplementationIntentionsPr
           console.error("Error parsing intentions:", e);
         }
       }
-    }
+    },
   });
 
   const addIntention = () => {
-    setIntentions([
-      ...intentions,
-      {
-        if: "",
-        then: "",
-        id: uuidv4()
-      }
-    ]);
+    setIntentions([...intentions, { if: "", then: "", id: uuidv4() }]);
   };
 
   const updateIntention = (id: string, field: "if" | "then", value: string) => {
-    setIntentions(intentions.map(intent => 
-      intent.id === id ? { ...intent, [field]: value } : intent
-    ));
+    setIntentions(
+      intentions.map((intent) =>
+        intent.id === id ? { ...intent, [field]: value } : intent
+      )
+    );
   };
 
   const removeIntention = (id: string) => {
-    setIntentions(intentions.filter(intent => intent.id !== id));
+    setIntentions(intentions.filter((intent) => intent.id !== id));
   };
 
   const createToolboxMutation = useMutation({
     mutationFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
-      
+
       // Convert steps to string for storage
       const stepsJson = JSON.stringify(intentions);
-      
+
       if (toolboxes && toolboxes.length > 0) {
         // Update existing toolbox
         const { error } = await supabase
           .from("habit_toolboxes")
           .update({
             steps: stepsJson,
-            updated_at: new Date().toISOString()
+            updated_at: new Date().toISOString(),
           })
           .eq("id", toolboxes[0].id);
-        
+
         if (error) throw error;
       } else {
         // Create new toolbox
@@ -109,35 +100,32 @@ export const ImplementationIntentions = ({ habitId }: ImplementationIntentionsPr
             type: "intentions",
             title: "Implementation Intentions",
             description: "If-Then plans for your habit",
-            steps: stepsJson
+            steps: stepsJson,
           });
-        
+
         if (error) throw error;
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["habit-toolboxes", habitId]
-      });
-      
+      queryClient.invalidateQueries({ queryKey: ["habit-toolboxes", habitId] });
       toast({
         title: "Intentionen gespeichert",
-        description: "Deine Implementation Intentions wurden gespeichert."
+        description: "Deine Implementation Intentions wurden gespeichert.",
       });
-    }
+    },
   });
 
   const handleSave = () => {
     // Filter out empty intentions
-    const validIntentions = intentions.filter(i => 
-      i.if.trim() !== "" && i.then.trim() !== ""
+    const validIntentions = intentions.filter(
+      (i) => i.if.trim() !== "" && i.then.trim() !== ""
     );
     
     if (validIntentions.length === 0) {
       toast({
         title: "Keine Intentionen",
         description: "Bitte füge mindestens eine vollständige Intention hinzu.",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -158,32 +146,30 @@ export const ImplementationIntentions = ({ habitId }: ImplementationIntentionsPr
             deine Gewohnheit zu einer bestimmten Zeit oder in einer bestimmten Situation auszuführen.
           </p>
         </div>
-        
+
         <div className="space-y-4">
-          {intentions.map((intention) => (
+          {intentions.map((intention, index) => (
             <div key={intention.id} className="space-y-3 p-3 border rounded-md">
               <div className="flex items-center gap-2">
                 <Label className="w-20 shrink-0">Wenn:</Label>
-                <Input 
-                  placeholder="z.B. Wenn ich morgens aufstehe..." 
+                <Input
+                  placeholder="z.B. Wenn ich morgens aufstehe..."
                   value={intention.if}
                   onChange={(e) => updateIntention(intention.id, "if", e.target.value)}
                 />
               </div>
-              
               <div className="flex items-center gap-2">
                 <Label className="w-20 shrink-0">Dann:</Label>
-                <Input 
-                  placeholder="z.B. Dann mache ich direkt 10 Kniebeugen" 
+                <Input
+                  placeholder="z.B. Dann mache ich direkt 10 Kniebeugen"
                   value={intention.then}
                   onChange={(e) => updateIntention(intention.id, "then", e.target.value)}
                 />
               </div>
-              
               {intentions.length > 1 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
                   onClick={() => removeIntention(intention.id)}
                   className="text-red-500 hover:text-red-700 hover:bg-red-50 ml-auto block"
                 >
@@ -194,7 +180,7 @@ export const ImplementationIntentions = ({ habitId }: ImplementationIntentionsPr
             </div>
           ))}
         </div>
-        
+
         <div className="flex gap-2 mt-6">
           <Button 
             variant="outline" 
@@ -204,7 +190,6 @@ export const ImplementationIntentions = ({ habitId }: ImplementationIntentionsPr
             <Plus className="h-4 w-4 mr-1" />
             Intention hinzufügen
           </Button>
-          
           <Button 
             onClick={handleSave}
             className="flex items-center"

@@ -60,7 +60,6 @@ export const DashboardOverview = () => {
         totalProgress={stats?.totalProgress || 0}
       />
 
-      {/* Yearly Activity placed directly under MetricCards */}
       <YearlyActivity />
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
