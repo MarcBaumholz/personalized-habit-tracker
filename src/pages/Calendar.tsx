@@ -89,7 +89,7 @@ const Calendar = () => {
     },
   });
 
-  const { data: calendarPreferences } = useQuery({
+  const { data: calendarPreferences, refetch: refetchPreferences } = useQuery({
     queryKey: ["calendar-preferences"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -102,6 +102,46 @@ const Calendar = () => {
         .maybeSingle();
 
       return data || DEFAULT_PREFERENCES;
+    },
+  });
+
+  const savePreferencesMutation = useMutation({
+    mutationFn: async (preferences: any) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
+
+      const { data: existingPrefs } = await supabase
+        .from("calendar_preferences")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (existingPrefs) {
+        const { data, error } = await supabase
+          .from("calendar_preferences")
+          .update(preferences)
+          .eq("id", existingPrefs.id);
+
+        if (error) throw error;
+        return data;
+      } else {
+        const { data, error } = await supabase
+          .from("calendar_preferences")
+          .insert({
+            user_id: user.id,
+            ...preferences
+          });
+
+        if (error) throw error;
+        return data;
+      }
+    },
+    onSuccess: () => {
+      refetchPreferences();
+      toast({
+        title: "Einstellungen gespeichert",
+        description: "Deine Kalendereinstellungen wurden aktualisiert.",
+      });
     },
   });
 
@@ -156,6 +196,24 @@ const Calendar = () => {
     mutationFn: async ({ habitId, time, day }: { habitId: string, time: string, day: Date }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
+
+      const { data: existingSchedule } = await supabase
+        .from("habit_schedules")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("habit_id", habitId)
+        .eq("scheduled_date", format(day, "yyyy-MM-dd"))
+        .eq("scheduled_time", time)
+        .maybeSingle();
+
+      if (existingSchedule) {
+        toast({
+          title: "Gewohnheit bereits eingeplant",
+          description: "Diese Gewohnheit ist bereits für diesen Zeitpunkt eingeplant.",
+          variant: "destructive"
+        });
+        return null;
+      }
 
       const { data, error } = await supabase
         .from("habit_schedules")
@@ -237,6 +295,18 @@ const Calendar = () => {
     });
   };
 
+  const handleSavePreferences = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const startTime = formData.get('startTime') as string;
+    const endTime = formData.get('endTime') as string;
+
+    savePreferencesMutation.mutate({
+      start_time: `${startTime}:00`,
+      end_time: `${endTime}:00`
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50">
       <Navigation />
@@ -256,34 +326,39 @@ const Calendar = () => {
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-80">
-                  <div className="grid gap-4">
-                    <div className="space-y-2">
-                      <h4 className="font-medium leading-none">Kalendereinstellungen</h4>
-                      <p className="text-sm text-muted-foreground">
-                        Passen Sie die Anzeige des Kalenders an
-                      </p>
-                    </div>
-                    <div className="grid gap-2">
-                      <div className="grid grid-cols-3 items-center gap-4">
-                        <label htmlFor="startTime">Startzeit</label>
-                        <input
-                          id="startTime"
-                          type="time"
-                          className="col-span-2 h-8 rounded-md border border-input bg-background px-3"
-                          defaultValue={calendarPreferences?.start_time?.slice(0, 5) || "06:00"}
-                        />
+                  <form onSubmit={handleSavePreferences}>
+                    <div className="grid gap-4">
+                      <div className="space-y-2">
+                        <h4 className="font-medium leading-none">Kalendereinstellungen</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Passen Sie die Anzeige des Kalenders an
+                        </p>
                       </div>
-                      <div className="grid grid-cols-3 items-center gap-4">
-                        <label htmlFor="endTime">Endzeit</label>
-                        <input
-                          id="endTime"
-                          type="time"
-                          className="col-span-2 h-8 rounded-md border border-input bg-background px-3"
-                          defaultValue={calendarPreferences?.end_time?.slice(0, 5) || "21:00"}
-                        />
+                      <div className="grid gap-2">
+                        <div className="grid grid-cols-3 items-center gap-4">
+                          <label htmlFor="startTime">Startzeit</label>
+                          <input
+                            id="startTime"
+                            name="startTime"
+                            type="time"
+                            className="col-span-2 h-8 rounded-md border border-input bg-background px-3"
+                            defaultValue={calendarPreferences?.start_time?.slice(0, 5) || "06:00"}
+                          />
+                        </div>
+                        <div className="grid grid-cols-3 items-center gap-4">
+                          <label htmlFor="endTime">Endzeit</label>
+                          <input
+                            id="endTime"
+                            name="endTime"
+                            type="time"
+                            className="col-span-2 h-8 rounded-md border border-input bg-background px-3"
+                            defaultValue={calendarPreferences?.end_time?.slice(0, 5) || "21:00"}
+                          />
+                        </div>
                       </div>
+                      <Button type="submit" size="sm">Speichern</Button>
                     </div>
-                  </div>
+                  </form>
                 </PopoverContent>
               </Popover>
             </div>

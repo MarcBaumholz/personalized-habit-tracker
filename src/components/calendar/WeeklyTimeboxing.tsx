@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Calendar, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar, Plus, CalendarDays, Check } from "lucide-react";
 import { format, startOfWeek, addDays, getISOWeek, addWeeks, subWeeks } from "date-fns";
 import { de } from "date-fns/locale";
 import { useDroppable } from "@dnd-kit/core";
@@ -10,11 +10,20 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { 
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter
+} from "@/components/ui/dialog";
+import { 
   Popover,
   PopoverContent,
   PopoverTrigger 
 } from "@/components/ui/popover";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 interface TimeSlot {
   time: string;
@@ -75,12 +84,15 @@ export const WeeklyTimeboxing = ({
 }: WeeklyTimeboxingProps) => {
   const [currentWeek, setCurrentWeek] = useState(date);
   const [selectedTimeCell, setSelectedTimeCell] = useState<{ time: string, day: Date } | null>(null);
+  const [currentView, setCurrentView] = useState<'day' | 'week'>('week');
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
   const weekStart = startOfWeek(currentWeek, { weekStartsOn: 1 });
   const weekNumber = getISOWeek(weekStart);
-  const weekDays = Array.from({ length: 5 }, (_, i) => addDays(weekStart, i));
+  const weekDays = Array.from({ length: currentView === 'week' ? 5 : 1 }, (_, i) => 
+    currentView === 'week' ? addDays(weekStart, i) : currentWeek
+  );
 
   const startTime = preferences?.start_time ? 
     parseInt(preferences.start_time.split(':')[0], 10) : 6;
@@ -96,12 +108,20 @@ export const WeeklyTimeboxing = ({
     return `${time}-${x}:${y}`;
   };
 
-  const handlePrevWeek = () => {
-    setCurrentWeek(subWeeks(currentWeek, 1));
+  const handlePrevNavigate = () => {
+    if (currentView === 'week') {
+      setCurrentWeek(subWeeks(currentWeek, 1));
+    } else {
+      setCurrentWeek(addDays(currentWeek, -1));
+    }
   };
 
-  const handleNextWeek = () => {
-    setCurrentWeek(addWeeks(currentWeek, 1));
+  const handleNextNavigate = () => {
+    if (currentView === 'week') {
+      setCurrentWeek(addWeeks(currentWeek, 1));
+    } else {
+      setCurrentWeek(addDays(currentWeek, 1));
+    }
   };
 
   const handleCellClick = (time: string, day: Date) => {
@@ -116,6 +136,11 @@ export const WeeklyTimeboxing = ({
     if (selectedTimeCell && onScheduleHabit) {
       onScheduleHabit(habit, selectedTimeCell.time, selectedTimeCell.day);
       setSelectedTimeCell(null);
+      
+      toast({
+        title: "Gewohnheit eingeplant",
+        description: `${habit.name} wurde für ${selectedTimeCell.time} Uhr eingeplant.`,
+      });
     }
   };
 
@@ -123,6 +148,11 @@ export const WeeklyTimeboxing = ({
     if (selectedTimeCell && onScheduleTodo) {
       onScheduleTodo(todo, selectedTimeCell.time, selectedTimeCell.day);
       setSelectedTimeCell(null);
+      
+      toast({
+        title: "Todo eingeplant",
+        description: `${todo.title} wurde für ${selectedTimeCell.time} Uhr eingeplant.`,
+      });
     }
   };
 
@@ -136,24 +166,40 @@ export const WeeklyTimeboxing = ({
           </h2>
         </div>
         <div className="flex items-center space-x-2">
-          <Button variant="outline" size="sm" onClick={handlePrevWeek} className="hover:bg-blue-50 border-blue-200">
+          <Button variant="outline" size="sm" onClick={handlePrevNavigate} className="hover:bg-blue-50 border-blue-200">
             <ChevronLeft className="h-4 w-4 text-blue-600" />
           </Button>
           <span className="font-medium text-sm md:text-base text-blue-800">
-            KW {weekNumber}
+            {currentView === 'week' ? `KW ${weekNumber}` : format(currentWeek, "dd.MM.yyyy")}
           </span>
-          <Button variant="outline" size="sm" onClick={handleNextWeek} className="hover:bg-blue-50 border-blue-200">
+          <Button variant="outline" size="sm" onClick={handleNextNavigate} className="hover:bg-blue-50 border-blue-200">
             <ChevronRight className="h-4 w-4 text-blue-600" />
           </Button>
         </div>
         <div className="flex space-x-2">
-          <div className="bg-white rounded-md px-3 py-1 text-sm text-gray-600">Tag</div>
-          <div className="bg-blue-600 rounded-md px-3 py-1 text-sm text-white">Mo-Fr</div>
+          <Button 
+            variant={currentView === 'day' ? "default" : "outline"} 
+            size="sm" 
+            onClick={() => setCurrentView('day')}
+            className={currentView === 'day' ? "bg-blue-600 text-white" : "text-gray-600"}
+          >
+            <Calendar className="h-4 w-4 mr-1" />
+            Tag
+          </Button>
+          <Button 
+            variant={currentView === 'week' ? "default" : "outline"} 
+            size="sm" 
+            onClick={() => setCurrentView('week')}
+            className={currentView === 'week' ? "bg-blue-600 text-white" : "text-gray-600"}
+          >
+            <CalendarDays className="h-4 w-4 mr-1" />
+            Woche
+          </Button>
         </div>
       </div>
       
       <div className="overflow-x-auto">
-        <div className="grid grid-cols-[100px_repeat(5,1fr)] min-w-[800px] border rounded-lg bg-white">
+        <div className={`grid ${currentView === 'week' ? 'grid-cols-[100px_repeat(5,1fr)]' : 'grid-cols-[100px_1fr]'} min-w-[600px] border rounded-lg bg-white`}>
           <div className="border-b border-r py-4 bg-blue-50 text-center font-medium">
             Zeit
           </div>
@@ -170,11 +216,8 @@ export const WeeklyTimeboxing = ({
           ))}
 
           {visibleTimeSlots.map((slot, timeIndex) => (
-            // Fixed: Removed data-lov-id from React.Fragment
             <React.Fragment key={`timeslot-${slot.time}`}>
-              <div 
-                className="border-b border-r py-4 px-2 h-20 text-blue-600 text-center"
-              >
+              <div className="border-b border-r py-4 px-2 h-20 text-blue-600 text-center">
                 {slot.displayTime}
               </div>
 
@@ -189,7 +232,6 @@ export const WeeklyTimeboxing = ({
                   schedule.scheduled_time === slot.time
                 );
 
-                // Check for todos scheduled at this time slot
                 const matchingTodos = todos.filter(todo => 
                   todo.scheduled_time === slot.time && 
                   format(new Date(todo.scheduled_date || new Date()), "yyyy-MM-dd") === format(day, "yyyy-MM-dd")
@@ -199,6 +241,7 @@ export const WeeklyTimeboxing = ({
                 const isSelected = selectedTimeCell && 
                                   selectedTimeCell.time === slot.time && 
                                   format(selectedTimeCell.day, "yyyy-MM-dd") === format(day, "yyyy-MM-dd");
+                                  
                 const bgClass = isSelected 
                   ? 'bg-blue-100 border-2 border-blue-400' 
                   : (hasItems ? 'bg-green-50' : 'hover:bg-gray-50');
@@ -207,7 +250,7 @@ export const WeeklyTimeboxing = ({
                   <div
                     key={`${day.toISOString()}-${slot.time}`}
                     ref={setNodeRef}
-                    className={`border-b border-r h-20 group relative ${bgClass} cursor-pointer`}
+                    className={`border-b border-r h-20 group relative ${bgClass} cursor-pointer transition-colors`}
                     onClick={() => handleCellClick(slot.time, day)}
                   >
                     {matchingSchedules.map(schedule => (
@@ -218,7 +261,7 @@ export const WeeklyTimeboxing = ({
                           left: `${schedule.position_x || 5}px`,
                           top: `${schedule.position_y || 5}px`
                         }}
-                        className="px-3 py-1 text-sm bg-blue-100 rounded-md"
+                        className="px-3 py-1 text-sm bg-blue-100 rounded-md shadow-sm"
                       >
                         {schedule.habits?.name || "Gewohnheit"}
                       </div>
@@ -232,14 +275,14 @@ export const WeeklyTimeboxing = ({
                           left: `${todo.position_x || 5}px`,
                           top: `${(todo.position_y || 5) + 30}px`
                         }}
-                        className="px-3 py-1 text-sm bg-green-100 rounded-md"
+                        className="px-3 py-1 text-sm bg-green-100 rounded-md shadow-sm"
                       >
                         {todo.title || "Todo"}
                       </div>
                     ))}
 
                     {!hasItems && (
-                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                         <Plus className="h-6 w-6 text-blue-400" />
                       </div>
                     )}
@@ -251,70 +294,84 @@ export const WeeklyTimeboxing = ({
         </div>
       </div>
 
-      {selectedTimeCell && (
-        <Popover open={!!selectedTimeCell} onOpenChange={(open) => !open && setSelectedTimeCell(null)}>
-          <PopoverTrigger asChild>
-            <div className="hidden">Trigger</div>
-          </PopoverTrigger>
-          <PopoverContent className="w-80 p-0" align="center">
-            <div className="p-3 border-b bg-blue-50">
-              <h3 className="font-medium">
-                Termin für {format(selectedTimeCell.day, "dd.MM.yyyy", { locale: de })} um {selectedTimeCell.time} Uhr
-              </h3>
-            </div>
-            <Tabs defaultValue="habits" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 rounded-none">
-                <TabsTrigger value="habits">Gewohnheiten</TabsTrigger>
-                <TabsTrigger value="todos">Todos</TabsTrigger>
-              </TabsList>
-              <TabsContent value="habits" className="max-h-[300px] overflow-y-auto">
-                {habits && habits.length > 0 ? (
-                  <div className="space-y-2 p-3">
-                    {habits.map((habit) => (
-                      <div 
-                        key={habit.id}
-                        className="p-2 bg-blue-50 rounded-md flex justify-between items-center hover:bg-blue-100 cursor-pointer"
-                        onClick={() => handleQuickScheduleHabit(habit)}
-                      >
-                        <div className="truncate">{habit.name}</div>
-                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0">
-                          <Plus className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="p-6 text-center text-gray-500">
-                    <p>Keine Gewohnheiten verfügbar</p>
-                  </div>
-                )}
-              </TabsContent>
-              <TabsContent value="todos" className="max-h-[300px] overflow-y-auto">
-                {todos && todos.length > 0 ? (
-                  <div className="space-y-2 p-3">
-                    {todos.filter(todo => !todo.scheduled_time).map((todo) => (
-                      <div 
-                        key={todo.id}
-                        className="p-2 bg-green-50 rounded-md flex justify-between items-center hover:bg-green-100 cursor-pointer"
-                        onClick={() => handleQuickScheduleTodo(todo)}
-                      >
-                        <div className="truncate">{todo.title}</div>
-                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0">
-                          <Plus className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="p-6 text-center text-gray-500">
-                    <p>Keine offenen Todos verfügbar</p>
-                  </div>
-                )}
-              </TabsContent>
-            </Tabs>
-          </PopoverContent>
-        </Popover>
-      )}
+      {/* Scheduler Dialog */}
+      <Dialog open={!!selectedTimeCell} onOpenChange={(open) => !open && setSelectedTimeCell(null)}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>
+              Termin für {selectedTimeCell && format(selectedTimeCell.day, "dd.MM.yyyy", { locale: de })} um {selectedTimeCell?.time} Uhr
+            </DialogTitle>
+            <DialogDescription>
+              Wähle eine Gewohnheit oder ein Todo, das du zu diesem Zeitpunkt planen möchtest.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <Tabs defaultValue="habits" className="w-full mt-4">
+            <TabsList className="grid w-full grid-cols-2 mb-4">
+              <TabsTrigger value="habits">Gewohnheiten</TabsTrigger>
+              <TabsTrigger value="todos">Todos</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="habits" className="max-h-[300px] overflow-y-auto">
+              {habits && habits.length > 0 ? (
+                <div className="space-y-2">
+                  {habits.map((habit) => (
+                    <div 
+                      key={habit.id}
+                      className="p-3 bg-blue-50 rounded-md flex justify-between items-center hover:bg-blue-100 cursor-pointer transition-all"
+                      onClick={() => handleQuickScheduleHabit(habit)}
+                    >
+                      <div className="truncate font-medium">{habit.name}</div>
+                      <Button size="sm" variant="ghost" className="h-8 w-8 p-0 rounded-full" onClick={(e) => {
+                        e.stopPropagation();
+                        handleQuickScheduleHabit(habit);
+                      }}>
+                        <Check className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-6 text-center text-gray-500">
+                  <p>Keine Gewohnheiten verfügbar</p>
+                </div>
+              )}
+            </TabsContent>
+            
+            <TabsContent value="todos" className="max-h-[300px] overflow-y-auto">
+              {todos && todos.filter(todo => !todo.scheduled_time).length > 0 ? (
+                <div className="space-y-2">
+                  {todos.filter(todo => !todo.scheduled_time).map((todo) => (
+                    <div 
+                      key={todo.id}
+                      className="p-3 bg-green-50 rounded-md flex justify-between items-center hover:bg-green-100 cursor-pointer transition-all"
+                      onClick={() => handleQuickScheduleTodo(todo)}
+                    >
+                      <div className="truncate font-medium">{todo.title}</div>
+                      <Button size="sm" variant="ghost" className="h-8 w-8 p-0 rounded-full" onClick={(e) => {
+                        e.stopPropagation();
+                        handleQuickScheduleTodo(todo);
+                      }}>
+                        <Check className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-6 text-center text-gray-500">
+                  <p>Keine offenen Todos verfügbar</p>
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+          
+          <DialogFooter className="mt-4">
+            <Button variant="outline" onClick={() => setSelectedTimeCell(null)}>
+              Abbrechen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
