@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Calendar, ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
@@ -214,6 +213,8 @@ export const WeeklyTimeboxing = ({
         todos={todos || []}
         onScheduleHabit={handleScheduleHabit}
         onScheduleTodo={handleScheduleTodo}
+        schedules={schedules}
+        scheduledTodos={todos}
       />
     </div>
   );

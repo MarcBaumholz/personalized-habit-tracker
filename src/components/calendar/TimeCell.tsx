@@ -2,7 +2,7 @@
 import React from "react";
 import { format } from "date-fns";
 import { useDroppable } from "@dnd-kit/core";
-import { Plus } from "lucide-react";
+import { Plus, Lock } from "lucide-react";
 
 interface TimeCellProps {
   day: Date;
@@ -37,16 +37,23 @@ export const TimeCell: React.FC<TimeCellProps> = ({
   );
 
   const hasItems = matchingSchedules.length > 0 || matchingTodos.length > 0;
+  const isBlocked = hasItems;
   
   const bgClass = isSelected 
     ? 'bg-blue-100 border-2 border-blue-400' 
-    : (hasItems ? 'bg-green-50' : 'hover:bg-gray-50');
+    : (isBlocked ? 'bg-green-50' : 'hover:bg-gray-50');
+
+  const handleClick = () => {
+    if (!isBlocked) {
+      onClick(time, day);
+    }
+  };
 
   return (
     <div
       ref={setNodeRef}
-      className={`border-b border-r h-20 group relative ${bgClass} cursor-pointer transition-colors`}
-      onClick={() => onClick(time, day)}
+      className={`border-b border-r h-20 group relative ${bgClass} ${isBlocked ? 'cursor-not-allowed' : 'cursor-pointer'} transition-colors`}
+      onClick={handleClick}
     >
       {matchingSchedules.map(schedule => (
         <div
@@ -76,7 +83,11 @@ export const TimeCell: React.FC<TimeCellProps> = ({
         </div>
       ))}
 
-      {!hasItems && (
+      {isBlocked ? (
+        <div className="absolute inset-0 flex items-center justify-center opacity-50">
+          <Lock className="h-5 w-5 text-gray-500" />
+        </div>
+      ) : (
         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
           <Plus className="h-6 w-6 text-blue-400" />
         </div>

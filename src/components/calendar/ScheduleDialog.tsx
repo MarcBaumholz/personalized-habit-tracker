@@ -2,7 +2,7 @@
 import React from "react";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
-import { Check } from "lucide-react";
+import { Check, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -13,6 +13,7 @@ import {
   DialogFooter
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
 
 interface ScheduleDialogProps {
   open: boolean;
@@ -23,6 +24,8 @@ interface ScheduleDialogProps {
   todos: any[];
   onScheduleHabit: (habit: any, time: string, day: Date) => void;
   onScheduleTodo: (todo: any, time: string, day: Date) => void;
+  schedules?: any[];
+  scheduledTodos?: any[];
 }
 
 export const ScheduleDialog: React.FC<ScheduleDialogProps> = ({
@@ -33,18 +36,57 @@ export const ScheduleDialog: React.FC<ScheduleDialogProps> = ({
   habits,
   todos,
   onScheduleHabit,
-  onScheduleTodo
+  onScheduleTodo,
+  schedules = [],
+  scheduledTodos = []
 }) => {
+  const { toast } = useToast();
+  
   if (!selectedTime || !selectedDay) return null;
 
   const unscheduledTodos = todos.filter(todo => !todo.scheduled_time);
 
+  // Check if the selected time slot is already occupied
+  const isTimeSlotOccupied = () => {
+    const selectedDateString = format(selectedDay, "yyyy-MM-dd");
+    
+    const hasSchedule = schedules.some(schedule => 
+      format(new Date(schedule.scheduled_date), "yyyy-MM-dd") === selectedDateString &&
+      schedule.scheduled_time === selectedTime
+    );
+    
+    const hasTodo = scheduledTodos.some(todo => 
+      todo.scheduled_time === selectedTime && 
+      format(new Date(todo.scheduled_date || new Date()), "yyyy-MM-dd") === selectedDateString
+    );
+    
+    return hasSchedule || hasTodo;
+  };
+
   const handleQuickScheduleHabit = (habit: any) => {
+    if (isTimeSlotOccupied()) {
+      toast({
+        title: "Zeitslot bereits belegt",
+        description: "Dieser Zeitslot ist bereits mit einer Gewohnheit oder einem Todo belegt.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     onScheduleHabit(habit, selectedTime, selectedDay);
     onOpenChange(false);
   };
 
   const handleQuickScheduleTodo = (todo: any) => {
+    if (isTimeSlotOccupied()) {
+      toast({
+        title: "Zeitslot bereits belegt",
+        description: "Dieser Zeitslot ist bereits mit einer Gewohnheit oder einem Todo belegt.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     onScheduleTodo(todo, selectedTime, selectedDay);
     onOpenChange(false);
   };
@@ -61,6 +103,13 @@ export const ScheduleDialog: React.FC<ScheduleDialogProps> = ({
           </DialogDescription>
         </DialogHeader>
         
+        {isTimeSlotOccupied() && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 my-2 flex items-center gap-2 text-yellow-700">
+            <AlertCircle className="h-5 w-5 text-yellow-500" />
+            <p className="text-sm">Dieser Zeitslot ist bereits belegt. Wähle eine andere Zeit oder einen anderen Tag.</p>
+          </div>
+        )}
+        
         <Tabs defaultValue="habits" className="w-full mt-4">
           <TabsList className="grid w-full grid-cols-2 mb-4">
             <TabsTrigger value="habits">Gewohnheiten</TabsTrigger>
@@ -73,14 +122,20 @@ export const ScheduleDialog: React.FC<ScheduleDialogProps> = ({
                 {habits.map((habit) => (
                   <div 
                     key={habit.id}
-                    className="p-3 bg-blue-50 rounded-md flex justify-between items-center hover:bg-blue-100 cursor-pointer transition-all"
-                    onClick={() => handleQuickScheduleHabit(habit)}
+                    className={`p-3 bg-blue-50 rounded-md flex justify-between items-center ${isTimeSlotOccupied() ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-100 cursor-pointer'} transition-all`}
+                    onClick={() => !isTimeSlotOccupied() && handleQuickScheduleHabit(habit)}
                   >
                     <div className="truncate font-medium">{habit.name}</div>
-                    <Button size="sm" variant="ghost" className="h-8 w-8 p-0 rounded-full" onClick={(e) => {
-                      e.stopPropagation();
-                      handleQuickScheduleHabit(habit);
-                    }}>
+                    <Button 
+                      size="sm" 
+                      variant="ghost" 
+                      className="h-8 w-8 p-0 rounded-full" 
+                      disabled={isTimeSlotOccupied()}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleQuickScheduleHabit(habit);
+                      }}
+                    >
                       <Check className="h-4 w-4" />
                     </Button>
                   </div>
@@ -99,14 +154,20 @@ export const ScheduleDialog: React.FC<ScheduleDialogProps> = ({
                 {unscheduledTodos.map((todo) => (
                   <div 
                     key={todo.id}
-                    className="p-3 bg-green-50 rounded-md flex justify-between items-center hover:bg-green-100 cursor-pointer transition-all"
-                    onClick={() => handleQuickScheduleTodo(todo)}
+                    className={`p-3 bg-green-50 rounded-md flex justify-between items-center ${isTimeSlotOccupied() ? 'opacity-50 cursor-not-allowed' : 'hover:bg-green-100 cursor-pointer'} transition-all`}
+                    onClick={() => !isTimeSlotOccupied() && handleQuickScheduleTodo(todo)}
                   >
                     <div className="truncate font-medium">{todo.title}</div>
-                    <Button size="sm" variant="ghost" className="h-8 w-8 p-0 rounded-full" onClick={(e) => {
-                      e.stopPropagation();
-                      handleQuickScheduleTodo(todo);
-                    }}>
+                    <Button 
+                      size="sm" 
+                      variant="ghost" 
+                      className="h-8 w-8 p-0 rounded-full" 
+                      disabled={isTimeSlotOccupied()}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleQuickScheduleTodo(todo);
+                      }}
+                    >
                       <Check className="h-4 w-4" />
                     </Button>
                   </div>
