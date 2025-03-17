@@ -1,5 +1,5 @@
 
-import { Settings2, Trash2, Users, Star } from "lucide-react";
+import { Settings2, Trash2, Users, MinusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -87,8 +87,8 @@ export const ToolkitCardActions = ({
                     size="sm"
                     className="h-10 w-10 p-0 hover:bg-yellow-50 bg-white"
                   >
-                    <Star 
-                      className={`h-5 w-5 ${isFavorite ? 'text-yellow-500 fill-yellow-500' : 'text-gray-600'} hover:text-yellow-600`} 
+                    <MinusCircle 
+                      className={`h-5 w-5 ${isFavorite ? 'text-yellow-600 fill-yellow-100' : 'text-gray-600'} hover:text-yellow-600`} 
                     />
                   </Button>
                 </TooltipTrigger>

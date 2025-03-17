@@ -1,7 +1,7 @@
+
 import { useState } from "react";
 import { Navigation } from "@/components/layout/Navigation";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Mail, UserPlus, UserCheck } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -12,10 +12,10 @@ import { CoachingSection } from "@/components/profile/CoachingSection";
 import { ZRMSection } from "@/components/profile/ZRMSection";
 import { LifeAreasSection } from "@/components/profile/LifeAreasSection";
 import { KeystoneHabitsSection } from "@/components/profile/KeystoneHabitsSection";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
+import { MinusCircle } from "lucide-react";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -64,6 +64,23 @@ const Profile = () => {
         .from("keystone_habits")
         .select("*")
         .eq("user_id", user.id);
+
+      return data || [];
+    },
+  });
+
+  const { data: activeHabits } = useQuery({
+    queryKey: ["active-habits"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
+
+      const { data } = await supabase
+        .from("habits")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("paused", false)
+        .order("created_at", { ascending: false });
 
       return data || [];
     },
@@ -235,6 +252,10 @@ const Profile = () => {
     }
   };
 
+  const navigateToHabitDetail = (habitId: string) => {
+    navigate(`/habits/${habitId}`);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 transition-all duration-500">
       <Navigation />
@@ -305,8 +326,53 @@ const Profile = () => {
               <ZRMSection resources={zrmResources || []} goals={attitudeGoals || []} />
             </TabsContent>
             
-            <TabsContent value="habits" className="animate-fade-in">
+            <TabsContent value="habits" className="space-y-6 animate-fade-in">
               <KeystoneHabitsSection habits={keystoneHabits || []} />
+              
+              <Card className="p-6 bg-white rounded-2xl shadow-sm border border-blue-100">
+                <CardHeader className="px-0 pt-0">
+                  <CardTitle className="text-xl font-semibold text-blue-800">Aktive Gewohnheiten</CardTitle>
+                </CardHeader>
+                <CardContent className="px-0 pb-0">
+                  {activeHabits && activeHabits.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {activeHabits.map((habit: any) => (
+                        <div 
+                          key={habit.id} 
+                          className="border rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+                          onClick={() => navigateToHabitDetail(habit.id)}
+                        >
+                          <div className="flex justify-between items-start mb-2">
+                            <h3 className="font-medium text-blue-800">{habit.name}</h3>
+                            <div className="flex items-center space-x-1">
+                              {habit.streak_count > 0 && (
+                                <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
+                                  {habit.streak_count} Tage
+                                </span>
+                              )}
+                              {habit.minimal_dose && (
+                                <span className="bg-yellow-100 border border-yellow-400 text-yellow-800 p-1 rounded-full">
+                                  <MinusCircle className="h-4 w-4 text-yellow-600 fill-yellow-100" />
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <p className="text-sm text-gray-600 line-clamp-2">
+                            {habit.why_description || habit.why || "Keine Beschreibung"}
+                          </p>
+                          <div className="mt-2 text-xs text-gray-500">
+                            Bereich: {habit.life_area || "Allgemein"}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      Keine aktiven Gewohnheiten gefunden.
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </TabsContent>
             
             <TabsContent value="areas" className="animate-fade-in">

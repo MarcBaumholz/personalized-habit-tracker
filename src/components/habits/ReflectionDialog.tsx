@@ -12,7 +12,6 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ReflectionQuestions } from "./ReflectionQuestions";
 import { Check, Info, AlertTriangle } from "lucide-react";
 
 interface ReflectionDialogProps {
@@ -54,7 +53,7 @@ export const ReflectionDialog = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="max-w-4xl">
         <DialogHeader>
           <DialogTitle>SRHI - Gewohnheitsindex</DialogTitle>
           <DialogDescription>

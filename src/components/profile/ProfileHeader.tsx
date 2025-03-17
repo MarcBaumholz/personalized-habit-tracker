@@ -3,6 +3,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Mail, UserPlus, UserCheck, RefreshCw } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { ProfileImageUpload } from "./ProfileImageUpload";
+import { UsernameEditor } from "./UsernameEditor";
 
 interface Profile {
   id: string;
@@ -38,21 +40,33 @@ export const ProfileHeader = ({
     <Card className="p-6 bg-white rounded-2xl shadow-sm border border-blue-100">
       <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
         <div className="flex-shrink-0">
-          <Avatar className="h-32 w-32 border-4 border-blue-100">
-            <AvatarImage src={profile?.avatar_url || ""} alt={profile?.full_name || "User"} />
-            <AvatarFallback className="bg-blue-600 text-white text-2xl">
-              {getInitials(profile?.full_name)}
-            </AvatarFallback>
-          </Avatar>
+          {profile ? (
+            <ProfileImageUpload 
+              profileId={profile.id} 
+              currentImage={profile.avatar_url} 
+              fullName={profile.full_name} 
+            />
+          ) : (
+            <Avatar className="h-32 w-32 border-4 border-blue-100">
+              <AvatarFallback className="bg-blue-600 text-white text-2xl">
+                U
+              </AvatarFallback>
+            </Avatar>
+          )}
         </div>
         
         <div className="flex-1 text-center md:text-left">
           <h1 className="text-2xl md:text-3xl font-bold text-blue-800 mb-1">
             {profile?.full_name || "Dein Profil"}
           </h1>
-          <p className="text-blue-600 text-lg">
-            @{profile?.username || "username"}
-          </p>
+          
+          {profile && (
+            <UsernameEditor 
+              profileId={profile.id} 
+              currentUsername={profile.username} 
+            />
+          )}
+          
           <p className="mt-4 text-gray-600 max-w-2xl">
             Willkommen auf deinem persönlichen Profil! Hier kannst du deine Persönlichkeitsmerkmale, 
             Gewohnheiten und Lebensbereiche einsehen und bearbeiten.

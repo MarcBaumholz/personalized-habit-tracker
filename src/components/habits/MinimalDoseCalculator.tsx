@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
-import { Star, Save, Sparkles } from "lucide-react";
+import { MinusCircle, Save, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -184,11 +184,11 @@ export const MinimalDoseCalculator = ({ habitId, onSave }: MinimalDoseCalculator
 
         <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
           <div className="flex items-start">
-            <Star className="h-5 w-5 text-amber-500 mr-3 mt-0.5 flex-shrink-0" />
+            <MinusCircle className="h-5 w-5 text-yellow-600 fill-yellow-100 mr-3 mt-0.5 flex-shrink-0" />
             <div>
-              <h4 className="text-sm font-medium text-blue-800 mb-1">Tipp: Markiere mit dem Stern ⭐</h4>
+              <h4 className="text-sm font-medium text-blue-800 mb-1">Tipp: Markiere mit dem Minuszeichen</h4>
               <p className="text-xs text-blue-700">
-                An schwierigen Tagen kannst du die minimale Dosis mit dem Stern ⭐ markieren, 
+                An schwierigen Tagen kannst du die minimale Dosis mit dem Minuszeichen markieren, 
                 anstatt die Gewohnheit abzuhaken. So bleibt deine Streak erhalten, und du weißt später, 
                 an welchen Tagen du die reduzierte Version genutzt hast.
               </p>
