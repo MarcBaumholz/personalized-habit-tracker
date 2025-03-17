@@ -16,7 +16,11 @@ interface ImplementationIntention {
   id: string;
 }
 
-export const ImplementationIntentions = ({ habitId }: { habitId: string }) => {
+interface ImplementationIntentionsProps {
+  habitId: string;
+}
+
+export const ImplementationIntentions = ({ habitId }: ImplementationIntentionsProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [intentions, setIntentions] = useState<ImplementationIntention[]>([
