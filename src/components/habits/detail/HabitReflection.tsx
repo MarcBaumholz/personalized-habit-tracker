@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -93,6 +92,7 @@ export const HabitReflection = ({ habitId }: HabitReflectionProps) => {
     onSuccess: () => {
       setReflection("");
       queryClient.invalidateQueries({ queryKey: ["habit", habitId] });
+      queryClient.invalidateQueries({ queryKey: ["habit-reflections", habitId] });
       toast({
         title: "Reflexion gespeichert",
         description: "Deine Reflexion wurde erfolgreich gespeichert.",
