@@ -1,26 +1,39 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format, startOfYear, eachDayOfInterval, endOfYear, getDay, subYears, addDays } from "date-fns";
 import { de } from "date-fns/locale";
-import { Check, ChevronLeft, ChevronRight, BarChart2, Calendar, PieChart } from "lucide-react";
+import { Check, Star, ChevronLeft, ChevronRight, BarChart2, Calendar, PieChart } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RechartsPieChart, Pie, Cell, Legend, AreaChart, Area } from 'recharts';
 
-const ACTIVITY_COLORS = {
-  "check": "#4ade80", // Green for completed
-  "star": "#facc15", // Yellow for minimal dose
-  "empty": "#f1f5f9" // Light gray for no entries
+// Verbesserte Farbskala mit höherem Kontrast
+const COMPLETION_COLORS = {
+  "check": {
+    0: "#f1f5f9", // Keine Einträge - hellgrau
+    1: "#bbf7d0", // Hellgrün
+    2: "#86efac", // Mittelgrün
+    3: "#4ade80", // Kräftiges Grün
+    4: "#22c55e", // Sehr kräftiges Grün
+  },
+  "star": {
+    0: "#f1f5f9", // Keine Einträge - hellgrau
+    1: "#fef08a", // Hellgelb
+    2: "#fde047", // Mittelgelb
+    3: "#facc15", // Kräftiges Gelb
+    4: "#eab308", // Sehr kräftiges Gelb
+  }
 };
 
 const WEEKDAYS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
 const CHART_COLORS = ["#3b82f6", "#22c55e", "#f59e0b", "#ef4444", "#8b5cf6"];
 const PHASE_COLORS = {
-  phase1: "#bbdefb", // Light blue for Phase 1 (Day 0-30)
-  phase2: "#90caf9", // Medium blue for Phase 2 (Day 31-66)
-  phase3: "#2196f3", // Dark blue for Phase 3 (Day 67+)
+  phase1: "#bbdefb", // Hellblau für Phase 1 (Tag 0-30)
+  phase2: "#90caf9", // Mittelblau für Phase 2 (Tag 31-66)
+  phase3: "#2196f3", // Dunkelblau für Phase 3 (Tag 67+)
 };
 
 const PHASE_DESCRIPTIONS = {
@@ -75,18 +88,22 @@ export const YearlyActivity = () => {
           const dateStr = format(date, 'yyyy-MM-dd');
           const completions = completionMap.get(dateStr) || { check: 0, star: 0 };
           
-          let colorType = 'empty';
+          let colorType = 'check';
+          let intensity = 0;
           
           if (completions.check > 0) {
             colorType = 'check';
+            intensity = Math.min(Math.ceil(completions.check / 2), 4);
           } else if (completions.star > 0) {
             colorType = 'star';
+            intensity = Math.min(Math.ceil(completions.star / 2), 4);
           }
 
           return {
             date: dateStr,
             completions,
             colorType,
+            intensity,
             weekday: getDay(date),
           };
         });
@@ -181,8 +198,8 @@ export const YearlyActivity = () => {
     }
   });
 
-  const getActivityColor = (colorType: string) => {
-    return ACTIVITY_COLORS[colorType as keyof typeof ACTIVITY_COLORS];
+  const getCompletionColor = (colorType: string, intensity: number) => {
+    return COMPLETION_COLORS[colorType as keyof typeof COMPLETION_COLORS][intensity as keyof typeof COMPLETION_COLORS["check"]];
   };
 
   const navigateHabit = (direction: 'prev' | 'next') => {
@@ -242,12 +259,12 @@ export const YearlyActivity = () => {
                     key={`${habit.id}-${day.date}`}
                     className="w-3 h-3 rounded-sm transition-colors duration-200 hover:scale-125"
                     style={{
-                      backgroundColor: getActivityColor(day.colorType),
+                      backgroundColor: getCompletionColor(day.colorType, day.intensity),
                       gridRow: day.weekday + 1
                     }}
                     title={`${day.date}: ${
-                      day.completions.check ? `Vollständig erfüllt` : 
-                      day.completions.star ? `Minimal erfüllt` : 
+                      day.completions.check ? `${day.completions.check} vollständig` : 
+                      day.completions.star ? `${day.completions.star} teilweise` : 
                       'Keine Einträge'
                     }`}
                   />
@@ -257,15 +274,34 @@ export const YearlyActivity = () => {
           </div>
         </ScrollArea>
 
+        {/* Farbskala als eigener Bereich, unter den Kacheln */}
         <div className="mt-6">
-          <div className="flex items-center justify-center gap-6 text-sm">
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: ACTIVITY_COLORS.check }}></div>
-              <span>Vollständig erfüllt</span>
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-1 text-sm text-gray-500 justify-between">
+              <span>Weniger</span>
+              <div className="flex">
+                {[0, 1, 2, 3, 4].map((level) => (
+                  <div
+                    key={`full-${level}`}
+                    className="w-5 h-5 rounded-sm border border-gray-100"
+                    style={{ backgroundColor: COMPLETION_COLORS.check[level] }}
+                  />
+                ))}
+              </div>
+              <span>Mehr (vollständig)</span>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: ACTIVITY_COLORS.star }}></div>
-              <span>Minimal erfüllt</span>
+            <div className="flex items-center gap-1 text-sm text-gray-500 justify-between">
+              <span>Weniger</span>
+              <div className="flex">
+                {[0, 1, 2, 3, 4].map((level) => (
+                  <div
+                    key={`partial-${level}`}
+                    className="w-5 h-5 rounded-sm border border-gray-100"
+                    style={{ backgroundColor: COMPLETION_COLORS.star[level] }}
+                  />
+                ))}
+              </div>
+              <span>Mehr (teilweise)</span>
             </div>
           </div>
         </div>
