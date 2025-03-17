@@ -53,14 +53,16 @@ export const HabitControls = ({
 
   return (
     <div className="flex items-center gap-1">
-      {/* Minimal Dose Option - Updated to Circle with Minus symbol */}
+      {/* Minimal Dose Option - Updated with more prominent yellow styling */}
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
             <Button 
               variant="ghost" 
               size="sm" 
-              className="h-8 w-8 p-0 text-amber-500 hover:text-amber-600 hover:bg-amber-50"
+              className={`h-8 w-8 p-0 ${elasticLevel === "minimal" 
+                ? "text-amber-600 bg-amber-50" 
+                : "text-amber-500 hover:text-amber-600 hover:bg-amber-50"}`}
               onClick={() => onUpdateElasticLevel(elasticLevel === "minimal" ? "medium" : "minimal")}
             >
               <MinusCircle 

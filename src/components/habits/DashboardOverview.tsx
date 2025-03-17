@@ -60,11 +60,8 @@ export const DashboardOverview = () => {
         totalProgress={stats?.totalProgress || 0}
       />
 
-      {/* Moved YearlyActivity higher */}
-      <div className="bg-white p-5 rounded-lg shadow-sm border">
-        <h2 className="text-lg font-medium mb-4">Jahresübersicht</h2>
-        <YearlyActivity />
-      </div>
+      {/* Yearly Activity placed directly under MetricCards */}
+      <YearlyActivity />
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <CategoryDistribution data={stats?.categoryData || []} />

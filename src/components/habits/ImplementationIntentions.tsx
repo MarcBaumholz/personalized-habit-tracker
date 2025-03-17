@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, Save, Trash } from "lucide-react";
@@ -10,23 +10,25 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { v4 as uuidv4 } from "uuid";
 
-interface Intention {
+interface ImplementationIntention {
   id: string;
   if: string;
   then: string;
 }
 
-interface ImplementationIntentionsProps {
+export interface ImplementationIntentionsProps {
   habitId: string;
 }
 
-export const ImplementationIntentions = ({
-  habitId
-}: ImplementationIntentionsProps) => {
+export const ImplementationIntentions = ({ habitId }: ImplementationIntentionsProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [intentions, setIntentions] = useState<Intention[]>([
-    { if: "", then: "", id: uuidv4() }
+  const [intentions, setIntentions] = useState<ImplementationIntention[]>([
+    {
+      if: "",
+      then: "",
+      id: uuidv4()
+    }
   ]);
 
   // Query to fetch existing intentions
@@ -38,31 +40,33 @@ export const ImplementationIntentions = ({
         .select("*")
         .eq("habit_id", habitId)
         .eq("type", "intentions");
-
+      
       if (error) throw error;
       return data || [];
-    }
-  });
-
-  // Effect to handle loaded data
-  useEffect(() => {
-    if (toolboxes && toolboxes.length > 0 && toolboxes[0].steps) {
-      try {
-        // Parse the steps from the database
-        const parsedSteps = JSON.parse(toolboxes[0].steps);
-        if (Array.isArray(parsedSteps) && parsedSteps.length > 0) {
-          setIntentions(parsedSteps);
+    },
+    onSuccess: (data) => {
+      if (data.length > 0 && data[0].steps) {
+        try {
+          // Parse the steps from the database
+          const parsedSteps = JSON.parse(data[0].steps);
+          if (Array.isArray(parsedSteps) && parsedSteps.length > 0) {
+            setIntentions(parsedSteps);
+          }
+        } catch (e) {
+          console.error("Error parsing intentions:", e);
         }
-      } catch (e) {
-        console.error("Error parsing intentions:", e);
       }
     }
-  }, [toolboxes]);
+  });
 
   const addIntention = () => {
     setIntentions([
       ...intentions,
-      { if: "", then: "", id: uuidv4() }
+      {
+        if: "",
+        then: "",
+        id: uuidv4()
+      }
     ]);
   };
 
@@ -80,10 +84,10 @@ export const ImplementationIntentions = ({
     mutationFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
-
+      
       // Convert steps to string for storage
       const stepsJson = JSON.stringify(intentions);
-
+      
       if (toolboxes && toolboxes.length > 0) {
         // Update existing toolbox
         const { error } = await supabase
@@ -93,7 +97,7 @@ export const ImplementationIntentions = ({
             updated_at: new Date().toISOString()
           })
           .eq("id", toolboxes[0].id);
-
+        
         if (error) throw error;
       } else {
         // Create new toolbox
@@ -107,7 +111,7 @@ export const ImplementationIntentions = ({
             description: "If-Then plans for your habit",
             steps: stepsJson
           });
-          
+        
         if (error) throw error;
       }
     },
@@ -115,6 +119,7 @@ export const ImplementationIntentions = ({
       queryClient.invalidateQueries({
         queryKey: ["habit-toolboxes", habitId]
       });
+      
       toast({
         title: "Intentionen gespeichert",
         description: "Deine Implementation Intentions wurden gespeichert."
@@ -153,28 +158,28 @@ export const ImplementationIntentions = ({
             deine Gewohnheit zu einer bestimmten Zeit oder in einer bestimmten Situation auszuführen.
           </p>
         </div>
-
+        
         <div className="space-y-4">
           {intentions.map((intention) => (
             <div key={intention.id} className="space-y-3 p-3 border rounded-md">
               <div className="flex items-center gap-2">
                 <Label className="w-20 shrink-0">Wenn:</Label>
-                <Input
-                  placeholder="z.B. Wenn ich morgens aufstehe..."
+                <Input 
+                  placeholder="z.B. Wenn ich morgens aufstehe..." 
                   value={intention.if}
                   onChange={(e) => updateIntention(intention.id, "if", e.target.value)}
                 />
               </div>
-
+              
               <div className="flex items-center gap-2">
                 <Label className="w-20 shrink-0">Dann:</Label>
-                <Input
-                  placeholder="z.B. Dann mache ich direkt 10 Kniebeugen"
+                <Input 
+                  placeholder="z.B. Dann mache ich direkt 10 Kniebeugen" 
                   value={intention.then}
                   onChange={(e) => updateIntention(intention.id, "then", e.target.value)}
                 />
               </div>
-
+              
               {intentions.length > 1 && (
                 <Button
                   variant="ghost"
@@ -189,10 +194,10 @@ export const ImplementationIntentions = ({
             </div>
           ))}
         </div>
-
+        
         <div className="flex gap-2 mt-6">
-          <Button
-            variant="outline"
+          <Button 
+            variant="outline" 
             onClick={addIntention}
             className="flex items-center"
           >
@@ -200,7 +205,7 @@ export const ImplementationIntentions = ({
             Intention hinzufügen
           </Button>
           
-          <Button
+          <Button 
             onClick={handleSave}
             className="flex items-center"
           >
