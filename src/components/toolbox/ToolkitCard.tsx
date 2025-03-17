@@ -1,5 +1,5 @@
 
-import { Calendar, Plus, Star } from "lucide-react";
+import { Calendar, Plus, MinusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -128,13 +128,13 @@ export const ToolkitCard = ({ toolkit, onSelect, onRemove, onAdd, onToggleFavori
             </Badge>
             {toolkit.type === 'building_block' && (
               <Badge variant="outline" className="text-base font-medium">
-                <Star className="h-4 w-4 text-yellow-500 mr-2" />
+                <MinusCircle className="h-4 w-4 text-yellow-500 fill-yellow-100 mr-2" />
                 Building Block
               </Badge>
             )}
             {toolkit.is_favorite && (
               <Badge variant="favorite" className="text-base font-medium">
-                <Star className="h-4 w-4 fill-yellow-500 mr-2" />
+                <MinusCircle className="h-4 w-4 text-yellow-500 fill-yellow-100 mr-2" />
                 Favorit
               </Badge>
             )}

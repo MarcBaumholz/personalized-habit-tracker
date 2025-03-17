@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { ChevronUp, ChevronDown, Smile, BookOpen, Trash2 } from "lucide-react";
+import { ChevronUp, ChevronDown, Smile, BookOpen, Trash2, MinusCircle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -124,6 +124,16 @@ export const HabitControls = ({
       >
         Reflektieren
       </Button>
+
+      {habit.minimal_dose && (
+        <Button
+          size="sm"
+          variant="outline"
+          className="bg-yellow-100 border-yellow-400 text-yellow-800"
+        >
+          <MinusCircle className="h-4 w-4 text-yellow-600 fill-yellow-100" />
+        </Button>
+      )}
 
       <Button
         size="sm"

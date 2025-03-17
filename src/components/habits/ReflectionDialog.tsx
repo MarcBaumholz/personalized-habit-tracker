@@ -1,3 +1,4 @@
+
 import {
   Dialog,
   DialogContent,
@@ -12,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ReflectionQuestions } from "./ReflectionQuestions";
+import { Check, Info, AlertTriangle } from "lucide-react";
 
 interface ReflectionDialogProps {
   isOpen: boolean;
@@ -54,40 +56,55 @@ export const ReflectionDialog = ({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>SRHI - Self-Report Habit Index</DialogTitle>
+          <DialogTitle>SRHI - Gewohnheitsindex</DialogTitle>
           <DialogDescription>
-            Bewerte deine Gewohnheit anhand der folgenden Aussagen
+            Bewerte deine Gewohnheit und identifiziere Herausforderungen
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-6">
+          <div className="bg-blue-50 p-4 rounded-lg">
+            <div className="flex items-start space-x-2">
+              <Info className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+              <p className="text-sm text-blue-700">
+                Der SRHI hilft dir zu verstehen, wie automatisiert deine Gewohnheit bereits ist. 
+                Eine höhere Punktzahl zeigt eine stärkere Gewohnheit.
+              </p>
+            </div>
+          </div>
+
           {questions.map((question, index) => (
-            <div key={index} className="space-y-2">
-              <Label>{question}</Label>
+            <div key={index} className="border p-4 rounded-lg bg-gray-50">
+              <Label className="font-medium mb-3 block">{question}</Label>
               <RadioGroup
                 value={responses[index]}
                 onValueChange={(value) => onResponseChange(index, value)}
+                className="flex justify-between space-x-2"
               >
-                <div className="flex justify-between">
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="1" id={`q${index}-1`} />
-                    <Label htmlFor={`q${index}-1`}>Stimme nicht zu</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="2" id={`q${index}-2`} />
-                    <Label htmlFor={`q${index}-2`}>Neutral</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="3" id={`q${index}-3`} />
-                    <Label htmlFor={`q${index}-3`}>Stimme zu</Label>
-                  </div>
+                <div className="flex-1 border rounded-md p-2 flex flex-col items-center hover:bg-gray-100">
+                  <RadioGroupItem value="1" id={`q${index}-1`} />
+                  <Label htmlFor={`q${index}-1`} className="text-xs mt-1">
+                    Nein
+                  </Label>
+                </div>
+                <div className="flex-1 border rounded-md p-2 flex flex-col items-center hover:bg-gray-100">
+                  <RadioGroupItem value="2" id={`q${index}-2`} />
+                  <Label htmlFor={`q${index}-2`} className="text-xs mt-1">
+                    Neutral
+                  </Label>
+                </div>
+                <div className="flex-1 border rounded-md p-2 flex flex-col items-center hover:bg-gray-100">
+                  <RadioGroupItem value="3" id={`q${index}-3`} />
+                  <Label htmlFor={`q${index}-3`} className="text-xs mt-1">
+                    Ja
+                  </Label>
                 </div>
               </RadioGroup>
             </div>
           ))}
 
           {customQuestions?.map((q: any) => (
-            <div key={q.id} className="space-y-2">
-              <Label>{q.question}</Label>
+            <div key={q.id} className="border p-4 rounded-lg">
+              <Label className="font-medium mb-2 block">{q.question}</Label>
               <Textarea
                 placeholder="Deine Antwort..."
                 className="h-20"
@@ -96,19 +113,21 @@ export const ReflectionDialog = ({
             </div>
           ))}
 
-          <div className="space-y-2">
-            <Label>Persönliche Reflexionsfragen</Label>
-            <ReflectionQuestions />
+          <div className="border p-4 rounded-lg bg-orange-50">
+            <div className="flex items-start space-x-2 mb-3">
+              <AlertTriangle className="h-5 w-5 text-orange-600 mt-0.5 flex-shrink-0" />
+              <Label className="font-medium">Herausforderungen & Hindernisse</Label>
+            </div>
+            <Textarea
+              value={reflection}
+              onChange={(e) => onReflectionChange(e.target.value)}
+              placeholder="Welche Herausforderungen oder Hindernisse hast du bei dieser Gewohnheit erlebt? Was könnte dir helfen, sie zu überwinden?"
+              className="h-32"
+            />
           </div>
 
-          <Textarea
-            value={reflection}
-            onChange={(e) => onReflectionChange(e.target.value)}
-            placeholder="Teile deine Gedanken..."
-            className="h-32"
-          />
           <Button onClick={onSubmit} className="w-full">
-            Reflexion abschließen
+            <Check className="mr-2 h-4 w-4" /> Reflexion abschließen
           </Button>
         </div>
       </DialogContent>

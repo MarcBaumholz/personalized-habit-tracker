@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,7 +16,9 @@ import {
   Calendar,
   Check,
   X,
-  MinusCircle
+  MinusCircle,
+  Info,
+  AlertTriangle
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -38,7 +39,6 @@ export const HabitReflection = ({ habitId }: HabitReflectionProps) => {
   const [emotionRating, setEmotionRating] = useState<string | null>(null);
   const [reflectionType, setReflectionType] = useState<"daily" | "weekly">("daily");
 
-  // Weekly tracking state
   const [weeklyTracking, setWeeklyTracking] = useState<Record<string, string>>({
     "Mo": "",
     "Di": "",
@@ -136,7 +136,6 @@ export const HabitReflection = ({ habitId }: HabitReflectionProps) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
-      // Convert weekly tracking to reflection text
       const trackedDays = Object.entries(weeklyData)
         .filter(([_, status]) => status !== "")
         .map(([day, status]) => {
@@ -263,10 +262,13 @@ export const HabitReflection = ({ habitId }: HabitReflectionProps) => {
             </TabsList>
             
             <TabsContent value="tracking">
-              <div className="text-center mb-4">
-                <p className="text-sm text-gray-500 mb-4">
-                  Wie hast du deine Gewohnheit heute umgesetzt?
-                </p>
+              <div className="bg-blue-50 p-4 rounded-lg mb-4">
+                <div className="flex items-start space-x-2">
+                  <Info className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <p className="text-sm text-blue-700">
+                    Wie hast du deine Gewohnheit heute umgesetzt?
+                  </p>
+                </div>
               </div>
               
               <div className="grid grid-cols-3 gap-3">
@@ -284,8 +286,8 @@ export const HabitReflection = ({ habitId }: HabitReflectionProps) => {
                   className="flex flex-col items-center p-3 h-auto"
                   onClick={() => handleCompletion("star")}
                 >
-                  <Star className={`h-8 w-8 mb-2 ${completionType === "star" ? "text-white" : "text-yellow-500"}`} />
-                  <span className="text-xs">Besonders gut</span>
+                  <MinusCircle className={`h-8 w-8 mb-2 ${completionType === "star" ? "text-white" : "text-yellow-500 fill-yellow-100"}`} />
+                  <span className="text-xs">Minimal</span>
                 </Button>
                 
                 <Button 
@@ -297,21 +299,18 @@ export const HabitReflection = ({ habitId }: HabitReflectionProps) => {
                   <span className="text-xs">Angepasst</span>
                 </Button>
               </div>
-              
-              <div className="mt-4 text-center">
-                <Button 
-                  variant="ghost" 
-                  className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 mt-2"
-                  onClick={() => setCompletionType(null)}
-                >
-                  Zurücksetzen
-                </Button>
-              </div>
             </TabsContent>
             
             <TabsContent value="emotions">
               <div className="space-y-4">
-                <p className="text-sm text-gray-500 mb-2">Wie fühlst du dich bei dieser Gewohnheit?</p>
+                <div className="bg-blue-50 p-4 rounded-lg mb-4">
+                  <div className="flex items-start space-x-2">
+                    <Info className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <p className="text-sm text-blue-700">
+                      Wie fühlst du dich bei dieser Gewohnheit?
+                    </p>
+                  </div>
+                </div>
                 
                 <RadioGroup 
                   value={emotionRating || ""} 
@@ -384,10 +383,18 @@ export const HabitReflection = ({ habitId }: HabitReflectionProps) => {
             
             <TabsContent value="reflection">
               <div className="space-y-4">
-                <Label htmlFor="reflection" className="mb-2 block">Reflexion</Label>
+                <div className="bg-orange-50 p-4 rounded-lg mb-4">
+                  <div className="flex items-start space-x-2">
+                    <AlertTriangle className="h-5 w-5 text-orange-600 mt-0.5 flex-shrink-0" />
+                    <p className="text-sm text-orange-700">
+                      Welche Herausforderungen oder Hindernisse hast du bei dieser Gewohnheit erlebt?
+                    </p>
+                  </div>
+                </div>
+                
                 <Textarea 
                   id="reflection"
-                  placeholder="Wie ist es dir heute mit deiner Gewohnheit ergangen? Was hast du gelernt?"
+                  placeholder="Was hat gut funktioniert? Was waren Hürden? Wie könntest du sie überwinden?"
                   value={reflection}
                   onChange={(e) => setReflection(e.target.value)}
                   className="h-32 mb-3"
@@ -400,7 +407,6 @@ export const HabitReflection = ({ habitId }: HabitReflectionProps) => {
             </TabsContent>
           </Tabs>
         ) : (
-          // Weekly reflection view
           <div className="space-y-6">
             <div>
               <h3 className="text-sm font-medium mb-2">Schnelles Wochentracking</h3>
