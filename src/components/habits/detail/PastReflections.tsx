@@ -17,6 +17,7 @@ interface Reflection {
   reflection_text: string;
   srhi_score?: number;
   created_at: string;
+  reflection_type?: string;
 }
 
 interface PastReflectionsProps {
@@ -99,6 +100,60 @@ export const PastReflections = ({ reflections, habitId }: PastReflectionsProps) 
     );
   }
 
+  // Group reflections by type
+  const dailyReflections = reflections.filter(r => !r.reflection_type || r.reflection_type === 'daily');
+  const weeklyReflections = reflections.filter(r => r.reflection_type === 'weekly');
+
+  const renderReflectionsList = (refList: Reflection[], type: string) => (
+    <>
+      <h3 className="text-sm font-medium text-gray-500 mb-2">{type === 'daily' ? 'Tägliche Reflexionen' : 'Wöchentliche Reflexionen'}</h3>
+      <div className="space-y-3 mt-2">
+        {refList.map((reflection) => (
+          <div key={reflection.id} className="p-3 bg-gray-50 rounded-md">
+            <div className="flex justify-between mb-2">
+              <span className="text-sm font-medium">
+                {format(new Date(reflection.created_at), "d. MMMM", { locale: de })}
+              </span>
+              <span className="text-xs text-gray-500">
+                {format(new Date(reflection.created_at), "HH:mm")}
+              </span>
+            </div>
+            
+            {editingId === reflection.id ? (
+              <div className="space-y-2">
+                <Textarea 
+                  value={editedText}
+                  onChange={(e) => setEditedText(e.target.value)}
+                  className="h-20 mb-2"
+                />
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" size="sm" onClick={() => setEditingId(null)}>
+                    Abbrechen
+                  </Button>
+                  <Button size="sm" onClick={() => handleSave(reflection.id)}>
+                    Speichern
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <p className="text-sm text-gray-700 mb-2">{reflection.reflection_text}</p>
+                <div className="flex justify-end gap-2">
+                  <Button variant="ghost" size="sm" onClick={() => handleEdit(reflection)}>
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => handleDelete(reflection.id)}>
+                    <Trash className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </>
+  );
+
   return (
     <Card>
       <CardHeader>
@@ -106,50 +161,8 @@ export const PastReflections = ({ reflections, habitId }: PastReflectionsProps) 
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {reflections.map((reflection) => (
-            <div key={reflection.id} className="p-4 bg-gray-50 rounded-md">
-              <div className="flex justify-between mb-2">
-                <span className="text-sm font-medium">
-                  {format(new Date(reflection.created_at), "d. MMMM", { locale: de })}
-                </span>
-                <span className="text-xs text-gray-500">
-                  {format(new Date(reflection.created_at), "HH:mm")}
-                </span>
-              </div>
-              
-              {editingId === reflection.id ? (
-                <div className="space-y-2">
-                  <Textarea 
-                    value={editedText}
-                    onChange={(e) => setEditedText(e.target.value)}
-                    className="h-20 mb-2"
-                  />
-                  <div className="flex justify-end gap-2">
-                    <Button variant="outline" size="sm" onClick={() => setEditingId(null)}>
-                      Abbrechen
-                    </Button>
-                    <Button size="sm" onClick={() => handleSave(reflection.id)}>
-                      Speichern
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div>
-                  <p className="text-sm text-gray-700 mb-2">{reflection.reflection_text}</p>
-                  <div className="flex justify-end gap-2">
-                    <Button variant="ghost" size="sm" onClick={() => handleEdit(reflection)}>
-                      <Edit className="h-4 w-4 mr-1" />
-                      Bearbeiten
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => handleDelete(reflection.id)}>
-                      <Trash className="h-4 w-4 mr-1" />
-                      Löschen
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
+          {dailyReflections.length > 0 && renderReflectionsList(dailyReflections, 'daily')}
+          {weeklyReflections.length > 0 && renderReflectionsList(weeklyReflections, 'weekly')}
         </div>
       </CardContent>
     </Card>

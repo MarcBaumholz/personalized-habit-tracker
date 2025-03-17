@@ -160,7 +160,7 @@ const HabitDetail = () => {
               <PastReflections reflections={reflections || []} habitId={id || ""} />
             </div>
 
-            {/* Right Column - Tools and Reflections */}
+            {/* Right Column - Tools */}
             <div className="space-y-6">
               <HabitToolbox 
                 habitId={id || ""} 
