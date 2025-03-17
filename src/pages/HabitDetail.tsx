@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { HabitToolbox } from "@/components/habits/HabitToolbox";
 import { HabitToolboxes } from "@/components/habits/detail/HabitToolboxes";
 import { useState } from "react";
-import { HabitSchedules } from "@/components/habits/detail/HabitSchedules";
+import { PastReflections } from "@/components/habits/detail/PastReflections";
 
 const HabitDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -54,8 +54,8 @@ const HabitDetail = () => {
     },
   });
 
-  const { data: schedules } = useQuery({
-    queryKey: ["habit-schedules", id],
+  const { data: reflections } = useQuery({
+    queryKey: ["habit-reflections", id],
     queryFn: async () => {
       if (!id) return [];
       
@@ -63,12 +63,11 @@ const HabitDetail = () => {
       if (!user) throw new Error("No user found");
 
       const { data, error } = await supabase
-        .from("habit_schedules")
+        .from("habit_reflections")
         .select("*")
         .eq("habit_id", id)
         .eq("user_id", user.id)
-        .gte("scheduled_date", new Date().toISOString().split('T')[0])
-        .order("scheduled_date", { ascending: true });
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
       return data || [];
@@ -123,10 +122,9 @@ const HabitDetail = () => {
 
         {isMobile ? (
           <Tabs defaultValue="details" className="mb-12">
-            <TabsList className="grid grid-cols-4 mb-4">
+            <TabsList className="grid grid-cols-3 mb-4">
               <TabsTrigger value="details">Details</TabsTrigger>
               <TabsTrigger value="tracking">Tracking</TabsTrigger>
-              <TabsTrigger value="schedule">Kalender</TabsTrigger>
               <TabsTrigger value="tools">Werkzeuge</TabsTrigger>
             </TabsList>
             
@@ -136,10 +134,7 @@ const HabitDetail = () => {
             
             <TabsContent value="tracking" className="space-y-6">
               <HabitReflection habitId={id || ""} />
-            </TabsContent>
-            
-            <TabsContent value="schedule" className="space-y-6">
-              <HabitSchedules schedules={schedules || []} habitId={id || ""} />
+              <PastReflections reflections={reflections || []} />
             </TabsContent>
             
             <TabsContent value="tools" className="space-y-6">
@@ -162,10 +157,9 @@ const HabitDetail = () => {
             <div className="space-y-6">
               <HabitDetailForm habit={habit} id={id} onUpdate={refetchHabit} />
               <HabitReflection habitId={id || ""} />
-              <HabitSchedules schedules={schedules || []} habitId={id || ""} />
             </div>
 
-            {/* Right Column - Tools and Toolboxes */}
+            {/* Right Column - Tools and Reflections */}
             <div className="space-y-6">
               <HabitToolbox 
                 habitId={id || ""} 
@@ -178,6 +172,7 @@ const HabitDetail = () => {
                 habitId={id || ""} 
                 onToolboxUpdate={handleToolboxUpdate}
               />
+              <PastReflections reflections={reflections || []} />
             </div>
           </div>
         )}
