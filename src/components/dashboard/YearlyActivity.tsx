@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,29 +10,30 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RechartsPieChart, Pie, Cell, Legend, AreaChart, Area } from 'recharts';
 
+// Verbesserte Farbskala mit höherem Kontrast
 const COMPLETION_COLORS = {
   "check": {
-    0: "#f1f5f9", // No completions - light gray
-    1: "#dcfce7", // Light green
-    2: "#bbf7d0", // Medium green
-    3: "#86efac", // Strong green
-    4: "#4ade80", // Very strong green
+    0: "#f1f5f9", // Keine Einträge - hellgrau
+    1: "#bbf7d0", // Hellgrün
+    2: "#86efac", // Mittelgrün
+    3: "#4ade80", // Kräftiges Grün
+    4: "#22c55e", // Sehr kräftiges Grün
   },
   "star": {
-    0: "#f1f5f9", // No completions - light gray
-    1: "#fef9c3", // Light yellow
-    2: "#fde68a", // Medium yellow
-    3: "#fcd34d", // Strong yellow
-    4: "#facc15", // Very strong yellow
+    0: "#f1f5f9", // Keine Einträge - hellgrau
+    1: "#fef08a", // Hellgelb
+    2: "#fde047", // Mittelgelb
+    3: "#facc15", // Kräftiges Gelb
+    4: "#eab308", // Sehr kräftiges Gelb
   }
 };
 
 const WEEKDAYS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
 const CHART_COLORS = ["#3b82f6", "#22c55e", "#f59e0b", "#ef4444", "#8b5cf6"];
 const PHASE_COLORS = {
-  phase1: "#bbdefb", // Light blue for Phase 1 (day 0-30)
-  phase2: "#90caf9", // Medium blue for Phase 2 (day 31-66)
-  phase3: "#2196f3", // Darker blue for Phase 3 (day 67+)
+  phase1: "#bbdefb", // Hellblau für Phase 1 (Tag 0-30)
+  phase2: "#90caf9", // Mittelblau für Phase 2 (Tag 31-66)
+  phase3: "#2196f3", // Dunkelblau für Phase 3 (Tag 67+)
 };
 
 const PHASE_DESCRIPTIONS = {
@@ -222,16 +224,6 @@ export const YearlyActivity = () => {
           <div className="flex items-center gap-2">
             <h3 className="text-lg font-medium">{habit.name}</h3>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: COMPLETION_COLORS.check[4] }} />
-              <span className="text-xs text-gray-600">Vollständig</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: COMPLETION_COLORS.star[4] }} />
-              <span className="text-xs text-gray-600">Teilweise</span>
-            </div>
-          </div>
         </div>
 
         <ScrollArea className="w-full">
@@ -265,7 +257,7 @@ export const YearlyActivity = () => {
                 {habit.days.map((day, index) => (
                   <div
                     key={`${habit.id}-${day.date}`}
-                    className="w-3 h-3 rounded-sm transition-colors duration-200"
+                    className="w-3 h-3 rounded-sm transition-colors duration-200 hover:scale-125"
                     style={{
                       backgroundColor: getCompletionColor(day.colorType, day.intensity),
                       gridRow: day.weekday + 1
@@ -282,17 +274,35 @@ export const YearlyActivity = () => {
           </div>
         </ScrollArea>
 
-        <div className="mt-4 flex justify-end gap-4">
-          <div className="flex items-center gap-1 text-sm text-gray-500">
-            Weniger
-            {[0, 1, 2, 3, 4].map((level) => (
-              <div
-                key={level}
-                className="w-3 h-3 rounded-sm"
-                style={{ backgroundColor: COMPLETION_COLORS.check[level] }}
-              />
-            ))}
-            Mehr
+        {/* Farbskala als eigener Bereich, unter den Kacheln */}
+        <div className="mt-6">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-1 text-sm text-gray-500 justify-between">
+              <span>Weniger</span>
+              <div className="flex">
+                {[0, 1, 2, 3, 4].map((level) => (
+                  <div
+                    key={`full-${level}`}
+                    className="w-5 h-5 rounded-sm border border-gray-100"
+                    style={{ backgroundColor: COMPLETION_COLORS.check[level] }}
+                  />
+                ))}
+              </div>
+              <span>Mehr (vollständig)</span>
+            </div>
+            <div className="flex items-center gap-1 text-sm text-gray-500 justify-between">
+              <span>Weniger</span>
+              <div className="flex">
+                {[0, 1, 2, 3, 4].map((level) => (
+                  <div
+                    key={`partial-${level}`}
+                    className="w-5 h-5 rounded-sm border border-gray-100"
+                    style={{ backgroundColor: COMPLETION_COLORS.star[level] }}
+                  />
+                ))}
+              </div>
+              <span>Mehr (teilweise)</span>
+            </div>
           </div>
         </div>
       </div>
