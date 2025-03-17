@@ -1,3 +1,4 @@
+
 import {
   Dialog,
   DialogContent,
@@ -11,6 +12,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent } from "@/components/ui/card";
 import { ReflectionQuestions } from "./ReflectionQuestions";
 
 interface ReflectionDialogProps {
@@ -54,37 +56,64 @@ export const ReflectionDialog = ({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>SRHI - Self-Report Habit Index</DialogTitle>
+          <DialogTitle>Schnelle Reflexion</DialogTitle>
           <DialogDescription>
-            Bewerte deine Gewohnheit anhand der folgenden Aussagen
+            Identifiziere Hürden und Erfolge bei deiner Gewohnheitsbildung
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-6">
-          {questions.map((question, index) => (
-            <div key={index} className="space-y-2">
-              <Label>{question}</Label>
-              <RadioGroup
-                value={responses[index]}
-                onValueChange={(value) => onResponseChange(index, value)}
-              >
-                <div className="flex justify-between">
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="1" id={`q${index}-1`} />
-                    <Label htmlFor={`q${index}-1`}>Stimme nicht zu</Label>
+        
+        <div className="space-y-5 py-2">
+          {/* Simplified Habit Progress Assessment */}
+          <Card className="border-blue-100">
+            <CardContent className="pt-4">
+              <div className="space-y-3">
+                <Label className="font-medium text-blue-700">Wie ist es dir mit dieser Gewohnheit ergangen?</Label>
+                <RadioGroup
+                  value={responses[0] || ""}
+                  onValueChange={(value) => onResponseChange(0, value)}
+                  className="flex justify-between space-x-2"
+                >
+                  <div className="flex-1 flex flex-col items-center p-2 border rounded-md hover:bg-gray-50 cursor-pointer">
+                    <RadioGroupItem value="1" id="progress-1" className="sr-only" />
+                    <Label htmlFor="progress-1" className="cursor-pointer text-center">
+                      <div className="text-red-500 text-xl mb-1">😞</div>
+                      <div className="text-xs">Schwierig</div>
+                    </Label>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="2" id={`q${index}-2`} />
-                    <Label htmlFor={`q${index}-2`}>Neutral</Label>
+                  
+                  <div className="flex-1 flex flex-col items-center p-2 border rounded-md hover:bg-gray-50 cursor-pointer">
+                    <RadioGroupItem value="2" id="progress-2" className="sr-only" />
+                    <Label htmlFor="progress-2" className="cursor-pointer text-center">
+                      <div className="text-yellow-500 text-xl mb-1">😐</div>
+                      <div className="text-xs">Neutral</div>
+                    </Label>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="3" id={`q${index}-3`} />
-                    <Label htmlFor={`q${index}-3`}>Stimme zu</Label>
+                  
+                  <div className="flex-1 flex flex-col items-center p-2 border rounded-md hover:bg-gray-50 cursor-pointer">
+                    <RadioGroupItem value="3" id="progress-3" className="sr-only" />
+                    <Label htmlFor="progress-3" className="cursor-pointer text-center">
+                      <div className="text-green-500 text-xl mb-1">😊</div>
+                      <div className="text-xs">Gut</div>
+                    </Label>
                   </div>
-                </div>
-              </RadioGroup>
-            </div>
-          ))}
+                </RadioGroup>
+              </div>
+            </CardContent>
+          </Card>
 
+          {/* Obstacles and Challenges */}
+          <div className="space-y-3">
+            <Label htmlFor="reflection" className="font-medium">Hürden & Probleme</Label>
+            <Textarea
+              id="reflection"
+              placeholder="Welche Hindernisse sind aufgetreten? Was hat dir Schwierigkeiten bereitet?"
+              value={reflection}
+              onChange={(e) => onReflectionChange(e.target.value)}
+              className="h-24"
+            />
+          </div>
+
+          {/* Show any custom questions */}
           {customQuestions?.map((q: any) => (
             <div key={q.id} className="space-y-2">
               <Label>{q.question}</Label>
@@ -96,19 +125,8 @@ export const ReflectionDialog = ({
             </div>
           ))}
 
-          <div className="space-y-2">
-            <Label>Persönliche Reflexionsfragen</Label>
-            <ReflectionQuestions />
-          </div>
-
-          <Textarea
-            value={reflection}
-            onChange={(e) => onReflectionChange(e.target.value)}
-            placeholder="Teile deine Gedanken..."
-            className="h-32"
-          />
           <Button onClick={onSubmit} className="w-full">
-            Reflexion abschließen
+            Speichern
           </Button>
         </div>
       </DialogContent>

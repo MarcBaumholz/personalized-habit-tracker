@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,7 +21,6 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Checkbox } from "@/components/ui/checkbox";
 
 interface HabitReflectionProps {
   habitId: string;
@@ -38,7 +36,6 @@ export const HabitReflection = ({ habitId }: HabitReflectionProps) => {
   const [emotionRating, setEmotionRating] = useState<string | null>(null);
   const [reflectionType, setReflectionType] = useState<"daily" | "weekly">("daily");
 
-  // Weekly tracking state
   const [weeklyTracking, setWeeklyTracking] = useState<Record<string, string>>({
     "Mo": "",
     "Di": "",
@@ -136,7 +133,6 @@ export const HabitReflection = ({ habitId }: HabitReflectionProps) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
-      // Convert weekly tracking to reflection text
       const trackedDays = Object.entries(weeklyData)
         .filter(([_, status]) => status !== "")
         .map(([day, status]) => {
@@ -280,12 +276,12 @@ export const HabitReflection = ({ habitId }: HabitReflectionProps) => {
                 </Button>
                 
                 <Button 
-                  variant={completionType === "star" ? "default" : "outline"} 
+                  variant={completionType === "minimal" ? "default" : "outline"} 
                   className="flex flex-col items-center p-3 h-auto"
-                  onClick={() => handleCompletion("star")}
+                  onClick={() => handleCompletion("minimal")}
                 >
-                  <Star className={`h-8 w-8 mb-2 ${completionType === "star" ? "text-white" : "text-yellow-500"}`} />
-                  <span className="text-xs">Besonders gut</span>
+                  <MinusCircle className={`h-8 w-8 mb-2 ${completionType === "minimal" ? "text-white" : "text-amber-500"} ${completionType === "minimal" ? "" : "fill-amber-50"}`} />
+                  <span className="text-xs">Minimal</span>
                 </Button>
                 
                 <Button 
@@ -293,8 +289,8 @@ export const HabitReflection = ({ habitId }: HabitReflectionProps) => {
                   className="flex flex-col items-center p-3 h-auto"
                   onClick={() => handleCompletion("skip")}
                 >
-                  <SlidersHorizontal className={`h-8 w-8 mb-2 ${completionType === "skip" ? "text-white" : "text-blue-500"}`} />
-                  <span className="text-xs">Angepasst</span>
+                  <X className={`h-8 w-8 mb-2 ${completionType === "skip" ? "text-white" : "text-red-500"}`} />
+                  <span className="text-xs">Nicht</span>
                 </Button>
               </div>
               
@@ -400,10 +396,27 @@ export const HabitReflection = ({ habitId }: HabitReflectionProps) => {
             </TabsContent>
           </Tabs>
         ) : (
-          // Weekly reflection view
           <div className="space-y-6">
             <div>
-              <h3 className="text-sm font-medium mb-2">Schnelles Wochentracking</h3>
+              <h3 className="text-sm font-medium mb-3">Wochentracking</h3>
+              
+              <div className="mb-3 text-xs text-center text-gray-500">
+                <div className="flex justify-center space-x-4">
+                  <div className="flex items-center">
+                    <span className="inline-block w-3 h-3 rounded-full bg-green-500 mr-1"></span>
+                    <span>Vollständig</span>
+                  </div>
+                  <div className="flex items-center">
+                    <span className="inline-block w-3 h-3 rounded-full bg-amber-500 mr-1"></span>
+                    <span>Minimal</span>
+                  </div>
+                  <div className="flex items-center">
+                    <span className="inline-block w-3 h-3 rounded-full bg-red-500 mr-1"></span>
+                    <span>Nicht</span>
+                  </div>
+                </div>
+              </div>
+              
               <div className="grid grid-cols-7 gap-1 mb-4">
                 {WEEK_DAYS.map(day => (
                   <div key={day} className="text-center">
@@ -423,7 +436,7 @@ export const HabitReflection = ({ habitId }: HabitReflectionProps) => {
                         onClick={() => setDayStatus(day, "minimal")}
                         className={`w-8 h-8 rounded-full flex items-center justify-center ${
                           weeklyTracking[day] === "minimal" 
-                            ? "bg-yellow-500 text-white" 
+                            ? "bg-amber-500 text-white" 
                             : "bg-gray-100 text-gray-400 hover:bg-gray-200"
                         }`}
                       >
@@ -443,29 +456,13 @@ export const HabitReflection = ({ habitId }: HabitReflectionProps) => {
                   </div>
                 ))}
               </div>
-              <div className="text-xs text-gray-500 text-center mb-4">
-                <div className="flex justify-center space-x-4">
-                  <div className="flex items-center">
-                    <span className="inline-block w-3 h-3 rounded-full bg-green-500 mr-1"></span>
-                    <span>Vollständig</span>
-                  </div>
-                  <div className="flex items-center">
-                    <span className="inline-block w-3 h-3 rounded-full bg-yellow-500 mr-1"></span>
-                    <span>Minimal</span>
-                  </div>
-                  <div className="flex items-center">
-                    <span className="inline-block w-3 h-3 rounded-full bg-red-500 mr-1"></span>
-                    <span>Nicht</span>
-                  </div>
-                </div>
-              </div>
             </div>
             
             <div className="space-y-4">
               <Label htmlFor="weekly-reflection" className="mb-2 block">Wöchentliche Reflexion</Label>
               <Textarea 
                 id="weekly-reflection"
-                placeholder="Wie ist es dir diese Woche mit deiner Gewohnheit ergangen? Was hast du gelernt?"
+                placeholder="Welche Hürden und Schwierigkeiten sind diese Woche aufgetreten? Was würdest du nächste Woche anders machen?"
                 value={reflection}
                 onChange={(e) => setReflection(e.target.value)}
                 className="h-32 mb-3"
@@ -481,3 +478,4 @@ export const HabitReflection = ({ habitId }: HabitReflectionProps) => {
     </Card>
   );
 };
+

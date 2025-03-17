@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, Save, Trash } from "lucide-react";
@@ -10,21 +10,23 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { v4 as uuidv4 } from "uuid";
 
-interface ImplementationIntention {
+interface Intention {
+  id: string;
   if: string;
   then: string;
-  id: string;
 }
 
 interface ImplementationIntentionsProps {
   habitId: string;
 }
 
-export const ImplementationIntentions = ({ habitId }: ImplementationIntentionsProps) => {
+export const ImplementationIntentions = ({
+  habitId
+}: ImplementationIntentionsProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [intentions, setIntentions] = useState<ImplementationIntention[]>([
-    { if: "", then: "", id: uuidv4() },
+  const [intentions, setIntentions] = useState<Intention[]>([
+    { if: "", then: "", id: uuidv4() }
   ]);
 
   // Query to fetch existing intentions
@@ -39,36 +41,39 @@ export const ImplementationIntentions = ({ habitId }: ImplementationIntentionsPr
 
       if (error) throw error;
       return data || [];
-    },
-    onSuccess: (data) => {
-      if (data.length > 0 && data[0].steps) {
-        try {
-          // Parse the steps from the database
-          const parsedSteps = JSON.parse(data[0].steps);
-          if (Array.isArray(parsedSteps) && parsedSteps.length > 0) {
-            setIntentions(parsedSteps);
-          }
-        } catch (e) {
-          console.error("Error parsing intentions:", e);
-        }
-      }
-    },
+    }
   });
 
+  // Effect to handle loaded data
+  useEffect(() => {
+    if (toolboxes && toolboxes.length > 0 && toolboxes[0].steps) {
+      try {
+        // Parse the steps from the database
+        const parsedSteps = JSON.parse(toolboxes[0].steps);
+        if (Array.isArray(parsedSteps) && parsedSteps.length > 0) {
+          setIntentions(parsedSteps);
+        }
+      } catch (e) {
+        console.error("Error parsing intentions:", e);
+      }
+    }
+  }, [toolboxes]);
+
   const addIntention = () => {
-    setIntentions([...intentions, { if: "", then: "", id: uuidv4() }]);
+    setIntentions([
+      ...intentions,
+      { if: "", then: "", id: uuidv4() }
+    ]);
   };
 
   const updateIntention = (id: string, field: "if" | "then", value: string) => {
-    setIntentions(
-      intentions.map((intent) =>
-        intent.id === id ? { ...intent, [field]: value } : intent
-      )
-    );
+    setIntentions(intentions.map(intent => 
+      intent.id === id ? { ...intent, [field]: value } : intent
+    ));
   };
 
   const removeIntention = (id: string) => {
-    setIntentions(intentions.filter((intent) => intent.id !== id));
+    setIntentions(intentions.filter(intent => intent.id !== id));
   };
 
   const createToolboxMutation = useMutation({
@@ -85,7 +90,7 @@ export const ImplementationIntentions = ({ habitId }: ImplementationIntentionsPr
           .from("habit_toolboxes")
           .update({
             steps: stepsJson,
-            updated_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
           })
           .eq("id", toolboxes[0].id);
 
@@ -100,32 +105,34 @@ export const ImplementationIntentions = ({ habitId }: ImplementationIntentionsPr
             type: "intentions",
             title: "Implementation Intentions",
             description: "If-Then plans for your habit",
-            steps: stepsJson,
+            steps: stepsJson
           });
-
+          
         if (error) throw error;
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["habit-toolboxes", habitId] });
+      queryClient.invalidateQueries({
+        queryKey: ["habit-toolboxes", habitId]
+      });
       toast({
         title: "Intentionen gespeichert",
-        description: "Deine Implementation Intentions wurden gespeichert.",
+        description: "Deine Implementation Intentions wurden gespeichert."
       });
-    },
+    }
   });
 
   const handleSave = () => {
     // Filter out empty intentions
-    const validIntentions = intentions.filter(
-      (i) => i.if.trim() !== "" && i.then.trim() !== ""
+    const validIntentions = intentions.filter(i => 
+      i.if.trim() !== "" && i.then.trim() !== ""
     );
     
     if (validIntentions.length === 0) {
       toast({
         title: "Keine Intentionen",
         description: "Bitte füge mindestens eine vollständige Intention hinzu.",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
@@ -148,7 +155,7 @@ export const ImplementationIntentions = ({ habitId }: ImplementationIntentionsPr
         </div>
 
         <div className="space-y-4">
-          {intentions.map((intention, index) => (
+          {intentions.map((intention) => (
             <div key={intention.id} className="space-y-3 p-3 border rounded-md">
               <div className="flex items-center gap-2">
                 <Label className="w-20 shrink-0">Wenn:</Label>
@@ -158,6 +165,7 @@ export const ImplementationIntentions = ({ habitId }: ImplementationIntentionsPr
                   onChange={(e) => updateIntention(intention.id, "if", e.target.value)}
                 />
               </div>
+
               <div className="flex items-center gap-2">
                 <Label className="w-20 shrink-0">Dann:</Label>
                 <Input
@@ -166,10 +174,11 @@ export const ImplementationIntentions = ({ habitId }: ImplementationIntentionsPr
                   onChange={(e) => updateIntention(intention.id, "then", e.target.value)}
                 />
               </div>
+
               {intentions.length > 1 && (
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => removeIntention(intention.id)}
                   className="text-red-500 hover:text-red-700 hover:bg-red-50 ml-auto block"
                 >
@@ -182,15 +191,16 @@ export const ImplementationIntentions = ({ habitId }: ImplementationIntentionsPr
         </div>
 
         <div className="flex gap-2 mt-6">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={addIntention}
             className="flex items-center"
           >
             <Plus className="h-4 w-4 mr-1" />
             Intention hinzufügen
           </Button>
-          <Button 
+          
+          <Button
             onClick={handleSave}
             className="flex items-center"
           >

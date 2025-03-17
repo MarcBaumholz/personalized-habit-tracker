@@ -1,15 +1,26 @@
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ChevronUp, ChevronDown, Smile, BookOpen, Trash2 } from "lucide-react";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { EmotionTracker } from "../EmotionTracker";
-import { EditHabitDialog } from "../EditHabitDialog";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  MoreVertical,
+  CircleDashed,
+  BellDot,
+  Pencil,
+  Trash2,
+  Settings,
+  Calendar,
+  MinusCircle,
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface HabitControlsProps {
   habit: any;
@@ -38,101 +49,95 @@ export const HabitControls = ({
   lastReflection,
   onDelete,
 }: HabitControlsProps) => {
+  const [showTooltip, setShowTooltip] = useState(true);
+
   return (
-    <div className="flex items-center gap-2">
-      <Dialog open={showHabitLoop} onOpenChange={onShowHabitLoop}>
-        <DialogTrigger asChild>
-          <Button size="sm" variant="outline">
-            <BookOpen className="h-4 w-4 mr-2" />
-            Habit Loop
+    <div className="flex items-center gap-1">
+      {/* Minimal Dose Option - Updated to Circle with Minus symbol */}
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-8 w-8 p-0 text-amber-500 hover:text-amber-600 hover:bg-amber-50"
+              onClick={() => onUpdateElasticLevel(elasticLevel === "minimal" ? "medium" : "minimal")}
+            >
+              <MinusCircle 
+                className={`h-5 w-5 ${elasticLevel === "minimal" ? "fill-amber-100" : ""}`} 
+              />
+              <span className="sr-only">Minimale Dosis</span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Minimale Dosis {elasticLevel === "minimal" ? "(aktiviert)" : ""}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+
+      {/* Reflection Button */}
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className={`h-8 w-8 p-0 ${needsReflection ? "text-blue-500 hover:text-blue-600" : "text-gray-400 hover:text-gray-500"}`}
+              onClick={onReflect}
+            >
+              <Pencil className="h-4 w-4" />
+              <span className="sr-only">Reflektieren</span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Reflektieren</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+
+      {/* Menu Dropdown */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+            <MoreVertical className="h-4 w-4" />
+            <span className="sr-only">Mehr Optionen</span>
           </Button>
-        </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Dein Habit Loop</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 p-4">
-            <div className="rounded-lg bg-purple-50 p-4">
-              <h4 className="font-semibold mb-2">Cue (Auslöser)</h4>
-              <p className="text-sm text-gray-600">
-                {habit.cue || "Was löst diese Gewohnheit aus?"}
-              </p>
-            </div>
-            <div className="rounded-lg bg-blue-50 p-4">
-              <h4 className="font-semibold mb-2">Craving (Verlangen)</h4>
-              <p className="text-sm text-gray-600">
-                {habit.craving || "Welches Bedürfnis steckt dahinter?"}
-              </p>
-            </div>
-            <div className="rounded-lg bg-green-50 p-4">
-              <h4 className="font-semibold mb-2">Routine</h4>
-              <p className="text-sm text-gray-600">{habit.name}</p>
-            </div>
-            <div className="rounded-lg bg-yellow-50 p-4">
-              <h4 className="font-semibold mb-2">Reward (Belohnung)</h4>
-              <p className="text-sm text-gray-600">
-                {habit.reward || "Wie belohnst du dich?"}
-              </p>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <div className="flex flex-col items-center">
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={() => onUpdateElasticLevel(elasticLevel === "easy" ? "medium" : "easy")}
-        >
-          <ChevronUp className="h-4 w-4" />
-        </Button>
-        <span className="text-xs text-gray-500 capitalize">{elasticLevel}</span>
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={() => onUpdateElasticLevel(elasticLevel === "hard" ? "medium" : "hard")}
-        >
-          <ChevronDown className="h-4 w-4" />
-        </Button>
-      </div>
-
-      <Dialog open={showEmotionTracker} onOpenChange={onShowEmotionTracker}>
-        <DialogTrigger asChild>
-          <Button size="sm" variant="outline">
-            <Smile className="h-4 w-4 mr-2" />
-            Gefühl
-          </Button>
-        </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Wie fühlst du dich?</DialogTitle>
-          </DialogHeader>
-          <EmotionTracker
-            habitId={habit.id}
-            onClose={() => onShowEmotionTracker(false)}
-          />
-        </DialogContent>
-      </Dialog>
-
-      <EditHabitDialog habit={habit} />
-
-      <Button
-        size="sm"
-        variant={needsReflection ? "destructive" : "outline"}
-        onClick={onReflect}
-        className={lastReflection && !needsReflection ? "border-green-500 text-green-600" : ""}
-      >
-        Reflektieren
-      </Button>
-
-      <Button
-        size="sm"
-        variant="ghost"
-        onClick={onDelete}
-        className="text-red-500 hover:text-red-600 hover:bg-red-50"
-      >
-        <Trash2 className="h-4 w-4" />
-      </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuLabel>Gewohnheitsoptionen</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          
+          <DropdownMenuItem onClick={() => onShowEmotionTracker(!showEmotionTracker)}>
+            <BellDot className="h-4 w-4 mr-2" />
+            <span>Emotionen tracken</span>
+          </DropdownMenuItem>
+          
+          <DropdownMenuItem onClick={() => onShowHabitLoop(!showHabitLoop)}>
+            <CircleDashed className="h-4 w-4 mr-2" />
+            <span>Habit Loop anzeigen</span>
+          </DropdownMenuItem>
+          
+          <DropdownMenuItem>
+            <Calendar className="h-4 w-4 mr-2" />
+            <span>Zeitplan anzeigen</span>
+          </DropdownMenuItem>
+          
+          <DropdownMenuItem>
+            <Settings className="h-4 w-4 mr-2" />
+            <span>Gewohnheit bearbeiten</span>
+          </DropdownMenuItem>
+          
+          <DropdownMenuSeparator />
+          
+          <DropdownMenuItem 
+            className="text-red-600 focus:text-red-600" 
+            onClick={onDelete}
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            <span>Löschen</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 };
