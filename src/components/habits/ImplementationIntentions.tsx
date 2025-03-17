@@ -18,14 +18,18 @@ export interface ImplementationIntentionsProps {
   habitId: string;
   title?: string;
   description?: string;
+  initialIntentions?: ImplementationIntention[];
+  onSave?: (updatedIntentions: ImplementationIntention[]) => void;
 }
 
 export const ImplementationIntentions = ({
   habitId,
   title = "Wenn-Dann-Pläne",
-  description = "Erstelle konkrete Wenn-Dann-Pläne, um deine Gewohnheit zu etablieren."
+  description = "Erstelle konkrete Wenn-Dann-Pläne, um deine Gewohnheit zu etablieren.",
+  initialIntentions = [],
+  onSave
 }: ImplementationIntentionsProps) => {
-  const [intentions, setIntentions] = useState<ImplementationIntention[]>([]);
+  const [intentions, setIntentions] = useState<ImplementationIntention[]>(initialIntentions);
   const [newIntention, setNewIntention] = useState<ImplementationIntention>({
     if_part: "",
     then_part: ""
@@ -51,7 +55,9 @@ export const ImplementationIntentions = ({
   });
 
   useEffect(() => {
-    if (toolboxData && toolboxData.length > 0) {
+    if (initialIntentions && initialIntentions.length > 0) {
+      setIntentions(initialIntentions);
+    } else if (toolboxData && toolboxData.length > 0) {
       try {
         const storedIntentions = toolboxData[0].steps;
         if (Array.isArray(storedIntentions) && storedIntentions.length > 0) {
@@ -69,7 +75,7 @@ export const ImplementationIntentions = ({
         console.error("Error parsing intentions:", error);
       }
     }
-  }, [toolboxData]);
+  }, [toolboxData, initialIntentions]);
 
   const saveIntentionsMutation = useMutation({
     mutationFn: async (updatedIntentions: ImplementationIntention[]) => {
@@ -110,8 +116,13 @@ export const ImplementationIntentions = ({
         return data;
       }
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["habit-toolboxes"] });
+      
+      if (onSave) {
+        onSave(variables);
+      }
+      
       toast({
         title: "Wenn-Dann-Pläne gespeichert",
         description: "Deine Implementationsintentionen wurden erfolgreich gespeichert."

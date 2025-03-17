@@ -34,6 +34,7 @@ const Calendar = () => {
   const queryClient = useQueryClient();
   const { todos } = useTodos();
 
+  // Fetch habits
   const { data: habits } = useQuery({
     queryKey: ["habits"],
     queryFn: async () => {
@@ -49,6 +50,7 @@ const Calendar = () => {
     },
   });
 
+  // Fetch schedules for the selected date
   const { data: schedules, refetch: refetchSchedules } = useQuery({
     queryKey: ["habit-schedules", date],
     queryFn: async () => {
@@ -72,6 +74,7 @@ const Calendar = () => {
     },
   });
 
+  // Fetch scheduled todos
   const { data: todoSchedules, refetch: refetchTodoSchedules } = useQuery({
     queryKey: ["todo-schedules", date],
     queryFn: async () => {
@@ -88,6 +91,7 @@ const Calendar = () => {
     },
   });
 
+  // Fetch calendar preferences
   const { data: calendarPreferences, refetch: refetchPreferences } = useQuery({
     queryKey: ["calendar-preferences"],
     queryFn: async () => {
@@ -104,6 +108,7 @@ const Calendar = () => {
     },
   });
 
+  // Save preferences mutation
   const savePreferencesMutation = useMutation({
     mutationFn: async (preferences: any) => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -144,6 +149,7 @@ const Calendar = () => {
     },
   });
 
+  // Update schedule position mutation
   const updateScheduleMutation = useMutation({
     mutationFn: async ({ id, updates }: { id: string, updates: any }) => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -167,6 +173,7 @@ const Calendar = () => {
     },
   });
 
+  // Update todo schedule mutation
   const updateTodoScheduleMutation = useMutation({
     mutationFn: async ({ id, updates }: { id: string, updates: any }) => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -191,6 +198,7 @@ const Calendar = () => {
     },
   });
 
+  // Create habit schedule mutation
   const createHabitScheduleMutation = useMutation({
     mutationFn: async ({ habitId, time, day }: { habitId: string, time: string, day: Date }) => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -237,6 +245,7 @@ const Calendar = () => {
     },
   });
 
+  // Handle drag and drop
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     
