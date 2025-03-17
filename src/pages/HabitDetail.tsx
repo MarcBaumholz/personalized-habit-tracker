@@ -134,7 +134,7 @@ const HabitDetail = () => {
             
             <TabsContent value="tracking" className="space-y-6">
               <HabitReflection habitId={id || ""} />
-              <PastReflections reflections={reflections || []} />
+              <PastReflections reflections={reflections || []} habitId={id || ""} />
             </TabsContent>
             
             <TabsContent value="tools" className="space-y-6">
@@ -153,10 +153,11 @@ const HabitDetail = () => {
           </Tabs>
         ) : (
           <div className="grid md:grid-cols-2 gap-6">
-            {/* Left Column - Habit Details and Tracking */}
+            {/* Left Column - Habit Details and Daily Check-in */}
             <div className="space-y-6">
               <HabitDetailForm habit={habit} id={id} onUpdate={refetchHabit} />
               <HabitReflection habitId={id || ""} />
+              <PastReflections reflections={reflections || []} habitId={id || ""} />
             </div>
 
             {/* Right Column - Tools and Reflections */}
@@ -172,7 +173,6 @@ const HabitDetail = () => {
                 habitId={id || ""} 
                 onToolboxUpdate={handleToolboxUpdate}
               />
-              <PastReflections reflections={reflections || []} />
             </div>
           </div>
         )}

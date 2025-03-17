@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -5,7 +6,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { CheckCircle, Star, BellDot, MessageSquare, SlidersHorizontal, Smile } from "lucide-react";
+import { 
+  CheckCircle, 
+  Star, 
+  BellDot, 
+  MessageSquare, 
+  SlidersHorizontal, 
+  Smile,
+  CalendarDays,
+  Calendar 
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -20,6 +30,7 @@ export const HabitReflection = ({ habitId }: HabitReflectionProps) => {
   const [reflection, setReflection] = useState("");
   const [completionType, setCompletionType] = useState<string | null>(null);
   const [emotionRating, setEmotionRating] = useState<string | null>(null);
+  const [reflectionType, setReflectionType] = useState<"daily" | "weekly">("daily");
 
   const saveCompletionMutation = useMutation({
     mutationFn: async (type: string) => {
@@ -31,7 +42,8 @@ export const HabitReflection = ({ habitId }: HabitReflectionProps) => {
         .insert({
           habit_id: habitId,
           user_id: user.id,
-          completion_type: type
+          completion_type: type,
+          reflection_type: reflectionType
         });
 
       if (error) throw error;
@@ -58,7 +70,8 @@ export const HabitReflection = ({ habitId }: HabitReflectionProps) => {
           habit_id: habitId,
           user_id: user.id,
           emotion: emotion,
-          note: reflection
+          note: reflection,
+          reflection_type: reflectionType
         });
 
       if (error) throw error;
@@ -83,7 +96,8 @@ export const HabitReflection = ({ habitId }: HabitReflectionProps) => {
         .insert({
           habit_id: habitId,
           user_id: user.id,
-          reflection_text: reflectionText
+          reflection_text: reflectionText,
+          reflection_type: reflectionType
         });
 
       if (error) throw error;
@@ -127,7 +141,31 @@ export const HabitReflection = ({ habitId }: HabitReflectionProps) => {
   return (
     <Card className="border-blue-100 shadow-md">
       <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100 border-b">
-        <CardTitle className="text-blue-700">Täglicher Check-in</CardTitle>
+        <div className="flex justify-between items-center">
+          <CardTitle className="text-blue-700">
+            {reflectionType === "daily" ? "Täglicher Check-in" : "Wöchentlicher Check-in"}
+          </CardTitle>
+          <div className="flex space-x-1">
+            <Button 
+              variant={reflectionType === "daily" ? "default" : "outline"} 
+              size="sm"
+              onClick={() => setReflectionType("daily")}
+              className="flex items-center"
+            >
+              <Calendar className="h-4 w-4 mr-1" />
+              Täglich
+            </Button>
+            <Button 
+              variant={reflectionType === "weekly" ? "default" : "outline"} 
+              size="sm"
+              onClick={() => setReflectionType("weekly")}
+              className="flex items-center"
+            >
+              <CalendarDays className="h-4 w-4 mr-1" />
+              Wöchentlich
+            </Button>
+          </div>
+        </div>
       </CardHeader>
       <CardContent className="pt-6">
         <Tabs defaultValue="tracking">
@@ -139,7 +177,11 @@ export const HabitReflection = ({ habitId }: HabitReflectionProps) => {
           
           <TabsContent value="tracking">
             <div className="text-center mb-4">
-              <p className="text-sm text-gray-500 mb-4">Wie hast du deine Gewohnheit heute umgesetzt?</p>
+              <p className="text-sm text-gray-500 mb-4">
+                {reflectionType === "daily" 
+                  ? "Wie hast du deine Gewohnheit heute umgesetzt?" 
+                  : "Wie hast du deine Gewohnheit diese Woche umgesetzt?"}
+              </p>
             </div>
             
             <div className="grid grid-cols-3 gap-3">
@@ -260,7 +302,9 @@ export const HabitReflection = ({ habitId }: HabitReflectionProps) => {
               <Label htmlFor="reflection" className="mb-2 block">Reflexion</Label>
               <Textarea 
                 id="reflection"
-                placeholder="Wie ist es dir heute mit deiner Gewohnheit ergangen? Was hast du gelernt?"
+                placeholder={reflectionType === "daily" 
+                  ? "Wie ist es dir heute mit deiner Gewohnheit ergangen? Was hast du gelernt?" 
+                  : "Wie ist es dir diese Woche mit deiner Gewohnheit ergangen? Was hast du gelernt?"}
                 value={reflection}
                 onChange={(e) => setReflection(e.target.value)}
                 className="h-32 mb-3"
