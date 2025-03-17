@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,7 +14,7 @@ export interface ImplementationIntention {
 }
 
 export interface ImplementationIntentionsProps {
-  habitId: string;
+  habitId?: string;
   title?: string;
   description?: string;
   initialIntentions?: ImplementationIntention[];
@@ -23,7 +22,7 @@ export interface ImplementationIntentionsProps {
 }
 
 export const ImplementationIntentions = ({
-  habitId,
+  habitId = "",
   title = "Wenn-Dann-Pläne",
   description = "Erstelle konkrete Wenn-Dann-Pläne, um deine Gewohnheit zu etablieren.",
   initialIntentions = [],
@@ -40,6 +39,8 @@ export const ImplementationIntentions = ({
   const { data: toolboxData } = useQuery({
     queryKey: ["habit-toolboxes", habitId, "intentions"],
     queryFn: async () => {
+      if (!habitId) return [];
+      
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
@@ -51,7 +52,8 @@ export const ImplementationIntentions = ({
         .eq("type", "intentions");
 
       return data || [];
-    }
+    },
+    enabled: !!habitId
   });
 
   useEffect(() => {
@@ -65,7 +67,6 @@ export const ImplementationIntentions = ({
             try {
               return JSON.parse(step);
             } catch (e) {
-              // If the step is not valid JSON, return a default object
               return { if_part: step, then_part: "" };
             }
           });
@@ -79,15 +80,15 @@ export const ImplementationIntentions = ({
 
   const saveIntentionsMutation = useMutation({
     mutationFn: async (updatedIntentions: ImplementationIntention[]) => {
+      if (!habitId) return null;
+      
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
-      // Serialize intentions to store as string array
       const intentionsAsStringArray = updatedIntentions.map(intention => 
         JSON.stringify(intention)
       );
 
-      // Check if toolbox record exists
       if (toolboxData && toolboxData.length > 0) {
         const { data, error } = await supabase
           .from("habit_toolboxes")
@@ -99,7 +100,6 @@ export const ImplementationIntentions = ({
         if (error) throw error;
         return data;
       } else {
-        // Create new toolbox record
         const { data, error } = await supabase
           .from("habit_toolboxes")
           .insert({
@@ -117,16 +117,18 @@ export const ImplementationIntentions = ({
       }
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["habit-toolboxes"] });
+      if (habitId) {
+        queryClient.invalidateQueries({ queryKey: ["habit-toolboxes"] });
+        
+        toast({
+          title: "Wenn-Dann-Pläne gespeichert",
+          description: "Deine Implementationsintentionen wurden erfolgreich gespeichert."
+        });
+      }
       
       if (onSave) {
         onSave(variables);
       }
-      
-      toast({
-        title: "Wenn-Dann-Pläne gespeichert",
-        description: "Deine Implementationsintentionen wurden erfolgreich gespeichert."
-      });
     }
   });
 
@@ -135,7 +137,12 @@ export const ImplementationIntentions = ({
       const updatedIntentions = [...intentions, newIntention];
       setIntentions(updatedIntentions);
       setNewIntention({ if_part: "", then_part: "" });
-      saveIntentionsMutation.mutate(updatedIntentions);
+      
+      if (onSave && !habitId) {
+        onSave(updatedIntentions);
+      } else {
+        saveIntentionsMutation.mutate(updatedIntentions);
+      }
     } else {
       toast({
         title: "Felder ausfüllen",
@@ -148,7 +155,12 @@ export const ImplementationIntentions = ({
   const handleRemoveIntention = (index: number) => {
     const updatedIntentions = intentions.filter((_, i) => i !== index);
     setIntentions(updatedIntentions);
-    saveIntentionsMutation.mutate(updatedIntentions);
+    
+    if (onSave && !habitId) {
+      onSave(updatedIntentions);
+    } else {
+      saveIntentionsMutation.mutate(updatedIntentions);
+    }
   };
 
   const handleChangeIfPart = (e: React.ChangeEvent<HTMLInputElement>) => {

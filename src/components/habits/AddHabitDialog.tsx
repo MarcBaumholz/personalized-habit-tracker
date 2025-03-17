@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,14 +8,8 @@ import { Plus, AlertCircle } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ImplementationIntentions } from "./ImplementationIntentions";
+import { ImplementationIntentions, ImplementationIntention } from "./ImplementationIntentions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-interface ImplementationIntention {
-  if: string;
-  then: string;
-  id: string;
-}
 
 export const AddHabitDialog = () => {
   const { toast } = useToast();
@@ -35,7 +28,7 @@ export const AddHabitDialog = () => {
     minimal_dose: "", // Added field for minimal dose
   });
   const [intentions, setIntentions] = useState<ImplementationIntention[]>([
-    { if: "", then: "", id: crypto.randomUUID() }
+    { if_part: "", then_part: "", id: crypto.randomUUID() }
   ]);
   const [activeTab, setActiveTab] = useState("basic");
 
