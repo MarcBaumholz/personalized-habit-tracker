@@ -1,202 +1,220 @@
 
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import React, { useState, useEffect } from "react";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Save, Trash } from "lucide-react";
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { v4 as uuidv4 } from "uuid";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-interface ImplementationIntention {
-  if: string;
-  then: string;
-  id: string;
+export interface ImplementationIntention {
+  id?: string;
+  if_part: string;
+  then_part: string;
 }
 
-interface ImplementationIntentionsProps {
+export interface ImplementationIntentionsProps {
   habitId: string;
+  title?: string;
+  description?: string;
 }
 
-export const ImplementationIntentions = ({ habitId }: ImplementationIntentionsProps) => {
+export const ImplementationIntentions = ({
+  habitId,
+  title = "Wenn-Dann-Pläne",
+  description = "Erstelle konkrete Wenn-Dann-Pläne, um deine Gewohnheit zu etablieren."
+}: ImplementationIntentionsProps) => {
+  const [intentions, setIntentions] = useState<ImplementationIntention[]>([]);
+  const [newIntention, setNewIntention] = useState<ImplementationIntention>({
+    if_part: "",
+    then_part: ""
+  });
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [intentions, setIntentions] = useState<ImplementationIntention[]>([
-    { if: "", then: "", id: uuidv4() },
-  ]);
 
-  // Query to fetch existing intentions
-  const { data: toolboxes } = useQuery({
+  const { data: toolboxData } = useQuery({
     queryKey: ["habit-toolboxes", habitId, "intentions"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("habit_toolboxes")
-        .select("*")
-        .eq("habit_id", habitId)
-        .eq("type", "intentions");
-
-      if (error) throw error;
-      return data || [];
-    },
-    onSuccess: (data) => {
-      if (data.length > 0 && data[0].steps) {
-        try {
-          // Parse the steps from the database
-          const parsedSteps = JSON.parse(data[0].steps);
-          if (Array.isArray(parsedSteps) && parsedSteps.length > 0) {
-            setIntentions(parsedSteps);
-          }
-        } catch (e) {
-          console.error("Error parsing intentions:", e);
-        }
-      }
-    },
-  });
-
-  const addIntention = () => {
-    setIntentions([...intentions, { if: "", then: "", id: uuidv4() }]);
-  };
-
-  const updateIntention = (id: string, field: "if" | "then", value: string) => {
-    setIntentions(
-      intentions.map((intent) =>
-        intent.id === id ? { ...intent, [field]: value } : intent
-      )
-    );
-  };
-
-  const removeIntention = (id: string) => {
-    setIntentions(intentions.filter((intent) => intent.id !== id));
-  };
-
-  const createToolboxMutation = useMutation({
-    mutationFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
-      // Convert steps to string for storage
-      const stepsJson = JSON.stringify(intentions);
+      const { data } = await supabase
+        .from("habit_toolboxes")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("habit_id", habitId)
+        .eq("type", "intentions");
 
-      if (toolboxes && toolboxes.length > 0) {
-        // Update existing toolbox
-        const { error } = await supabase
+      return data || [];
+    }
+  });
+
+  useEffect(() => {
+    if (toolboxData && toolboxData.length > 0) {
+      try {
+        const storedIntentions = toolboxData[0].steps;
+        if (Array.isArray(storedIntentions) && storedIntentions.length > 0) {
+          const parsedIntentions = storedIntentions.map(step => {
+            try {
+              return JSON.parse(step);
+            } catch (e) {
+              // If the step is not valid JSON, return a default object
+              return { if_part: step, then_part: "" };
+            }
+          });
+          setIntentions(parsedIntentions);
+        }
+      } catch (error) {
+        console.error("Error parsing intentions:", error);
+      }
+    }
+  }, [toolboxData]);
+
+  const saveIntentionsMutation = useMutation({
+    mutationFn: async (updatedIntentions: ImplementationIntention[]) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
+
+      // Serialize intentions to store as string array
+      const intentionsAsStringArray = updatedIntentions.map(intention => 
+        JSON.stringify(intention)
+      );
+
+      // Check if toolbox record exists
+      if (toolboxData && toolboxData.length > 0) {
+        const { data, error } = await supabase
           .from("habit_toolboxes")
           .update({
-            steps: stepsJson,
-            updated_at: new Date().toISOString(),
+            steps: intentionsAsStringArray
           })
-          .eq("id", toolboxes[0].id);
+          .eq("id", toolboxData[0].id);
 
         if (error) throw error;
+        return data;
       } else {
-        // Create new toolbox
-        const { error } = await supabase
+        // Create new toolbox record
+        const { data, error } = await supabase
           .from("habit_toolboxes")
           .insert({
-            habit_id: habitId,
             user_id: user.id,
+            habit_id: habitId,
+            title: "Wenn-Dann-Pläne",
+            description: "Implementationsintentionen für deine Gewohnheit",
             type: "intentions",
-            title: "Implementation Intentions",
-            description: "If-Then plans for your habit",
-            steps: stepsJson,
+            category: "Implementation",
+            steps: intentionsAsStringArray
           });
 
         if (error) throw error;
+        return data;
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["habit-toolboxes", habitId] });
+      queryClient.invalidateQueries({ queryKey: ["habit-toolboxes"] });
       toast({
-        title: "Intentionen gespeichert",
-        description: "Deine Implementation Intentions wurden gespeichert.",
+        title: "Wenn-Dann-Pläne gespeichert",
+        description: "Deine Implementationsintentionen wurden erfolgreich gespeichert."
       });
-    },
+    }
   });
 
-  const handleSave = () => {
-    // Filter out empty intentions
-    const validIntentions = intentions.filter(
-      (i) => i.if.trim() !== "" && i.then.trim() !== ""
-    );
-    
-    if (validIntentions.length === 0) {
+  const handleAddIntention = () => {
+    if (newIntention.if_part.trim() && newIntention.then_part.trim()) {
+      const updatedIntentions = [...intentions, newIntention];
+      setIntentions(updatedIntentions);
+      setNewIntention({ if_part: "", then_part: "" });
+      saveIntentionsMutation.mutate(updatedIntentions);
+    } else {
       toast({
-        title: "Keine Intentionen",
-        description: "Bitte füge mindestens eine vollständige Intention hinzu.",
-        variant: "destructive",
+        title: "Felder ausfüllen",
+        description: "Bitte fülle beide Felder aus.",
+        variant: "destructive"
       });
-      return;
     }
-    
-    setIntentions(validIntentions);
-    createToolboxMutation.mutate();
+  };
+
+  const handleRemoveIntention = (index: number) => {
+    const updatedIntentions = intentions.filter((_, i) => i !== index);
+    setIntentions(updatedIntentions);
+    saveIntentionsMutation.mutate(updatedIntentions);
+  };
+
+  const handleChangeIfPart = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewIntention({ ...newIntention, if_part: e.target.value });
+  };
+
+  const handleChangeThenPart = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewIntention({ ...newIntention, then_part: e.target.value });
   };
 
   return (
-    <Card className="border-blue-100 shadow-md">
-      <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100 border-b">
-        <CardTitle className="text-blue-700">Implementation Intentions</CardTitle>
+    <Card className="shadow-sm border-blue-100">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-lg text-blue-800">{title}</CardTitle>
+        <p className="text-gray-600 text-sm">{description}</p>
       </CardHeader>
-      <CardContent className="pt-6">
-        <div className="space-y-4 mb-4">
-          <p className="text-sm text-gray-600">
-            Implementation Intentions sind "Wenn-Dann" Pläne, die es dir leichter machen, 
-            deine Gewohnheit zu einer bestimmten Zeit oder in einer bestimmten Situation auszuführen.
-          </p>
-        </div>
-
+      <CardContent>
         <div className="space-y-4">
-          {intentions.map((intention, index) => (
-            <div key={intention.id} className="space-y-3 p-3 border rounded-md">
-              <div className="flex items-center gap-2">
-                <Label className="w-20 shrink-0">Wenn:</Label>
-                <Input
-                  placeholder="z.B. Wenn ich morgens aufstehe..."
-                  value={intention.if}
-                  onChange={(e) => updateIntention(intention.id, "if", e.target.value)}
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <Label className="w-20 shrink-0">Dann:</Label>
-                <Input
-                  placeholder="z.B. Dann mache ich direkt 10 Kniebeugen"
-                  value={intention.then}
-                  onChange={(e) => updateIntention(intention.id, "then", e.target.value)}
-                />
-              </div>
-              {intentions.length > 1 && (
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => removeIntention(intention.id)}
-                  className="text-red-500 hover:text-red-700 hover:bg-red-50 ml-auto block"
+          {intentions.length > 0 ? (
+            <div className="space-y-2">
+              {intentions.map((intention, index) => (
+                <div
+                  key={index}
+                  className="flex items-center gap-2 p-3 bg-blue-50 rounded-md"
                 >
-                  <Trash className="h-4 w-4 mr-1" />
-                  Löschen
-                </Button>
-              )}
+                  <div className="grow">
+                    <p>
+                      <span className="font-medium">Wenn: </span>
+                      {intention.if_part}
+                    </p>
+                    <p>
+                      <span className="font-medium">Dann: </span>
+                      {intention.then_part}
+                    </p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleRemoveIntention(index)}
+                    className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          ) : (
+            <div className="p-4 text-center text-gray-500 bg-gray-50 rounded-md">
+              <p>Noch keine Wenn-Dann-Pläne erstellt</p>
+            </div>
+          )}
 
-        <div className="flex gap-2 mt-6">
-          <Button 
-            variant="outline" 
-            onClick={addIntention}
-            className="flex items-center"
-          >
-            <Plus className="h-4 w-4 mr-1" />
-            Intention hinzufügen
-          </Button>
-          <Button 
-            onClick={handleSave}
-            className="flex items-center"
-          >
-            <Save className="h-4 w-4 mr-1" />
-            Speichern
-          </Button>
+          <div className="space-y-3 pt-2">
+            <div>
+              <div className="mb-1 text-sm font-medium">Wenn:</div>
+              <Input
+                placeholder="z.B.: Wenn ich morgens aufstehe..."
+                value={newIntention.if_part}
+                onChange={handleChangeIfPart}
+              />
+            </div>
+            <div>
+              <div className="mb-1 text-sm font-medium">Dann:</div>
+              <Input
+                placeholder="z.B.: ...trinke ich ein Glas Wasser."
+                value={newIntention.then_part}
+                onChange={handleChangeThenPart}
+              />
+            </div>
+            <Button
+              variant="outline"
+              className="w-full border-dashed border-blue-200 text-blue-600"
+              onClick={handleAddIntention}
+            >
+              <Plus className="h-4 w-4 mr-1" /> Wenn-Dann-Plan hinzufügen
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>

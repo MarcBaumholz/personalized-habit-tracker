@@ -17,13 +17,7 @@ import {
   DialogDescription,
   DialogFooter
 } from "@/components/ui/dialog";
-import { 
-  Popover,
-  PopoverContent,
-  PopoverTrigger 
-} from "@/components/ui/popover";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 interface TimeSlot {
   time: string;
@@ -261,7 +255,7 @@ export const WeeklyTimeboxing = ({
                           left: `${schedule.position_x || 5}px`,
                           top: `${schedule.position_y || 5}px`
                         }}
-                        className="px-3 py-1 text-sm bg-blue-100 rounded-md shadow-sm"
+                        className="px-3 py-1 text-sm bg-blue-100 border border-blue-200 rounded-md shadow-sm"
                       >
                         {schedule.habits?.name || "Gewohnheit"}
                       </div>
@@ -275,7 +269,7 @@ export const WeeklyTimeboxing = ({
                           left: `${todo.position_x || 5}px`,
                           top: `${(todo.position_y || 5) + 30}px`
                         }}
-                        className="px-3 py-1 text-sm bg-green-100 rounded-md shadow-sm"
+                        className="px-3 py-1 text-sm bg-green-100 border border-green-200 rounded-md shadow-sm"
                       >
                         {todo.title || "Todo"}
                       </div>

@@ -1,3 +1,4 @@
+
 import { Navigation } from "@/components/layout/Navigation";
 import { Card } from "@/components/ui/card";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
@@ -27,8 +28,6 @@ const DEFAULT_PREFERENCES = {
 
 const Calendar = () => {
   const [date, setDate] = useState<Date | undefined>(new Date());
-  const [selectedHabit, setSelectedHabit] = useState<string>("");
-  const [selectedTodo, setSelectedTodo] = useState<string>("");
   const [selectedTime, setSelectedTime] = useState<string>("");
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const { toast } = useToast();
@@ -50,7 +49,7 @@ const Calendar = () => {
     },
   });
 
-  const { data: schedules } = useQuery({
+  const { data: schedules, refetch: refetchSchedules } = useQuery({
     queryKey: ["habit-schedules", date],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -73,7 +72,7 @@ const Calendar = () => {
     },
   });
 
-  const { data: todoSchedules } = useQuery({
+  const { data: todoSchedules, refetch: refetchTodoSchedules } = useQuery({
     queryKey: ["todo-schedules", date],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -160,7 +159,7 @@ const Calendar = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["habit-schedules"] });
+      refetchSchedules();
       toast({
         title: "Zeitplan aktualisiert",
         description: "Der Zeitplan wurde erfolgreich aktualisiert.",
@@ -183,7 +182,7 @@ const Calendar = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["todo-schedules"] });
+      refetchTodoSchedules();
       queryClient.invalidateQueries({ queryKey: ["todos"] });
       toast({
         title: "Todo aktualisiert",
@@ -230,7 +229,7 @@ const Calendar = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["habit-schedules"] });
+      refetchSchedules();
       toast({
         title: "Gewohnheit eingeplant",
         description: "Die Gewohnheit wurde erfolgreich eingeplant.",
