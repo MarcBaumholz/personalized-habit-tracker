@@ -26,14 +26,16 @@ export const TimeCell: React.FC<TimeCellProps> = ({
     id: droppableId
   });
 
+  const formattedDate = format(day, "yyyy-MM-dd");
+
   const matchingSchedules = schedules.filter(schedule => 
-    format(new Date(schedule.scheduled_date), "yyyy-MM-dd") === format(day, "yyyy-MM-dd") &&
+    format(new Date(schedule.scheduled_date), "yyyy-MM-dd") === formattedDate &&
     schedule.scheduled_time === time
   );
 
   const matchingTodos = todos.filter(todo => 
     todo.scheduled_time === time && 
-    format(new Date(todo.scheduled_date || new Date()), "yyyy-MM-dd") === format(day, "yyyy-MM-dd")
+    format(new Date(todo.scheduled_date || new Date()), "yyyy-MM-dd") === formattedDate
   );
 
   const hasItems = matchingSchedules.length > 0 || matchingTodos.length > 0;
@@ -49,11 +51,14 @@ export const TimeCell: React.FC<TimeCellProps> = ({
     }
   };
 
+  console.log(`TimeCell: ${formattedDate} ${time}`, { matchingSchedules, matchingTodos, hasItems });
+
   return (
     <div
       ref={setNodeRef}
       className={`border-b border-r h-20 group relative ${bgClass} ${isBlocked ? 'cursor-not-allowed' : 'cursor-pointer'} transition-colors`}
       onClick={handleClick}
+      data-has-items={hasItems ? 'true' : 'false'}
     >
       {hasItems && (
         <div className="absolute inset-0 p-1 flex flex-col gap-1 overflow-y-auto">
