@@ -80,8 +80,9 @@ const Profile = () => {
     // Then override with profile sections if they exist
     if (sections) {
       sections.forEach(item => {
-        if (item.content && item.content.text) {
-          combinedSections[item.section_key] = item.content.text;
+        // Check if item.content is an object with a text property
+        if (item.content && typeof item.content === 'object' && 'text' in item.content) {
+          combinedSections[item.section_key] = item.content.text as string;
         }
       });
     }
