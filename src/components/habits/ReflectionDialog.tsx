@@ -216,9 +216,9 @@ export const ReflectionDialog = ({
                         <div>
                           <h4 className="font-medium text-sm">SRHI-Antworten</h4>
                           <ul className="text-sm space-y-1">
-                            {Object.entries(JSON.parse(ref.srhi_responses)).map(([index, value]) => (
-                              <li key={index}>
-                                {questions[parseInt(index)]}: {value}
+                            {Object.entries(JSON.parse(ref.srhi_responses || "{}")).map(([idx, val]) => (
+                              <li key={idx}>
+                                {questions[parseInt(idx)]}: {String(val)}
                               </li>
                             ))}
                           </ul>

@@ -1,4 +1,3 @@
-
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -113,7 +112,11 @@ export const HabitJourney = () => {
         .from("habit_reflections")
         .insert(payload);
         
-      if (error) throw error;
+      if (error) {
+        console.error("Error saving reflection:", error);
+        throw error;
+      }
+      
       return data;
     },
     onSuccess: () => {
@@ -148,6 +151,8 @@ export const HabitJourney = () => {
   };
 
   const needsReflection = (habit: any) => {
+    if (!habit.habit_reflections || habit.habit_reflections.length === 0) return true;
+    
     const reflections = habit.habit_reflections || [];
     const latestReflection = reflections.sort((a: any, b: any) => 
       new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
@@ -163,18 +168,9 @@ export const HabitJourney = () => {
     return daysSinceLastReflection >= 7;
   };
 
-  const handleReflectionSubmit = (reflection: string, obstacles: string, srhiResponses?: Record<number, string>) => {
-    if (selectedHabit) {
-      saveReflectionMutation.mutate({ 
-        habitId: selectedHabit.id, 
-        reflection, 
-        obstacles,
-        srhiResponses
-      });
-    }
-  };
-
   const hasCompletedReflection = (habit: any) => {
+    if (!habit.habit_reflections || habit.habit_reflections.length === 0) return false;
+    
     const reflections = habit.habit_reflections || [];
     const latestReflection = reflections.sort((a: any, b: any) => 
       new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
@@ -188,6 +184,24 @@ export const HabitJourney = () => {
     );
     
     return daysSinceLastReflection < 7;
+  };
+
+  const handleReflectionSubmit = (reflection: string, obstacles: string, srhiResponses?: Record<number, string>) => {
+    if (selectedHabit) {
+      console.log("Submitting reflection:", { 
+        reflection, 
+        obstacles, 
+        srhiResponses, 
+        habitId: selectedHabit.id 
+      });
+      
+      saveReflectionMutation.mutate({ 
+        habitId: selectedHabit.id, 
+        reflection, 
+        obstacles,
+        srhiResponses
+      });
+    }
   };
 
   return (
@@ -217,7 +231,7 @@ export const HabitJourney = () => {
                     needsReflection(habit) 
                       ? "text-red-500" 
                       : hasCompletedReflection(habit) 
-                        ? "text-black" 
+                        ? "text-gray-700" 
                         : ""
                   }`} />
                   {needsReflection(habit) && (
