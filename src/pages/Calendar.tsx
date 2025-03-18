@@ -13,12 +13,13 @@ import { WeeklyTimeboxing } from "@/components/calendar/WeeklyTimeboxing";
 import { DndContext, DragEndEvent } from "@dnd-kit/core";
 import { useTodos } from "@/hooks/useTodos";
 import { Button } from "@/components/ui/button";
-import { CalendarRange, Settings } from "lucide-react";
+import { CalendarRange, Settings, Calendar, CalendarClock } from "lucide-react";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { CalendarSync } from "@/components/calendar/CalendarSync";
 
 const DEFAULT_PREFERENCES = {
   start_time: '06:00:00',
@@ -326,49 +327,52 @@ const Calendar = () => {
                 <CalendarRange className="h-8 w-8 mr-2 text-blue-600" />
                 Kalenderansicht
               </h1>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-8 gap-1">
-                    <Settings className="h-4 w-4" />
-                    <span className="hidden sm:inline">Einstellungen</span>
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-80">
-                  <form onSubmit={handleSavePreferences}>
-                    <div className="grid gap-4">
-                      <div className="space-y-2">
-                        <h4 className="font-medium leading-none">Kalendereinstellungen</h4>
-                        <p className="text-sm text-muted-foreground">
-                          Passen Sie die Anzeige des Kalenders an
-                        </p>
-                      </div>
-                      <div className="grid gap-2">
-                        <div className="grid grid-cols-3 items-center gap-4">
-                          <label htmlFor="startTime">Startzeit</label>
-                          <input
-                            id="startTime"
-                            name="startTime"
-                            type="time"
-                            className="col-span-2 h-8 rounded-md border border-input bg-background px-3"
-                            defaultValue={calendarPreferences?.start_time?.slice(0, 5) || "06:00"}
-                          />
+              <div className="flex gap-2">
+                <CalendarSync />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-8 gap-1">
+                      <Settings className="h-4 w-4" />
+                      <span className="hidden sm:inline">Einstellungen</span>
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80">
+                    <form onSubmit={handleSavePreferences}>
+                      <div className="grid gap-4">
+                        <div className="space-y-2">
+                          <h4 className="font-medium leading-none">Kalendereinstellungen</h4>
+                          <p className="text-sm text-muted-foreground">
+                            Passen Sie die Anzeige des Kalenders an
+                          </p>
                         </div>
-                        <div className="grid grid-cols-3 items-center gap-4">
-                          <label htmlFor="endTime">Endzeit</label>
-                          <input
-                            id="endTime"
-                            name="endTime"
-                            type="time"
-                            className="col-span-2 h-8 rounded-md border border-input bg-background px-3"
-                            defaultValue={calendarPreferences?.end_time?.slice(0, 5) || "21:00"}
-                          />
+                        <div className="grid gap-2">
+                          <div className="grid grid-cols-3 items-center gap-4">
+                            <label htmlFor="startTime">Startzeit</label>
+                            <input
+                              id="startTime"
+                              name="startTime"
+                              type="time"
+                              className="col-span-2 h-8 rounded-md border border-input bg-background px-3"
+                              defaultValue={calendarPreferences?.start_time?.slice(0, 5) || "06:00"}
+                            />
+                          </div>
+                          <div className="grid grid-cols-3 items-center gap-4">
+                            <label htmlFor="endTime">Endzeit</label>
+                            <input
+                              id="endTime"
+                              name="endTime"
+                              type="time"
+                              className="col-span-2 h-8 rounded-md border border-input bg-background px-3"
+                              defaultValue={calendarPreferences?.end_time?.slice(0, 5) || "21:00"}
+                            />
+                          </div>
                         </div>
+                        <Button type="submit" size="sm">Speichern</Button>
                       </div>
-                      <Button type="submit" size="sm">Speichern</Button>
-                    </div>
-                  </form>
-                </PopoverContent>
-              </Popover>
+                    </form>
+                  </PopoverContent>
+                </Popover>
+              </div>
             </div>
             
             <div className="grid grid-cols-1 lg:grid-cols-[350px_1fr] gap-6">
@@ -400,6 +404,7 @@ const Calendar = () => {
                   schedules={schedules}
                   todos={todoSchedules}
                   habits={habits}
+                  activeTodos={todos}
                   preferences={calendarPreferences}
                   onTimeSlotClick={handleTimeSlotClick}
                   onScheduleHabit={handleScheduleHabit}

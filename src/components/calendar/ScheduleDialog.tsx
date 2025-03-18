@@ -44,6 +44,7 @@ export const ScheduleDialog: React.FC<ScheduleDialogProps> = ({
   
   if (!selectedTime || !selectedDay) return null;
 
+  // Filter for todos that aren't already scheduled
   const unscheduledTodos = todos.filter(todo => !todo.scheduled_time);
 
   // Check if the selected time slot is already occupied

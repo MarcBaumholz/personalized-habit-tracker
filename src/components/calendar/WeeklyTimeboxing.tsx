@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Calendar, ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
@@ -38,6 +39,7 @@ interface WeeklyTimeboxingProps {
   schedules?: any[];
   todos?: any[];
   habits?: any[];
+  activeTodos?: any[]; // Active todos from the dashboard
   onTimeSlotClick?: (time: string, date: Date) => void;
   preferences?: {
     start_time: string;
@@ -53,6 +55,7 @@ export const WeeklyTimeboxing = ({
   schedules = [], 
   todos = [],
   habits = [],
+  activeTodos = [],
   onTimeSlotClick,
   preferences,
   onScheduleHabit,
@@ -210,7 +213,7 @@ export const WeeklyTimeboxing = ({
         selectedTime={selectedTimeCell?.time || null}
         selectedDay={selectedTimeCell?.day || null}
         habits={habits || []}
-        todos={todos || []}
+        todos={activeTodos || []} // Use active todos from dashboard
         onScheduleHabit={handleScheduleHabit}
         onScheduleTodo={handleScheduleTodo}
         schedules={schedules}
