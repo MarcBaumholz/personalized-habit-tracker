@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Calendar, ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
@@ -48,6 +47,8 @@ interface WeeklyTimeboxingProps {
   };
   onScheduleHabit?: (habit: any, time: string, day: Date) => void;
   onScheduleTodo?: (todo: any, time: string, day: Date) => void;
+  onDeleteSchedule?: (scheduleId: string) => void;
+  onDeleteTodo?: (todoId: string) => void;
 }
 
 export const WeeklyTimeboxing = ({ 
@@ -59,7 +60,9 @@ export const WeeklyTimeboxing = ({
   onTimeSlotClick,
   preferences,
   onScheduleHabit,
-  onScheduleTodo
+  onScheduleTodo,
+  onDeleteSchedule,
+  onDeleteTodo
 }: WeeklyTimeboxingProps) => {
   const [currentWeek, setCurrentWeek] = useState(date);
   const [selectedTimeCell, setSelectedTimeCell] = useState<{ time: string, day: Date } | null>(null);
@@ -82,22 +85,6 @@ export const WeeklyTimeboxing = ({
     const hour = parseInt(slot.time.split(':')[0], 10);
     return hour >= startTime && hour <= endTime;
   });
-
-  const handlePrevNavigate = () => {
-    if (currentView === 'week') {
-      setCurrentWeek(subWeeks(currentWeek, 1));
-    } else {
-      setCurrentWeek(addDays(currentWeek, -1));
-    }
-  };
-
-  const handleNextNavigate = () => {
-    if (currentView === 'week') {
-      setCurrentWeek(addWeeks(currentWeek, 1));
-    } else {
-      setCurrentWeek(addDays(currentWeek, 1));
-    }
-  };
 
   const handleCellClick = (time: string, day: Date) => {
     setSelectedTimeCell({ time, day });
@@ -127,6 +114,34 @@ export const WeeklyTimeboxing = ({
         title: "Todo eingeplant",
         description: `${todo.title} wurde für ${time} Uhr eingeplant.`,
       });
+    }
+  };
+
+  const handleDeleteSchedule = (scheduleId: string) => {
+    if (onDeleteSchedule) {
+      onDeleteSchedule(scheduleId);
+    }
+  };
+
+  const handleDeleteTodo = (todoId: string) => {
+    if (onDeleteTodo) {
+      onDeleteTodo(todoId);
+    }
+  };
+
+  const handlePrevNavigate = () => {
+    if (currentView === 'week') {
+      setCurrentWeek(subWeeks(currentWeek, 1));
+    } else {
+      setCurrentWeek(addDays(currentWeek, -1));
+    }
+  };
+
+  const handleNextNavigate = () => {
+    if (currentView === 'week') {
+      setCurrentWeek(addWeeks(currentWeek, 1));
+    } else {
+      setCurrentWeek(addDays(currentWeek, 1));
     }
   };
 
@@ -200,6 +215,8 @@ export const WeeklyTimeboxing = ({
                     selectedTimeCell?.time === slot.time && 
                     format(selectedTimeCell.day, "yyyy-MM-dd") === format(day, "yyyy-MM-dd")
                   }
+                  onDeleteSchedule={handleDeleteSchedule}
+                  onDeleteTodo={handleDeleteTodo}
                 />
               ))}
             </React.Fragment>
@@ -213,7 +230,7 @@ export const WeeklyTimeboxing = ({
         selectedTime={selectedTimeCell?.time || null}
         selectedDay={selectedTimeCell?.day || null}
         habits={habits || []}
-        todos={activeTodos || []} // Use active todos from dashboard
+        todos={activeTodos || []}
         onScheduleHabit={handleScheduleHabit}
         onScheduleTodo={handleScheduleTodo}
         schedules={schedules}

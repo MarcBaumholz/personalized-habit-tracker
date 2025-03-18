@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,7 +7,7 @@ import { de } from "date-fns/locale";
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, Clock, Plus } from "lucide-react";
+import { Calendar, Clock, Plus, Trash2 } from "lucide-react";
 
 export interface Todo {
   id: string;
@@ -31,6 +32,8 @@ export interface ScheduleListProps {
   isDraggable?: boolean;
   onScheduleTodo?: (todo: any, time: string, day: Date) => void;
   onScheduleHabit?: (habit: any, time: string, day: Date) => void;
+  onDeleteSchedule?: (scheduleId: string) => void;
+  onDeleteTodo?: (todoId: string) => void;
 }
 
 const DraggableItem = ({ id, children, type }: { id: string; children: React.ReactNode; type: string }) => {
@@ -65,7 +68,9 @@ export const ScheduleList: React.FC<ScheduleListProps> = ({
   habits = [],
   isDraggable = false,
   onScheduleTodo,
-  onScheduleHabit
+  onScheduleHabit,
+  onDeleteSchedule,
+  onDeleteTodo
 }) => {
   const formattedDate = format(date, "EEEE, dd.MM.yyyy", { locale: de });
   
@@ -91,6 +96,20 @@ export const ScheduleList: React.FC<ScheduleListProps> = ({
   const handleScheduleHabit = (habit: any) => {
     if (onScheduleHabit) {
       onScheduleHabit(habit, "09:00", date);
+    }
+  };
+
+  const handleDeleteTodo = (e: React.MouseEvent, todoId: string) => {
+    e.stopPropagation();
+    if (onDeleteTodo) {
+      onDeleteTodo(todoId);
+    }
+  };
+
+  const handleDeleteSchedule = (e: React.MouseEvent, scheduleId: string) => {
+    e.stopPropagation();
+    if (onDeleteSchedule) {
+      onDeleteSchedule(scheduleId);
     }
   };
 
@@ -121,7 +140,19 @@ export const ScheduleList: React.FC<ScheduleListProps> = ({
                             <p className="font-medium">{schedule.habits?.name || "Gewohnheit"}</p>
                             <p className="text-sm text-gray-600">{schedule.scheduled_time || "Keine Zeit"} Uhr</p>
                           </div>
-                          <div className="text-xs px-2 py-1 bg-blue-100 rounded-full">Gewohnheit</div>
+                          <div className="flex items-center gap-2">
+                            <div className="text-xs px-2 py-1 bg-blue-100 rounded-full">Gewohnheit</div>
+                            {onDeleteSchedule && (
+                              <Button 
+                                size="sm" 
+                                variant="ghost" 
+                                className="h-7 w-7 p-0 text-blue-700 hover:text-red-600"
+                                onClick={(e) => handleDeleteSchedule(e, schedule.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
                         </div>
                       </DraggableItem>
                     ) : (
@@ -130,7 +161,19 @@ export const ScheduleList: React.FC<ScheduleListProps> = ({
                           <p className="font-medium">{schedule.habits?.name || "Gewohnheit"}</p>
                           <p className="text-sm text-gray-600">{schedule.scheduled_time || "Keine Zeit"} Uhr</p>
                         </div>
-                        <div className="text-xs px-2 py-1 bg-blue-100 rounded-full">Gewohnheit</div>
+                        <div className="flex items-center gap-2">
+                          <div className="text-xs px-2 py-1 bg-blue-100 rounded-full">Gewohnheit</div>
+                          {onDeleteSchedule && (
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              className="h-7 w-7 p-0 text-blue-700 hover:text-red-600"
+                              onClick={(e) => handleDeleteSchedule(e, schedule.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -145,7 +188,19 @@ export const ScheduleList: React.FC<ScheduleListProps> = ({
                             <p className="font-medium">{todo.title}</p>
                             <p className="text-sm text-gray-600">{todo.scheduled_time || "Keine Zeit"} Uhr</p>
                           </div>
-                          <div className="text-xs px-2 py-1 bg-green-100 rounded-full">Todo</div>
+                          <div className="flex items-center gap-2">
+                            <div className="text-xs px-2 py-1 bg-green-100 rounded-full">Todo</div>
+                            {onDeleteTodo && (
+                              <Button 
+                                size="sm" 
+                                variant="ghost" 
+                                className="h-7 w-7 p-0 text-green-700 hover:text-red-600"
+                                onClick={(e) => handleDeleteTodo(e, todo.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
                         </div>
                       </DraggableItem>
                     ) : (
@@ -154,7 +209,19 @@ export const ScheduleList: React.FC<ScheduleListProps> = ({
                           <p className="font-medium">{todo.title}</p>
                           <p className="text-sm text-gray-600">{todo.scheduled_time || "Keine Zeit"} Uhr</p>
                         </div>
-                        <div className="text-xs px-2 py-1 bg-green-100 rounded-full">Todo</div>
+                        <div className="flex items-center gap-2">
+                          <div className="text-xs px-2 py-1 bg-green-100 rounded-full">Todo</div>
+                          {onDeleteTodo && (
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              className="h-7 w-7 p-0 text-green-700 hover:text-red-600"
+                              onClick={(e) => handleDeleteTodo(e, todo.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>

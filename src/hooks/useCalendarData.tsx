@@ -138,6 +138,32 @@ export const useCalendarData = (date: Date | undefined) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
+      // Check if the time slot is already occupied
+      if (updates.scheduled_time) {
+        const { data: existingItems } = await supabase
+          .from("habit_schedules")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("scheduled_date", format(date || new Date(), "yyyy-MM-dd"))
+          .eq("scheduled_time", updates.scheduled_time)
+          .neq("id", id);
+
+        if (existingItems && existingItems.length > 0) {
+          throw new Error("Dieser Zeitslot ist bereits belegt.");
+        }
+
+        const { data: existingTodos } = await supabase
+          .from("todos")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("scheduled_date", format(date || new Date(), "yyyy-MM-dd"))
+          .eq("scheduled_time", updates.scheduled_time);
+
+        if (existingTodos && existingTodos.length > 0) {
+          throw new Error("Dieser Zeitslot ist bereits belegt.");
+        }
+      }
+
       const { data, error } = await supabase
         .from("habit_schedules")
         .update(updates)
@@ -154,6 +180,13 @@ export const useCalendarData = (date: Date | undefined) => {
         description: "Der Zeitplan wurde erfolgreich aktualisiert.",
       });
     },
+    onError: (error) => {
+      toast({
+        title: "Fehler",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
   });
 
   // Update todo schedule mutation
@@ -161,6 +194,32 @@ export const useCalendarData = (date: Date | undefined) => {
     mutationFn: async ({ id, updates }: { id: string, updates: any }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
+
+      // Check if the time slot is already occupied
+      if (updates.scheduled_time) {
+        const { data: existingSchedules } = await supabase
+          .from("habit_schedules")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("scheduled_date", updates.scheduled_date)
+          .eq("scheduled_time", updates.scheduled_time);
+
+        if (existingSchedules && existingSchedules.length > 0) {
+          throw new Error("Dieser Zeitslot ist bereits belegt.");
+        }
+
+        const { data: existingTodos } = await supabase
+          .from("todos")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("scheduled_date", updates.scheduled_date)
+          .eq("scheduled_time", updates.scheduled_time)
+          .neq("id", id);
+
+        if (existingTodos && existingTodos.length > 0) {
+          throw new Error("Dieser Zeitslot ist bereits belegt.");
+        }
+      }
 
       const { data, error } = await supabase
         .from("todos")
@@ -179,6 +238,13 @@ export const useCalendarData = (date: Date | undefined) => {
         description: "Das Todo wurde erfolgreich eingeplant.",
       });
     },
+    onError: (error) => {
+      toast({
+        title: "Fehler",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
   });
 
   // Create habit schedule mutation
@@ -187,22 +253,30 @@ export const useCalendarData = (date: Date | undefined) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
+      // Check if the time slot is already occupied by a habit schedule
       const { data: existingSchedule } = await supabase
         .from("habit_schedules")
         .select("id")
         .eq("user_id", user.id)
-        .eq("habit_id", habitId)
         .eq("scheduled_date", format(day, "yyyy-MM-dd"))
         .eq("scheduled_time", time)
         .maybeSingle();
 
       if (existingSchedule) {
-        toast({
-          title: "Gewohnheit bereits eingeplant",
-          description: "Diese Gewohnheit ist bereits für diesen Zeitpunkt eingeplant.",
-          variant: "destructive"
-        });
-        return null;
+        throw new Error("Dieser Zeitslot ist bereits mit einer Gewohnheit belegt.");
+      }
+
+      // Check if the time slot is already occupied by a todo
+      const { data: existingTodo } = await supabase
+        .from("todos")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("scheduled_date", format(day, "yyyy-MM-dd"))
+        .eq("scheduled_time", time)
+        .maybeSingle();
+
+      if (existingTodo) {
+        throw new Error("Dieser Zeitslot ist bereits mit einem Todo belegt.");
       }
 
       const { data, error } = await supabase
@@ -226,6 +300,59 @@ export const useCalendarData = (date: Date | undefined) => {
         description: "Die Gewohnheit wurde erfolgreich eingeplant.",
       });
     },
+    onError: (error) => {
+      toast({
+        title: "Fehler",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Delete habit schedule mutation
+  const deleteScheduleMutation = useMutation({
+    mutationFn: async (scheduleId: string) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
+
+      const { data, error } = await supabase
+        .from("habit_schedules")
+        .delete()
+        .eq("id", scheduleId)
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      refetchSchedules();
+    }
+  });
+
+  // Delete todo schedule mutation (actually just removes the scheduling information)
+  const deleteTodoScheduleMutation = useMutation({
+    mutationFn: async (todoId: string) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
+
+      const { data, error } = await supabase
+        .from("todos")
+        .update({
+          scheduled_time: null,
+          scheduled_date: null,
+          position_x: null,
+          position_y: null
+        })
+        .eq("id", todoId)
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      refetchTodoSchedules();
+      queryClient.invalidateQueries({ queryKey: ["todos"] });
+    }
   });
 
   const handleTimeSlotClick = (time: string, day: Date) => {
@@ -277,6 +404,8 @@ export const useCalendarData = (date: Date | undefined) => {
     handleScheduleHabit,
     handleSavePreferences,
     updateScheduleMutation,
-    updateTodoScheduleMutation
+    updateTodoScheduleMutation,
+    deleteScheduleMutation,
+    deleteTodoScheduleMutation
   };
 };

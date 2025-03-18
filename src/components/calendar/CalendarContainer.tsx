@@ -10,10 +10,12 @@ import { useCalendarData } from "@/hooks/useCalendarData";
 import { CalendarHeader } from "./CalendarHeader";
 import ScheduleList from "@/components/calendar/ScheduleList";
 import { WeeklyTimeboxing } from "@/components/calendar/WeeklyTimeboxing";
+import { useToast } from "@/hooks/use-toast";
 
 export const CalendarContainer = () => {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const { todos } = useTodos();
+  const { toast } = useToast();
   
   const {
     habits,
@@ -25,7 +27,9 @@ export const CalendarContainer = () => {
     handleScheduleHabit,
     handleSavePreferences,
     updateScheduleMutation,
-    updateTodoScheduleMutation
+    updateTodoScheduleMutation,
+    deleteScheduleMutation,
+    deleteTodoScheduleMutation
   } = useCalendarData(date);
 
   // Handle drag and drop
@@ -61,6 +65,28 @@ export const CalendarContainer = () => {
     }
   };
 
+  const handleDeleteSchedule = (scheduleId: string) => {
+    deleteScheduleMutation.mutate(scheduleId, {
+      onSuccess: () => {
+        toast({
+          title: "Termin gelöscht",
+          description: "Der Termin wurde erfolgreich gelöscht."
+        });
+      }
+    });
+  };
+
+  const handleDeleteTodo = (todoId: string) => {
+    deleteTodoScheduleMutation.mutate(todoId, {
+      onSuccess: () => {
+        toast({
+          title: "Todo-Termin gelöscht", 
+          description: "Der geplante Todo-Termin wurde erfolgreich gelöscht."
+        });
+      }
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50">
       <DndContext onDragEnd={handleDragEnd}>
@@ -91,6 +117,8 @@ export const CalendarContainer = () => {
                   isDraggable
                   onScheduleTodo={handleScheduleTodo}
                   onScheduleHabit={handleScheduleHabit}
+                  onDeleteSchedule={handleDeleteSchedule}
+                  onDeleteTodo={handleDeleteTodo}
                 />
               </div>
               
@@ -105,6 +133,8 @@ export const CalendarContainer = () => {
                   onTimeSlotClick={handleTimeSlotClick}
                   onScheduleHabit={handleScheduleHabit}
                   onScheduleTodo={handleScheduleTodo}
+                  onDeleteSchedule={handleDeleteSchedule}
+                  onDeleteTodo={handleDeleteTodo}
                 />
               </Card>
             </div>
