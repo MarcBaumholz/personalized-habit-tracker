@@ -15,10 +15,14 @@ export const HabitFormationTracker = ({ streak, habitName, className }: HabitFor
   // Calculate progress percentage (out of 66 days)
   const progressPercentage = Math.min(Math.round((streak / 66) * 100), 100);
   
+  // Calculate the current day based on streak
+  const currentDay = Math.max(1, streak);
+  const remainingDays = Math.max(0, 66 - currentDay);
+  
   // Determine which phase the habit is in
-  const phase = streak <= 30 
+  const phase = currentDay <= 30 
     ? "motivational" 
-    : streak <= 66 
+    : currentDay <= 66 
       ? "volitional" 
       : "habitual";
   
@@ -91,14 +95,12 @@ export const HabitFormationTracker = ({ streak, habitName, className }: HabitFor
       <CardContent className="space-y-4">
         <div className="space-y-2">
           <div className="flex justify-between text-sm text-gray-600">
-            <span>Tag {streak} von 66</span>
+            <span>Tag {currentDay} von 66</span>
             <span>{progressPercentage}%</span>
           </div>
           
           <div className="relative">
-            {/* Fixed: Removed indicatorClassName and used className with the dynamic color */}
             <Progress value={progressPercentage} className="h-3" 
-              // Apply the progress color as a class directly
               style={{ 
                 "--progress-background": currentColors.progressColor.replace("bg-", "var(--")+")",
               } as React.CSSProperties}
@@ -107,6 +109,13 @@ export const HabitFormationTracker = ({ streak, habitName, className }: HabitFor
             {/* Phase markers */}
             <div className="absolute top-0 left-[45.5%] h-3 border-l border-dotted border-gray-400"></div>
             <div className="absolute top-0 left-[100%] h-3 border-l border-dotted border-gray-400"></div>
+            
+            {/* Current day marker */}
+            <div 
+              className="absolute top-0 h-3 w-1 bg-black z-10" 
+              style={{ left: `${Math.min(progressPercentage, 100)}%` }}
+              title={`Aktueller Tag: ${currentDay}`}
+            />
             
             <div className="flex justify-between mt-1 text-xs text-gray-500">
               <span>Tag 1</span>
@@ -142,14 +151,14 @@ export const HabitFormationTracker = ({ streak, habitName, className }: HabitFor
         </div>
         
         <div className="text-center">
-          {streak >= 66 ? (
+          {currentDay >= 66 ? (
             <div className="flex items-center justify-center gap-2 text-green-700">
               <CheckCircle2 className="h-5 w-5" />
               <span className="font-medium">Gratulation! {habitName} ist jetzt eine etablierte Gewohnheit.</span>
             </div>
           ) : (
             <p className="text-sm text-gray-600">
-              Noch {66 - streak} Tage bis zur vollständigen Gewohnheitsbildung.
+              Noch {remainingDays} Tage bis zur vollständigen Gewohnheitsbildung.
             </p>
           )}
         </div>

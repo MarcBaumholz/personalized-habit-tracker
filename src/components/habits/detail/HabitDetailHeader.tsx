@@ -28,10 +28,14 @@ export const HabitDetailHeader = ({ habitName, progress, streak, habitId }: Habi
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
+  // Calculate current day based on progress
+  const currentDay = Math.max(1, Math.ceil((progress / 100) * 66));
+  const remainingDays = Math.max(0, 66 - currentDay);
+  
   // Determine which phase the habit is in
-  const phase = streak <= 30 
+  const phase = currentDay <= 30 
     ? "motivational" 
-    : streak <= 66 
+    : currentDay <= 66 
       ? "volitional" 
       : "habitual";
   
@@ -230,7 +234,7 @@ export const HabitDetailHeader = ({ habitName, progress, streak, habitId }: Habi
 
         <div className="space-y-2">
           <div className="flex justify-between text-sm text-gray-600">
-            <span>Tag {streak} von 66</span>
+            <span>Tag {currentDay} von 66</span>
             <span>{progress}% komplett</span>
           </div>
           
@@ -247,6 +251,13 @@ export const HabitDetailHeader = ({ habitName, progress, streak, habitId }: Habi
             <div className="absolute top-0 left-[45.5%] h-3 border-l border-dotted border-gray-400"></div>
             <div className="absolute top-0 left-[100%] h-3 border-l border-dotted border-gray-400"></div>
             
+            {/* Current day marker */}
+            <div 
+              className="absolute top-0 h-3 w-1 bg-black z-10" 
+              style={{ left: `${Math.min(progress, 100)}%` }}
+              title={`Aktueller Tag: ${currentDay}`}
+            />
+            
             <div className="flex justify-between mt-1 text-xs text-gray-600">
               <span>Tag 1</span>
               <span>Tag 30</span>
@@ -255,14 +266,14 @@ export const HabitDetailHeader = ({ habitName, progress, streak, habitId }: Habi
           </div>
         </div>
         
-        {streak >= 66 ? (
+        {currentDay >= 66 ? (
           <div className="flex items-center justify-center gap-2 text-green-700 mt-2">
             <CheckCircle2 className="h-5 w-5" />
             <span className="font-medium">Gratulation! {habitName} ist jetzt eine etablierte Gewohnheit.</span>
           </div>
         ) : (
           <p className="text-sm text-gray-600 mt-2">
-            Noch {66 - streak} Tage bis zur vollständigen Gewohnheitsbildung.
+            Noch {remainingDays} Tage bis zur vollständigen Gewohnheitsbildung.
           </p>
         )}
       </div>
