@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,36 +9,35 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RechartsPieChart, Pie, Cell, Legend, AreaChart, Area } from 'recharts';
 
-// Verbesserte Farbskala mit höherem Kontrast
 const COMPLETION_COLORS = {
   "check": {
-    0: "#f1f5f9", // Keine Einträge - hellgrau
-    1: "#bbf7d0", // Hellgrün
-    2: "#86efac", // Mittelgrün
-    3: "#4ade80", // Kräftiges Grün
-    4: "#22c55e", // Sehr kräftiges Grün
+    0: "#ebedf0", // No entries - light gray
+    1: "#9be9a8", // Light green
+    2: "#40c463", // Medium green
+    3: "#30a14e", // Strong green
+    4: "#216e39", // Very strong green
   },
   "star": {
-    0: "#f1f5f9", // Keine Einträge - hellgrau
-    1: "#fef08a", // Hellgelb
-    2: "#fde047", // Mittelgelb
-    3: "#facc15", // Kräftiges Gelb
-    4: "#eab308", // Sehr kräftiges Gelb
+    0: "#ebedf0", // No entries - light gray
+    1: "#fdf156", // Light yellow
+    2: "#ffc722", // Medium yellow
+    3: "#f9a839", // Strong yellow
+    4: "#e36209", // Very strong yellow
   }
 };
 
 const WEEKDAYS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
 const CHART_COLORS = ["#3b82f6", "#22c55e", "#f59e0b", "#ef4444", "#8b5cf6"];
 const PHASE_COLORS = {
-  phase1: "#bbdefb", // Hellblau für Phase 1 (Tag 0-30)
-  phase2: "#90caf9", // Mittelblau für Phase 2 (Tag 31-66)
-  phase3: "#2196f3", // Dunkelblau für Phase 3 (Tag 67+)
+  phase1: "#bbdefb", // Light blue for Phase 1 (Day 0-30)
+  phase2: "#90caf9", // Medium blue for Phase 2 (Day 31-66)
+  phase3: "#2196f3", // Dark blue for Phase 3 (Day 67+)
 };
 
 const PHASE_DESCRIPTIONS = {
-  phase1: "Phase 1 (Tag 0-30): Aktive Unterstützung, Trigger und externe Belohnungen",
-  phase2: "Phase 2 (Tag 31-66): Reduzierung von Hinweisen, Fokus auf Eigenverantwortung",
-  phase3: "Phase 3 (ab Tag 67): Automatisierung des Verhaltens erreicht",
+  phase1: "Phase 1 (Day 0-30): Active support, triggers and external rewards",
+  phase2: "Phase 2 (Day 31-66): Reduction of cues, focus on self-responsibility",
+  phase3: "Phase 3 (from Day 67): Behavior automation achieved",
 };
 
 export const YearlyActivity = () => {
@@ -218,91 +216,93 @@ export const YearlyActivity = () => {
     const habit = habitsData[activeHabitIndex];
     if (!habit) return null;
 
+    const totalContributions = habit.days.reduce((total: number, day: any) => {
+      if (day.completions.check > 0 || day.completions.star > 0) {
+        return total + 1;
+      }
+      return total;
+    }, 0);
+
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-2">
-            <h3 className="text-lg font-medium">{habit.name}</h3>
+      <div className="space-y-4">
+        <div className="flex items-center justify-between mb-4">
+          <div className="text-base text-gray-700 font-medium">
+            {totalContributions} Beiträge im letzten Jahr
+          </div>
+          <div className="text-sm text-gray-500">
+            {habit.name}
           </div>
         </div>
 
-        <ScrollArea className="w-full">
-          <div className="min-w-max">
-            <div className="flex mb-2">
-              <div className="w-8" /> {/* Spacer for weekday labels */}
-              <div className="flex gap-1">
-                {Array.from({ length: 12 }, (_, i) => {
-                  const date = addDays(subYears(new Date(), 1), i * 30);
-                  return (
-                    <div key={i} className="w-10 text-center">
-                      <span className="text-xs text-gray-500">
-                        {format(date, 'MMM', { locale: de })}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="flex gap-1">
-              <div className="w-8 flex flex-col justify-around">
-                {WEEKDAYS.map((day) => (
-                  <span key={day} className="text-xs text-gray-500 h-3">
-                    {day}
-                  </span>
-                ))}
-              </div>
-
-              <div className="grid grid-cols-[repeat(52,1fr)] gap-1">
-                {habit.days.map((day, index) => (
-                  <div
-                    key={`${habit.id}-${day.date}`}
-                    className="w-3 h-3 rounded-sm transition-colors duration-200 hover:scale-125"
-                    style={{
-                      backgroundColor: getCompletionColor(day.colorType, day.intensity),
-                      gridRow: day.weekday + 1
-                    }}
-                    title={`${day.date}: ${
-                      day.completions.check ? `${day.completions.check} vollständig` : 
-                      day.completions.star ? `${day.completions.star} teilweise` : 
-                      'Keine Einträge'
-                    }`}
-                  />
-                ))}
-              </div>
+        <div className="w-full bg-white rounded-lg border border-gray-200 p-4">
+          <div className="mb-2">
+            <div className="flex justify-between overflow-x-auto">
+              {Array.from({ length: 12 }, (_, i) => {
+                const date = addDays(subYears(new Date(), 1), i * 30);
+                return (
+                  <div key={i} className="flex-none text-xs text-gray-500 px-1">
+                    {format(date, 'MMM', { locale: de })}
+                  </div>
+                );
+              })}
             </div>
           </div>
-        </ScrollArea>
 
-        {/* Farbskala als eigener Bereich, unter den Kacheln */}
-        <div className="mt-6">
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-1 text-sm text-gray-500 justify-between">
-              <span>Weniger</span>
-              <div className="flex">
-                {[0, 1, 2, 3, 4].map((level) => (
-                  <div
-                    key={`full-${level}`}
-                    className="w-5 h-5 rounded-sm border border-gray-100"
-                    style={{ backgroundColor: COMPLETION_COLORS.check[level] }}
-                  />
-                ))}
-              </div>
-              <span>Mehr (vollständig)</span>
+          <div className="flex">
+            <div className="flex flex-col items-end mr-2 gap-2">
+              {WEEKDAYS.map((day, index) => (
+                <div key={day} className="text-xs text-gray-500 h-3">
+                  {index % 2 === 0 ? day : ""}
+                </div>
+              ))}
             </div>
-            <div className="flex items-center gap-1 text-sm text-gray-500 justify-between">
-              <span>Weniger</span>
-              <div className="flex">
-                {[0, 1, 2, 3, 4].map((level) => (
-                  <div
-                    key={`partial-${level}`}
-                    className="w-5 h-5 rounded-sm border border-gray-100"
-                    style={{ backgroundColor: COMPLETION_COLORS.star[level] }}
-                  />
-                ))}
-              </div>
-              <span>Mehr (teilweise)</span>
+
+            <div className="grid grid-cols-[repeat(52,1fr)] gap-1 w-full">
+              {habit.days.map((day: any, index: number) => (
+                <div
+                  key={`${habit.id}-${day.date}`}
+                  className="aspect-square rounded-sm transition-colors duration-200 hover:ring-2 hover:ring-gray-300"
+                  style={{
+                    backgroundColor: getCompletionColor(day.colorType, day.intensity),
+                    gridRow: ((day.weekday || 0) % 7) + 1
+                  }}
+                  title={`${day.date}: ${
+                    day.completions.check ? `${day.completions.check} vollständig` : 
+                    day.completions.star ? `${day.completions.star} teilweise` : 
+                    'Keine Einträge'
+                  }`}
+                />
+              ))}
             </div>
+          </div>
+
+          <div className="mt-4 flex items-center justify-between">
+            <div className="text-xs text-gray-500">
+              <a href="#" className="hover:text-blue-600">Erfahre mehr zu Beitragsberechnung</a>
+            </div>
+            
+            <div className="flex items-center text-xs text-gray-500 gap-1">
+              <span>Weniger</span>
+              {[0, 1, 2, 3, 4].map((level) => (
+                <div
+                  key={`legend-${level}`}
+                  className="w-3 h-3 rounded-sm"
+                  style={{ backgroundColor: COMPLETION_COLORS.check[level] }}
+                />
+              ))}
+              <span>Mehr</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex justify-between gap-4 text-sm text-gray-600 mt-2">
+          <div className="flex items-center gap-1">
+            <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: COMPLETION_COLORS.check[3] }}></div>
+            <span>Vollständige Durchführung</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: COMPLETION_COLORS.star[3] }}></div>
+            <span>Teilweise Durchführung</span>
           </div>
         </div>
       </div>
