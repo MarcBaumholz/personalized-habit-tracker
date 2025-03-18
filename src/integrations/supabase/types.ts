@@ -446,7 +446,10 @@ export type Database = {
           created_at: string
           habit_id: string
           id: string
+          obstacles: string | null
           reflection_text: string | null
+          reflection_type: string | null
+          srhi_responses: Json | null
           srhi_score: number | null
           user_id: string
         }
@@ -454,7 +457,10 @@ export type Database = {
           created_at?: string
           habit_id: string
           id?: string
+          obstacles?: string | null
           reflection_text?: string | null
+          reflection_type?: string | null
+          srhi_responses?: Json | null
           srhi_score?: number | null
           user_id: string
         }
@@ -462,7 +468,10 @@ export type Database = {
           created_at?: string
           habit_id?: string
           id?: string
+          obstacles?: string | null
           reflection_text?: string | null
+          reflection_type?: string | null
+          srhi_responses?: Json | null
           srhi_score?: number | null
           user_id?: string
         }

@@ -15,6 +15,8 @@ interface Reflection {
   habit_id: string;
   user_id: string;
   reflection_text: string;
+  obstacles?: string;
+  srhi_responses?: any;
   srhi_score?: number;
   created_at: string;
   reflection_type?: string;
@@ -70,7 +72,7 @@ export const PastReflections = ({ reflections, habitId }: PastReflectionsProps) 
 
   const handleEdit = (reflection: Reflection) => {
     setEditingId(reflection.id);
-    setEditedText(reflection.reflection_text);
+    setEditedText(reflection.reflection_text || "");
   };
 
   const handleSave = (id: string) => {
@@ -82,6 +84,19 @@ export const PastReflections = ({ reflections, habitId }: PastReflectionsProps) 
   const handleDelete = (id: string) => {
     if (confirm("Möchtest du diese Reflexion wirklich löschen?")) {
       deleteReflectionMutation.mutate(id);
+    }
+  };
+
+  const formatSrhiResponse = (responses: any) => {
+    if (!responses) return {};
+    try {
+      if (typeof responses === 'string') {
+        return JSON.parse(responses);
+      }
+      return responses;
+    } catch (error) {
+      console.error("Error parsing SRHI responses:", error);
+      return {};
     }
   };
 
@@ -137,7 +152,33 @@ export const PastReflections = ({ reflections, habitId }: PastReflectionsProps) 
               </div>
             ) : (
               <div>
-                <p className="text-sm text-gray-700 mb-2">{reflection.reflection_text}</p>
+                {reflection.reflection_text && (
+                  <div className="mb-2">
+                    <h4 className="font-medium text-sm">Reflexion</h4>
+                    <p className="text-sm text-gray-700">{reflection.reflection_text}</p>
+                  </div>
+                )}
+                
+                {reflection.obstacles && (
+                  <div className="mb-2">
+                    <h4 className="font-medium text-sm">Hürden & Hindernisse</h4>
+                    <p className="text-sm text-gray-700">{reflection.obstacles}</p>
+                  </div>
+                )}
+                
+                {reflection.srhi_responses && Object.keys(formatSrhiResponse(reflection.srhi_responses)).length > 0 && (
+                  <div className="mb-2">
+                    <h4 className="font-medium text-sm">SRHI-Antworten</h4>
+                    <ul className="text-sm space-y-1">
+                      {Object.entries(formatSrhiResponse(reflection.srhi_responses)).map(([idx, val]) => (
+                        <li key={idx}>
+                          Frage {Number(idx) + 1}: {String(val)}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                
                 <div className="flex justify-end gap-2">
                   <Button variant="ghost" size="sm" onClick={() => handleEdit(reflection)}>
                     <Edit className="h-4 w-4" />
