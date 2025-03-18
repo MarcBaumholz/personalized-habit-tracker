@@ -1,18 +1,18 @@
 
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { Check, Info, AlertTriangle } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { format } from "date-fns";
 
 interface ReflectionDialogProps {
   isOpen: boolean;
@@ -22,7 +22,8 @@ interface ReflectionDialogProps {
   onResponseChange: (index: number, value: string) => void;
   reflection: string;
   onReflectionChange: (value: string) => void;
-  onSubmit: () => void;
+  onSubmit: (reflection: string, obstacles: string) => void;
+  habit?: any;
 }
 
 export const ReflectionDialog = ({
@@ -34,110 +35,114 @@ export const ReflectionDialog = ({
   reflection,
   onReflectionChange,
   onSubmit,
+  habit
 }: ReflectionDialogProps) => {
-  const { data: customQuestions } = useQuery({
-    queryKey: ["reflection-questions"],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("No user found");
-
-      const { data } = await supabase
-        .from("reflection_questions")
-        .select("*")
-        .eq("user_id", user.id)
-        .eq("is_active", true);
-
-      return data || [];
-    },
-  });
+  const [currentReflection, setCurrentReflection] = useState("");
+  const [obstacles, setObstacles] = useState("");
+  const [activeTab, setActiveTab] = useState("reflection");
+  
+  // Get the latest reflection if available
+  const getLatestReflection = () => {
+    if (!habit || !habit.habit_reflections || habit.habit_reflections.length === 0) {
+      return null;
+    }
+    
+    return habit.habit_reflections.sort((a: any, b: any) => 
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    )[0];
+  };
+  
+  const latestReflection = getLatestReflection();
+  
+  const handleSubmit = () => {
+    onSubmit(currentReflection, obstacles);
+    setCurrentReflection("");
+    setObstacles("");
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-4xl">
+      <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>SRHI - Gewohnheitsindex</DialogTitle>
-          <DialogDescription>
-            Bewerte deine Gewohnheit und identifiziere Herausforderungen
-          </DialogDescription>
+          <DialogTitle>Reflexion: {habit?.name}</DialogTitle>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Left column - SRHI Questions */}
-          <div className="space-y-4">
-            <div className="bg-blue-50 p-3 rounded-lg mb-4">
-              <div className="flex items-start space-x-2">
-                <Info className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                <p className="text-sm text-blue-700">
-                  Der SRHI hilft dir zu verstehen, wie automatisiert deine Gewohnheit bereits ist. 
-                  Eine höhere Punktzahl zeigt eine stärkere Gewohnheit.
-                </p>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              {questions.map((question, index) => (
-                <div key={index} className="border p-3 rounded-lg bg-gray-50">
-                  <Label className="text-sm font-medium mb-2 block">{question}</Label>
-                  <RadioGroup
-                    value={responses[index]}
-                    onValueChange={(value) => onResponseChange(index, value)}
-                    className="flex justify-between space-x-2"
-                  >
-                    <div className="flex-1 border rounded-md p-2 flex flex-col items-center hover:bg-gray-100">
-                      <RadioGroupItem value="1" id={`q${index}-1`} />
-                      <Label htmlFor={`q${index}-1`} className="text-xs mt-1">
-                        Nein
-                      </Label>
-                    </div>
-                    <div className="flex-1 border rounded-md p-2 flex flex-col items-center hover:bg-gray-100">
-                      <RadioGroupItem value="2" id={`q${index}-2`} />
-                      <Label htmlFor={`q${index}-2`} className="text-xs mt-1">
-                        Neutral
-                      </Label>
-                    </div>
-                    <div className="flex-1 border rounded-md p-2 flex flex-col items-center hover:bg-gray-100">
-                      <RadioGroupItem value="3" id={`q${index}-3`} />
-                      <Label htmlFor={`q${index}-3`} className="text-xs mt-1">
-                        Ja
-                      </Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Right column - Challenges and Reflection */}
-          <div className="space-y-4">
-            {customQuestions?.map((q: any) => (
-              <div key={q.id} className="border p-4 rounded-lg">
-                <Label className="font-medium mb-2 block">{q.question}</Label>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-2">
+          <TabsList className="grid grid-cols-2 mb-4">
+            <TabsTrigger value="reflection">Reflexion</TabsTrigger>
+            <TabsTrigger value="history">Verlauf</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="reflection" className="space-y-4">
+            <div className="space-y-4">
+              <div>
+                <Label className="mb-2 block">Deine Gedanken zur Gewohnheit</Label>
                 <Textarea
-                  placeholder="Deine Antwort..."
-                  className="h-20"
-                  onChange={(e) => onReflectionChange(e.target.value)}
+                  placeholder="Wie läuft es mit dieser Gewohnheit? Was funktioniert gut, was könnte besser sein?"
+                  className="min-h-[100px]"
+                  value={currentReflection}
+                  onChange={(e) => setCurrentReflection(e.target.value)}
                 />
               </div>
-            ))}
-
-            <div className="border p-4 rounded-lg bg-orange-50">
-              <div className="flex items-start space-x-2 mb-3">
-                <AlertTriangle className="h-5 w-5 text-orange-600 mt-0.5 flex-shrink-0" />
-                <Label className="font-medium">Herausforderungen & Hindernisse</Label>
+              
+              <div>
+                <Label className="mb-2 block">Hürden & Hindernisse</Label>
+                <Textarea
+                  placeholder="Welche Hürden hast du erlebt? Was hat dich aufgehalten?"
+                  className="min-h-[100px]"
+                  value={obstacles}
+                  onChange={(e) => setObstacles(e.target.value)}
+                />
               </div>
-              <Textarea
-                value={reflection}
-                onChange={(e) => onReflectionChange(e.target.value)}
-                placeholder="Welche Herausforderungen oder Hindernisse hast du bei dieser Gewohnheit erlebt? Was könnte dir helfen, sie zu überwinden?"
-                className="h-32"
-              />
             </div>
-          </div>
-        </div>
-
-        <Button onClick={onSubmit} className="w-full mt-4">
-          <Check className="mr-2 h-4 w-4" /> Reflexion abschließen
-        </Button>
+            
+            <DialogFooter>
+              <Button onClick={handleSubmit} className="w-full">
+                Reflexion speichern
+              </Button>
+            </DialogFooter>
+          </TabsContent>
+          
+          <TabsContent value="history">
+            {habit?.habit_reflections && habit.habit_reflections.length > 0 ? (
+              <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
+                {habit.habit_reflections
+                  .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                  .map((ref: any, index: number) => (
+                    <div key={index} className="border p-4 rounded-lg space-y-2">
+                      <div className="text-sm text-gray-500">
+                        {format(new Date(ref.created_at), "dd.MM.yyyy")}
+                      </div>
+                      
+                      {ref.reflection_text && (
+                        <div>
+                          <h4 className="font-medium text-sm">Reflexion</h4>
+                          <p className="text-sm">{ref.reflection_text}</p>
+                        </div>
+                      )}
+                      
+                      {ref.obstacles && (
+                        <div>
+                          <h4 className="font-medium text-sm">Hürden & Hindernisse</h4>
+                          <p className="text-sm">{ref.obstacles}</p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+              </div>
+            ) : (
+              <div className="text-center py-6 text-gray-500">
+                Noch keine Reflexionen vorhanden.
+              </div>
+            )}
+            
+            <DialogFooter className="mt-4">
+              <Button variant="outline" onClick={onClose} className="w-full">
+                Schließen
+              </Button>
+            </DialogFooter>
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );

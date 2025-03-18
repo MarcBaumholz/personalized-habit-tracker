@@ -10,6 +10,7 @@ import { ReflectionDialog } from "./ReflectionDialog";
 import { EditHabitDialog } from "./EditHabitDialog";
 import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { format, differenceInDays } from "date-fns";
 
 export const HabitJourney = () => {
   const [selectedHabit, setSelectedHabit] = useState<any>(null);
@@ -25,7 +26,7 @@ export const HabitJourney = () => {
 
       const { data: habitsData } = await supabase
         .from("habits")
-        .select("*, habit_completions(*)")
+        .select("*, habit_completions(*), habit_reflections(*)")
         .eq("user_id", user.id);
 
       return habitsData;
@@ -75,6 +76,34 @@ export const HabitJourney = () => {
     },
   });
 
+  const saveReflectionMutation = useMutation({
+    mutationFn: async ({ habitId, reflection, obstacles }: { habitId: string, reflection: string, obstacles: string }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
+      
+      const { data, error } = await supabase
+        .from("habit_reflections")
+        .insert({
+          habit_id: habitId,
+          user_id: user.id,
+          reflection_text: reflection,
+          obstacles: obstacles,
+          reflection_type: "weekly"
+        });
+        
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["habits"] });
+      setSelectedHabit(null);
+      toast({
+        title: "Reflexion gespeichert",
+        description: "Deine Reflexion wurde erfolgreich gespeichert.",
+      });
+    },
+  });
+
   const calculateProgress = (habit: any) => {
     const completions = habit.habit_completions?.length || 0;
     return Math.round((completions / 66) * 100);
@@ -94,6 +123,34 @@ export const HabitJourney = () => {
     return habit.habit_completions?.some((c: any) => 
       c.completed_date === today
     );
+  };
+
+  const needsReflection = (habit: any) => {
+    // Get the latest reflection
+    const reflections = habit.habit_reflections || [];
+    const latestReflection = reflections.sort((a: any, b: any) => 
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    )[0];
+    
+    // If no reflection or the last reflection was more than 7 days ago
+    if (!latestReflection) return true;
+    
+    const daysSinceLastReflection = differenceInDays(
+      new Date(), 
+      new Date(latestReflection.created_at)
+    );
+    
+    return daysSinceLastReflection >= 7;
+  };
+
+  const handleReflectionSubmit = (reflection: string, obstacles: string) => {
+    if (selectedHabit) {
+      saveReflectionMutation.mutate({ 
+        habitId: selectedHabit.id, 
+        reflection, 
+        obstacles 
+      });
+    }
   };
 
   return (
@@ -116,10 +173,13 @@ export const HabitJourney = () => {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8"
+                  className="h-8 w-8 relative"
                   onClick={() => setSelectedHabit(habit)}
                 >
-                  <BellDot className="h-4 w-4" />
+                  <BellDot className={`h-4 w-4 ${needsReflection(habit) ? "text-red-500" : ""}`} />
+                  {needsReflection(habit) && (
+                    <span className="absolute -top-1 -right-1 h-2 w-2 bg-red-500 rounded-full"></span>
+                  )}
                 </Button>
                 <Button
                   variant="ghost"
@@ -156,22 +216,25 @@ export const HabitJourney = () => {
         ))}
       </div>
 
-      <ReflectionDialog
-        isOpen={!!selectedHabit}
-        onClose={() => setSelectedHabit(null)}
-        questions={[
-          "Dieses Verhalten ist etwas, das ich automatisch tue.",
-          "Dieses Verhalten ist etwas, das ich ohne nachzudenken tue.",
-          "Dieses Verhalten ist etwas, das ich tue, ohne dass ich mich daran erinnern muss.",
-          "Dieses Verhalten ist etwas, das typisch für mich ist.",
-          "Dieses Verhalten ist etwas, das ich schon lange tue.",
-        ]}
-        responses={{}}
-        onResponseChange={() => {}}
-        reflection=""
-        onReflectionChange={() => {}}
-        onSubmit={() => {}}
-      />
+      {selectedHabit && (
+        <ReflectionDialog
+          isOpen={!!selectedHabit}
+          onClose={() => setSelectedHabit(null)}
+          questions={[
+            "Dieses Verhalten ist etwas, das ich automatisch tue.",
+            "Dieses Verhalten ist etwas, das ich ohne nachzudenken tue.",
+            "Dieses Verhalten ist etwas, das ich tue, ohne dass ich mich daran erinnern muss.",
+            "Dieses Verhalten ist etwas, das typisch für mich ist.",
+            "Dieses Verhalten ist etwas, das ich schon lange tue.",
+          ]}
+          responses={{}}
+          onResponseChange={() => {}}
+          reflection=""
+          onReflectionChange={() => {}}
+          onSubmit={handleReflectionSubmit}
+          habit={selectedHabit}
+        />
+      )}
     </Card>
   );
 };
