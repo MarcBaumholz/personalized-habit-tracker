@@ -49,7 +49,7 @@ const Onboarding = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-50">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-50 py-8">
       {step === 1 && <CommitmentPact onComplete={handleStepComplete} />}
       {step === 2 && <DeepInterview onComplete={handleStepComplete} />}
       {step === 3 && <PersonalityQuiz onComplete={handleStepComplete} />}
@@ -57,7 +57,7 @@ const Onboarding = () => {
       {step === 5 && (
         <>
           {keystoneHabits && keystoneHabits.length > 0 && (
-            <div className="max-w-2xl mx-auto mt-6">
+            <div className="max-w-2xl mx-auto mb-6">
               <Alert className="bg-blue-50 border-blue-200 mb-4">
                 <Info className="h-5 w-5 text-blue-600" />
                 <AlertTitle className="text-blue-700 text-lg">

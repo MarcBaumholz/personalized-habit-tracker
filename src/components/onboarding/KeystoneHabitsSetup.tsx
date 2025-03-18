@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Info, ArrowRight } from "lucide-react";
+import { Info, ArrowRight, Zap } from "lucide-react";
 
 interface KeystoneHabit {
   name: string;
@@ -74,12 +74,39 @@ export const KeystoneHabitsSetup = ({ onComplete, existingHabits = [] }: Keyston
     setHabits(newHabits);
   };
 
+  const fillWithSampleData = () => {
+    setHabits([
+      {
+        name: "Tägliche Meditation",
+        why_description: "Verbessert meine mentale Klarheit und Stressresistenz",
+        lifeArea: "personal",
+        guideline: "10 Minuten jeden Morgen nach dem Aufstehen",
+        frequency: "daily",
+        timeOfDay: "morning",
+        difficulty: "medium",
+        why: "Mehr innere Ruhe und Fokus im Alltag"
+      },
+      {
+        name: "Bewegung im Freien",
+        why_description: "Steigert meine Energie und körperliche Fitness",
+        lifeArea: "health",
+        guideline: "Mindestens 30 Minuten täglich spazieren gehen oder joggen",
+        frequency: "daily",
+        timeOfDay: "afternoon",
+        difficulty: "medium",
+        why: "Bessere Gesundheit und mehr Wohlbefinden"
+      },
+    ]);
+  };
+
   const handleSubmit = async () => {
-    if (habits.some(h => !h.name || !h.why_description)) {
+    // Fields are no longer required - we'll just skip empty habits
+    const validHabits = habits.filter(h => h.name.trim() !== "");
+    
+    if (validHabits.length === 0) {
       toast({
-        title: "Unvollständige Eingabe",
-        description: "Bitte fülle alle Pflichtfelder aus",
-        variant: "destructive",
+        title: "Keine Habits definiert",
+        description: "Bitte fülle mindestens einen Habit aus oder überspringe diesen Schritt",
       });
       return;
     }
@@ -88,9 +115,7 @@ export const KeystoneHabitsSetup = ({ onComplete, existingHabits = [] }: Keyston
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
-      for (const habit of habits) {
-        if (!habit.name || !habit.why_description) continue;
-        
+      for (const habit of validHabits) {
         // Create the normal habit first
         const { data: habitData, error: habitError } = await supabase
           .from("habits")
@@ -101,8 +126,8 @@ export const KeystoneHabitsSetup = ({ onComplete, existingHabits = [] }: Keyston
             frequency: habit.frequency,
             time_of_day: habit.timeOfDay,
             difficulty: habit.difficulty,
-            why_description: habit.why_description,
-            why: habit.why,
+            why_description: habit.why_description || "Keine Beschreibung",
+            why: habit.why || "Keine Angabe",
             is_keystone: true,
             phase: "implementation",
           })
@@ -118,8 +143,8 @@ export const KeystoneHabitsSetup = ({ onComplete, existingHabits = [] }: Keyston
             user_id: user.id,
             habit_name: habit.name,
             life_area: habit.lifeArea,
-            description: habit.why_description,
-            guideline: habit.guideline,
+            description: habit.why_description || "Keine Beschreibung",
+            guideline: habit.guideline || "Keine Anleitung",
             habit_id: habitData.id,
           });
 
@@ -208,6 +233,26 @@ export const KeystoneHabitsSetup = ({ onComplete, existingHabits = [] }: Keyston
           </AlertDescription>
         </Alert>
       )}
+
+      <div className="flex justify-between items-center">
+        <Button
+          onClick={fillWithSampleData}
+          variant="outline"
+          className="border-blue-300 text-blue-600 hover:bg-blue-50"
+        >
+          <Zap className="mr-1 h-4 w-4" /> Mit Beispielen ausfüllen
+        </Button>
+        
+        {!hasExistingHabits && (
+          <Button 
+            onClick={skipToHome} 
+            variant="ghost"
+            className="text-gray-500 hover:text-gray-700"
+          >
+            Überspringen <ArrowRight className="ml-1 h-4 w-4" />
+          </Button>
+        )}
+      </div>
 
       {habits.map((habit, index) => (
         <div key={index} className="space-y-4 p-4 border rounded-lg bg-blue-50">
@@ -324,12 +369,21 @@ export const KeystoneHabitsSetup = ({ onComplete, existingHabits = [] }: Keyston
         </div>
       ))}
 
-      <Button
-        onClick={handleSubmit}
-        className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-      >
-        Keystone Habits speichern
-      </Button>
+      <div className="flex space-x-3">
+        <Button
+          onClick={skipToHome}
+          variant="outline"
+          className="flex-1 border-blue-300"
+        >
+          Überspringen
+        </Button>
+        <Button
+          onClick={handleSubmit}
+          className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+        >
+          Keystone Habits speichern
+        </Button>
+      </div>
     </Card>
   );
 };
