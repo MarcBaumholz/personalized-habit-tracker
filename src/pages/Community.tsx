@@ -38,7 +38,7 @@ const Community = () => {
     }
   });
 
-  // Dummy user posts for now
+  // Dummy user posts with more content for a realistic feel
   const posts = [
     {
       id: 1,
@@ -47,9 +47,10 @@ const Community = () => {
         avatar: profile?.avatar_url || "/placeholder.svg",
       },
       habit: "Meditation",
-      description: "30 Tage Meditation Challenge erfolgreich abgeschlossen!",
+      description: "30 Tage Meditation Challenge erfolgreich abgeschlossen! Ich hätte nie gedacht, dass ich es schaffen würde, jeden Tag zu meditieren, aber die Ergebnisse sind erstaunlich. Mehr Fokus, weniger Stress und besserer Schlaf!",
       likes: 24,
       comments: 5,
+      timeAgo: "vor 2 Stunden",
     },
     {
       id: 2,
@@ -58,9 +59,10 @@ const Community = () => {
         avatar: "/placeholder.svg",
       },
       habit: "Deep Work",
-      description: "Meine Erfahrungen mit der 4-Stunden Deep Work Routine",
+      description: "Meine Erfahrungen mit der 4-Stunden Deep Work Routine haben meine Produktivität völlig verändert. Durch gezieltes Blockieren von Ablenkungen und volle Konzentration auf eine Aufgabe konnte ich Projekte abschließen, die ich monatelang aufgeschoben hatte.",
       likes: 18,
       comments: 3,
+      timeAgo: "vor 5 Stunden",
     },
     {
       id: 3,
@@ -69,9 +71,10 @@ const Community = () => {
         avatar: "/placeholder.svg",
       },
       habit: "Lesegewohnheiten",
-      description: "1000 Seiten in 2 Monaten - Ein Erfahrungsbericht",
+      description: "1000 Seiten in 2 Monaten - Ein Erfahrungsbericht. Mit einer systematischen Herangehensweise und täglichen 20-Minuten-Slots habe ich es geschafft, mein Leseziel zu erreichen. Mein Tipp: Lese verschiedene Genres parallel und wechsle je nach Stimmung.",
       likes: 31,
       comments: 7,
+      timeAgo: "vor 1 Tag",
     },
     {
       id: 4,
@@ -80,9 +83,34 @@ const Community = () => {
         avatar: "/placeholder.svg",
       },
       habit: "Fitness",
-      description: "Mein Weg zu 100km Laufen im Monat - Tipps für Anfänger",
+      description: "Mein Weg zu 100km Laufen im Monat - Tipps für Anfänger: 1) Langsam anfangen, 2) Konsistenz ist wichtiger als Geschwindigkeit, 3) Gute Schuhe sind entscheidend, 4) Einen Laufbuddy finden, 5) Kleine Meilensteine feiern. Wer möchte sich der Herausforderung anschließen?",
       likes: 42,
       comments: 12,
+      timeAgo: "vor 2 Tagen",
+    },
+    {
+      id: 5,
+      user: {
+        name: "Michael R.",
+        avatar: "/placeholder.svg",
+      },
+      habit: "Journaling",
+      description: "Nach 60 Tagen täglichem Journaling kann ich sagen: Es ist eine Superkraft für mentale Klarheit! Ich notiere jeden Morgen drei Dinge, für die ich dankbar bin, und plane drei wichtige Aufgaben für den Tag. Abends reflektiere ich über Erfolge und Lernmomente.",
+      likes: 29,
+      comments: 8,
+      timeAgo: "vor 3 Tagen",
+    },
+    {
+      id: 6,
+      user: {
+        name: "Laura B.",
+        avatar: "/placeholder.svg",
+      },
+      habit: "Ernährung",
+      description: "Meal Prep hat mein Leben verändert! Ich koche jetzt zweimal pro Woche vor und spare dadurch nicht nur Zeit und Geld, sondern esse auch viel gesünder. Wer Rezeptideen braucht, kann mich gerne anschreiben.",
+      likes: 36,
+      comments: 15,
+      timeAgo: "vor 4 Tagen",
     },
   ];
 
@@ -112,15 +140,18 @@ const Community = () => {
             <div className="grid gap-6">
               {posts.map((post) => (
                 <Card key={post.id} className="p-6">
-                  <div className="flex items-center gap-4 mb-4">
-                    <Avatar>
-                      <AvatarImage src={post.user.avatar} />
-                      <AvatarFallback>{post.user.name[0]}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <h3 className="font-medium">{post.user.name}</h3>
-                      <p className="text-sm text-muted-foreground">{post.habit}</p>
+                  <div className="flex items-center justify-between gap-4 mb-4">
+                    <div className="flex items-center gap-4">
+                      <Avatar>
+                        <AvatarImage src={post.user.avatar} />
+                        <AvatarFallback>{post.user.name[0]}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <h3 className="font-medium">{post.user.name}</h3>
+                        <p className="text-sm text-muted-foreground">{post.habit}</p>
+                      </div>
                     </div>
+                    <span className="text-sm text-muted-foreground">{post.timeAgo}</span>
                   </div>
                   
                   <p className="mb-4">{post.description}</p>

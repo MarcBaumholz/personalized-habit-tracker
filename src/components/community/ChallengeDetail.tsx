@@ -29,6 +29,7 @@ import {
   Share2
 } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
+import * as React from "react";
 
 // Sample data for demo with updated dates
 const SAMPLE_CHALLENGES: ChallengeProps[] = [
@@ -103,7 +104,12 @@ const DUMMY_PARTICIPANTS = [
   { id: 'dummy7', name: 'Julia Klein', avatar: '/placeholder.svg', progress: 22, user_id: 'dummy7' },
   { id: 'dummy8', name: 'Markus Schneider', avatar: '/placeholder.svg', progress: 18, user_id: 'dummy8' },
   { id: 'dummy9', name: 'Sophia Müller', avatar: '/placeholder.svg', progress: 33, user_id: 'dummy9' },
-  { id: 'dummy10', name: 'David Fischer', avatar: '/placeholder.svg', progress: 27, user_id: 'dummy10' }
+  { id: 'dummy10', name: 'David Fischer', avatar: '/placeholder.svg', progress: 27, user_id: 'dummy10' },
+  { id: 'dummy11', name: 'Emma Hoffmann', avatar: '/placeholder.svg', progress: 31, user_id: 'dummy11' },
+  { id: 'dummy12', name: 'Felix Schulz', avatar: '/placeholder.svg', progress: 42, user_id: 'dummy12' },
+  { id: 'dummy13', name: 'Hannah Bauer', avatar: '/placeholder.svg', progress: 24, user_id: 'dummy13' },
+  { id: 'dummy14', name: 'Lukas Richter', avatar: '/placeholder.svg', progress: 38, user_id: 'dummy14' },
+  { id: 'dummy15', name: 'Lena Krüger', avatar: '/placeholder.svg', progress: 29, user_id: 'dummy15' }
 ];
 
 interface ParticipantData {
@@ -181,28 +187,45 @@ export const ChallengeDetail = () => {
     enabled: !!id,
     queryFn: async () => {
       try {
-        const { data, error } = await supabase
+        // First fetch the challenge participants
+        const { data: participantsData, error: participantsError } = await supabase
           .from('challenge_participants')
-          .select(`
-            id,
-            challenge_id,
-            user_id,
-            progress,
-            created_at,
-            profiles:profiles(id, full_name, avatar_url, username)
-          `)
+          .select('id, challenge_id, user_id, progress, created_at')
           .eq('challenge_id', id);
         
-        if (error) throw error;
+        if (participantsError) throw participantsError;
         
-        // Transform data to participants format
-        return data.map((p): ParticipantData => ({
-          id: p.id,
-          user_id: p.user_id,
-          name: p.profiles?.full_name || p.profiles?.username || 'Anonymous User',
-          avatar: p.profiles?.avatar_url || '/placeholder.svg',
-          progress: p.progress || 0
-        }));
+        // Then fetch profiles for each participant
+        const participantsWithProfiles: ParticipantData[] = await Promise.all(
+          participantsData.map(async (participant) => {
+            const { data: profileData, error: profileError } = await supabase
+              .from('profiles')
+              .select('id, full_name, avatar_url, username')
+              .eq('id', participant.user_id)
+              .single();
+            
+            if (profileError) {
+              console.error("Error fetching profile for participant:", profileError);
+              return {
+                id: participant.id,
+                user_id: participant.user_id,
+                name: 'Anonymous User',
+                avatar: '/placeholder.svg',
+                progress: participant.progress || 0
+              };
+            }
+            
+            return {
+              id: participant.id,
+              user_id: participant.user_id,
+              name: profileData.full_name || profileData.username || 'Anonymous User',
+              avatar: profileData.avatar_url || '/placeholder.svg',
+              progress: participant.progress || 0
+            };
+          })
+        );
+        
+        return participantsWithProfiles;
       } catch (error) {
         console.error("Error fetching participants:", error);
         return [];
@@ -214,7 +237,7 @@ export const ChallengeDetail = () => {
   const participants = React.useMemo(() => {
     // Get a random subset of dummy participants based on challenge ID
     const challengeNumber = parseInt(id || '1', 10) % 10;
-    const dummyCount = 5 + challengeNumber; // Between 5-15 dummy participants
+    const dummyCount = 8 + challengeNumber; // Between 8-18 dummy participants
     const selectedDummies = DUMMY_PARTICIPANTS.slice(0, dummyCount).map(dummy => ({
       ...dummy,
       // Adjust progress randomly based on challenge ID to make it look unique
