@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Plus, Trash2, Package, Star, ArrowLeft, ArrowRight, Check } from "lucide-react";
+import { Plus, Trash2, Package, Star, ArrowLeft, ArrowRight, Check, InfinityIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { 
@@ -101,6 +101,23 @@ export const HabitToolboxes = ({ toolboxes = [], habitId, onToolboxUpdate }: Hab
   }, [isAddDialogOpen, activeTab]);
 
   const INSPIRATION_TOOLKITS = [
+    {
+      id: "hooked-model",
+      title: "Hooked-Modell",
+      description: "Analysiere deine Gewohnheit mit dem Hooked-Modell von Nir Eyal",
+      category: "Analyse",
+      steps: [
+        "Identifiziere externe und interne Auslöser",
+        "Definiere die konkrete Handlung",
+        "Bestimme die variable Belohnung",
+        "Plane die Investition",
+      ],
+      cue: "Wann wird die Gewohnheit ausgelöst?",
+      craving: "Welches Verlangen wird angesprochen?",
+      routine: "Was ist die eigentliche Handlung?",
+      reward: "Wie belohnst du dich?",
+      minimal_dose: "Kleinste sinnvolle Einheit",
+    },
     {
       id: "morning-routine",
       title: "Morgenroutine",

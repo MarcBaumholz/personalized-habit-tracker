@@ -22,7 +22,7 @@ export const HookedModel = ({ habitId, onSave }: HookedModelProps) => {
     trigger_external: "",
     trigger_internal: "",
     action: "",
-    reward_type: "tribe" as "tribe" | "hunt" | "self", // Default reward type
+    reward_type: "tribe" as "tribe" | "hunt" | "self", // Fixed type here
     reward_description: "",
     investment: "",
     five_whys: ["", "", "", "", ""],
