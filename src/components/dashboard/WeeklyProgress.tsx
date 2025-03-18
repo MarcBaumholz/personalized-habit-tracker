@@ -14,18 +14,21 @@ export const WeeklyProgress = ({ data }: WeeklyProgressProps) => {
         <ResponsiveContainer width="100%" height="100%">
           <LineChart 
             data={data}
-            margin={{ top: 5, right: 10, left: 10, bottom: 5 }}
+            margin={{ top: 20, right: 20, left: 20, bottom: 10 }}
           >
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis 
               dataKey="name" 
               tick={{ fontSize: 12 }}
               interval={0}
+              padding={{ left: 10, right: 10 }}
             />
             <YAxis 
               tick={{ fontSize: 12 }}
-              width={40}
-              tickMargin={5}
+              width={45}
+              tickMargin={10}
+              domain={[0, 'auto']}
+              padding={{ top: 20 }}
             />
             <Tooltip 
               contentStyle={{ 
@@ -34,11 +37,12 @@ export const WeeklyProgress = ({ data }: WeeklyProgressProps) => {
                 borderRadius: '8px',
                 boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
               }} 
+              formatter={(value) => [`${value}`, 'Abschlüsse']}
             />
             <Line 
               type="monotone" 
               dataKey="completions" 
-              stroke="hsl(var(--primary))"
+              stroke="#8B5CF6"
               strokeWidth={2}
               activeDot={{ r: 6 }}
             />

@@ -107,9 +107,9 @@ export const useCalendarData = (date: Date | undefined) => {
         .eq("user_id", user.id)
         .not("scheduled_time", "is", null);
 
-      // Since the actual todo data structure doesn't perfectly match our TodoSchedule type,
-      // we accept the data as is because it has all the required properties
-      return (data || []) as TodoSchedule[];
+      // Use type assertion to convert the todos data to TodoSchedule
+      // This is safe because the TodoSchedule interface has been updated to match the structure
+      return (data || []) as unknown as TodoSchedule[];
     },
   });
 

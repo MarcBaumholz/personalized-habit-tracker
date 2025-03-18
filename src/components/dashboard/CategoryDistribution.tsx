@@ -12,14 +12,14 @@ interface CategoryDistributionProps {
 }
 
 export const CategoryDistribution = ({ data }: CategoryDistributionProps) => {
-  const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8"];
+  const COLORS = ["#8B5CF6", "#D946EF", "#F97316", "#0EA5E9", "#22C55E"];
 
   return (
     <Card className="p-4 md:p-6">
       <h3 className="text-lg font-semibold mb-4">Kategorienverteilung</h3>
       <div className="h-[250px] md:h-[300px]">
         <ResponsiveContainer width="100%" height="100%">
-          <PieChart margin={{ top: 0, right: 10, bottom: 0, left: 10 }}>
+          <PieChart margin={{ top: 10, right: 20, bottom: 10, left: 20 }}>
             <Pie
               data={data}
               cx="50%"
@@ -37,7 +37,7 @@ export const CategoryDistribution = ({ data }: CategoryDistributionProps) => {
                   key={`cell-${index}`}
                   fill={COLORS[index % COLORS.length]}
                   stroke="#fff"
-                  strokeWidth={1}
+                  strokeWidth={2}
                 />
               ))}
             </Pie>
