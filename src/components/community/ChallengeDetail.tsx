@@ -28,8 +28,9 @@ import {
   Activity,
   Share2
 } from "lucide-react";
+import { format, differenceInDays } from "date-fns";
 
-// Sample data for demo
+// Sample data for demo with updated dates
 const SAMPLE_CHALLENGES: ChallengeProps[] = [
   {
     id: '1',
@@ -41,7 +42,7 @@ const SAMPLE_CHALLENGES: ChallengeProps[] = [
       unit: 'km'
     },
     currentProgress: 63,
-    endDate: '2023-11-30',
+    endDate: '2025-04-05',
     participants: [
       { id: '1', name: 'Anna Schmidt', avatar: '', progress: 15 },
       { id: '2', name: 'Max Mustermann', avatar: '', progress: 22 },
@@ -62,7 +63,7 @@ const SAMPLE_CHALLENGES: ChallengeProps[] = [
       unit: 'Minuten'
     },
     currentProgress: 210,
-    endDate: '2023-12-15',
+    endDate: '2025-04-15',
     participants: [
       { id: '1', name: 'Anna Schmidt', avatar: '', progress: 70 },
       { id: '2', name: 'Max Mustermann', avatar: '', progress: 80 },
@@ -73,14 +74,14 @@ const SAMPLE_CHALLENGES: ChallengeProps[] = [
   {
     id: '3',
     title: '1000 Seiten lesen',
-    description: 'Gemeinsam 1000 Seiten in einem Monat lesen',
+    description: 'Gemeinsam 1000 Seiten in zwei Monaten lesen',
     category: 'Bildung',
     target: {
       value: 1000,
       unit: 'Seiten'
     },
     currentProgress: 450,
-    endDate: '2023-12-31',
+    endDate: '2025-04-05',
     participants: [
       { id: '1', name: 'Laura Meyer', avatar: '', progress: 150 },
       { id: '2', name: 'Thomas Weber', avatar: '', progress: 125 },
@@ -118,6 +119,11 @@ export const ChallengeDetail = () => {
   }
 
   const progressPercentage = Math.min(100, Math.round((challenge.currentProgress / challenge.target.value) * 100));
+  
+  // Calculate days remaining until the end date
+  const today = new Date();
+  const endDate = new Date(challenge.endDate);
+  const daysRemaining = Math.max(0, differenceInDays(endDate, today));
   
   const handleAddProgress = () => {
     if (!newProgress || isNaN(Number(newProgress)) || Number(newProgress) <= 0) {
@@ -188,7 +194,7 @@ export const ChallengeDetail = () => {
                     <span className="font-medium">Enddatum</span>
                   </div>
                   <p className="text-lg font-bold text-blue-700">
-                    {new Date(challenge.endDate).toLocaleDateString('de-DE')}
+                    {format(new Date(challenge.endDate), 'dd.MM.yyyy')}
                   </p>
                 </div>
               </div>
@@ -385,7 +391,7 @@ export const ChallengeDetail = () => {
                     <Clock className="h-5 w-5 text-blue-600 mr-2" />
                     <span className="font-medium">Verbleibend</span>
                   </div>
-                  <span className="text-lg font-bold text-blue-700">12 Tage</span>
+                  <span className="text-lg font-bold text-blue-700">{daysRemaining} Tage</span>
                 </div>
                 
                 <div className="flex justify-between items-center">
