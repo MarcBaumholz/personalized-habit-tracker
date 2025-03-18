@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -13,6 +13,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format } from "date-fns";
+import { useToast } from "@/hooks/use-toast";
 
 interface ReflectionDialogProps {
   isOpen: boolean;
@@ -22,7 +23,7 @@ interface ReflectionDialogProps {
   onResponseChange: (index: number, value: string) => void;
   reflection: string;
   onReflectionChange: (value: string) => void;
-  onSubmit: (reflection: string, obstacles: string) => void;
+  onSubmit: (reflection: string, obstacles: string, srhiResponses?: Record<number, string>) => void;
   habit?: any;
 }
 
@@ -41,6 +42,16 @@ export const ReflectionDialog = ({
   const [obstacles, setObstacles] = useState("");
   const [activeTab, setActiveTab] = useState("reflection");
   const [srhi, setSrhi] = useState<Record<number, string>>({});
+  const { toast } = useToast();
+  
+  // Reset states when dialog opens
+  useEffect(() => {
+    if (isOpen) {
+      setCurrentReflection("");
+      setObstacles("");
+      setSrhi({});
+    }
+  }, [isOpen]);
   
   // Get the latest reflection if available
   const getLatestReflection = () => {
@@ -55,10 +66,35 @@ export const ReflectionDialog = ({
   
   const latestReflection = getLatestReflection();
   
-  const handleSubmit = () => {
+  const handleReflectionSubmit = () => {
     onSubmit(currentReflection, obstacles);
     setCurrentReflection("");
     setObstacles("");
+    toast({
+      title: "Reflexion gespeichert",
+      description: "Deine Reflexion wurde erfolgreich gespeichert."
+    });
+    onClose();
+  };
+
+  const handleSrhiSubmit = () => {
+    // Check if at least one question has been answered
+    if (Object.keys(srhi).length === 0) {
+      toast({
+        title: "Bitte beantworte mindestens eine Frage",
+        description: "Um den SRHI zu speichern, beantworte bitte mindestens eine Frage.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    onSubmit("", "", srhi);
+    setSrhi({});
+    toast({
+      title: "SRHI gespeichert",
+      description: "Deine SRHI-Antworten wurden erfolgreich gespeichert."
+    });
+    onClose();
   };
 
   const handleSrhiChange = (index: number, value: string) => {
@@ -106,7 +142,7 @@ export const ReflectionDialog = ({
             </div>
             
             <DialogFooter>
-              <Button onClick={handleSubmit} className="w-full">
+              <Button onClick={handleReflectionSubmit} className="w-full">
                 Reflexion speichern
               </Button>
             </DialogFooter>
@@ -144,7 +180,7 @@ export const ReflectionDialog = ({
               ))}
               
               <DialogFooter>
-                <Button onClick={handleSubmit} className="w-full">
+                <Button onClick={handleSrhiSubmit} className="w-full">
                   SRHI speichern
                 </Button>
               </DialogFooter>
@@ -173,6 +209,19 @@ export const ReflectionDialog = ({
                         <div>
                           <h4 className="font-medium text-sm">Hürden & Hindernisse</h4>
                           <p className="text-sm">{ref.obstacles}</p>
+                        </div>
+                      )}
+                      
+                      {ref.srhi_responses && (
+                        <div>
+                          <h4 className="font-medium text-sm">SRHI-Antworten</h4>
+                          <ul className="text-sm space-y-1">
+                            {Object.entries(JSON.parse(ref.srhi_responses)).map(([index, value]) => (
+                              <li key={index}>
+                                {questions[parseInt(index)]}: {value}
+                              </li>
+                            ))}
+                          </ul>
                         </div>
                       )}
                     </div>

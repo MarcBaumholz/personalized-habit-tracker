@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -76,19 +77,41 @@ export const HabitJourney = () => {
   });
 
   const saveReflectionMutation = useMutation({
-    mutationFn: async ({ habitId, reflection, obstacles }: { habitId: string, reflection: string, obstacles: string }) => {
+    mutationFn: async ({ 
+      habitId, 
+      reflection, 
+      obstacles, 
+      srhiResponses 
+    }: { 
+      habitId: string; 
+      reflection: string; 
+      obstacles: string;
+      srhiResponses?: Record<number, string>;
+    }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
       
+      const payload: any = {
+        habit_id: habitId,
+        user_id: user.id,
+        reflection_type: "weekly"
+      };
+      
+      if (reflection) {
+        payload.reflection_text = reflection;
+      }
+      
+      if (obstacles) {
+        payload.obstacles = obstacles;
+      }
+      
+      if (srhiResponses) {
+        payload.srhi_responses = JSON.stringify(srhiResponses);
+      }
+        
       const { data, error } = await supabase
         .from("habit_reflections")
-        .insert({
-          habit_id: habitId,
-          user_id: user.id,
-          reflection_text: reflection,
-          obstacles: obstacles,
-          reflection_type: "weekly"
-        });
+        .insert(payload);
         
       if (error) throw error;
       return data;
@@ -140,12 +163,13 @@ export const HabitJourney = () => {
     return daysSinceLastReflection >= 7;
   };
 
-  const handleReflectionSubmit = (reflection: string, obstacles: string) => {
+  const handleReflectionSubmit = (reflection: string, obstacles: string, srhiResponses?: Record<number, string>) => {
     if (selectedHabit) {
       saveReflectionMutation.mutate({ 
         habitId: selectedHabit.id, 
         reflection, 
-        obstacles 
+        obstacles,
+        srhiResponses
       });
     }
   };
@@ -189,7 +213,13 @@ export const HabitJourney = () => {
                   className="h-8 w-8 relative"
                   onClick={() => setSelectedHabit(habit)}
                 >
-                  <BellDot className={`h-4 w-4 ${needsReflection(habit) ? "text-red-500" : hasCompletedReflection(habit) ? "text-black" : ""}`} />
+                  <BellDot className={`h-4 w-4 ${
+                    needsReflection(habit) 
+                      ? "text-red-500" 
+                      : hasCompletedReflection(habit) 
+                        ? "text-black" 
+                        : ""
+                  }`} />
                   {needsReflection(habit) && (
                     <span className="absolute -top-1 -right-1 h-2 w-2 bg-red-500 rounded-full"></span>
                   )}
