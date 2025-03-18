@@ -40,6 +40,7 @@ export const ReflectionDialog = ({
   const [currentReflection, setCurrentReflection] = useState("");
   const [obstacles, setObstacles] = useState("");
   const [activeTab, setActiveTab] = useState("reflection");
+  const [srhi, setSrhi] = useState<Record<number, string>>({});
   
   // Get the latest reflection if available
   const getLatestReflection = () => {
@@ -60,6 +61,13 @@ export const ReflectionDialog = ({
     setObstacles("");
   };
 
+  const handleSrhiChange = (index: number, value: string) => {
+    setSrhi(prev => ({
+      ...prev,
+      [index]: value
+    }));
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-md">
@@ -68,8 +76,9 @@ export const ReflectionDialog = ({
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-2">
-          <TabsList className="grid grid-cols-2 mb-4">
+          <TabsList className="grid grid-cols-3 mb-4">
             <TabsTrigger value="reflection">Reflexion</TabsTrigger>
+            <TabsTrigger value="srhi">SRHI</TabsTrigger>
             <TabsTrigger value="history">Verlauf</TabsTrigger>
           </TabsList>
           
@@ -101,6 +110,45 @@ export const ReflectionDialog = ({
                 Reflexion speichern
               </Button>
             </DialogFooter>
+          </TabsContent>
+          
+          <TabsContent value="srhi" className="space-y-4">
+            <div className="space-y-4">
+              {questions.map((question, index) => (
+                <div key={index} className="space-y-2">
+                  <Label className="text-sm">{question}</Label>
+                  <RadioGroup 
+                    value={srhi[index] || ""} 
+                    onValueChange={(value) => handleSrhiChange(index, value)}
+                    className="flex space-x-1"
+                  >
+                    {[1, 2, 3, 4, 5, 6, 7].map((value) => (
+                      <div key={value} className="flex flex-col items-center">
+                        <RadioGroupItem 
+                          value={value.toString()} 
+                          id={`q${index}-${value}`} 
+                          className="peer sr-only" 
+                        />
+                        <Label 
+                          htmlFor={`q${index}-${value}`}
+                          className="px-3 py-2 rounded-md cursor-pointer border peer-data-[state=checked]:bg-primary peer-data-[state=checked]:text-primary-foreground"
+                        >
+                          {value}
+                        </Label>
+                        {value === 1 && <span className="text-xs mt-1">Trifft nicht zu</span>}
+                        {value === 7 && <span className="text-xs mt-1">Trifft voll zu</span>}
+                      </div>
+                    ))}
+                  </RadioGroup>
+                </div>
+              ))}
+              
+              <DialogFooter>
+                <Button onClick={handleSubmit} className="w-full">
+                  SRHI speichern
+                </Button>
+              </DialogFooter>
+            </div>
           </TabsContent>
           
           <TabsContent value="history">

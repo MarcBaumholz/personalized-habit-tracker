@@ -1,4 +1,3 @@
-
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -126,13 +125,11 @@ export const HabitJourney = () => {
   };
 
   const needsReflection = (habit: any) => {
-    // Get the latest reflection
     const reflections = habit.habit_reflections || [];
     const latestReflection = reflections.sort((a: any, b: any) => 
       new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     )[0];
     
-    // If no reflection or the last reflection was more than 7 days ago
     if (!latestReflection) return true;
     
     const daysSinceLastReflection = differenceInDays(
@@ -151,6 +148,22 @@ export const HabitJourney = () => {
         obstacles 
       });
     }
+  };
+
+  const hasCompletedReflection = (habit: any) => {
+    const reflections = habit.habit_reflections || [];
+    const latestReflection = reflections.sort((a: any, b: any) => 
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    )[0];
+    
+    if (!latestReflection) return false;
+    
+    const daysSinceLastReflection = differenceInDays(
+      new Date(), 
+      new Date(latestReflection.created_at)
+    );
+    
+    return daysSinceLastReflection < 7;
   };
 
   return (
@@ -176,7 +189,7 @@ export const HabitJourney = () => {
                   className="h-8 w-8 relative"
                   onClick={() => setSelectedHabit(habit)}
                 >
-                  <BellDot className={`h-4 w-4 ${needsReflection(habit) ? "text-red-500" : ""}`} />
+                  <BellDot className={`h-4 w-4 ${needsReflection(habit) ? "text-red-500" : hasCompletedReflection(habit) ? "text-black" : ""}`} />
                   {needsReflection(habit) && (
                     <span className="absolute -top-1 -right-1 h-2 w-2 bg-red-500 rounded-full"></span>
                   )}
