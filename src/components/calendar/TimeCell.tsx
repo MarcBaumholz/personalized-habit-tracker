@@ -55,7 +55,7 @@ export const TimeCell: React.FC<TimeCellProps> = ({
       className={`border-b border-r h-20 group relative ${bgClass} ${isBlocked ? 'cursor-not-allowed' : 'cursor-pointer'} transition-colors`}
       onClick={handleClick}
     >
-      {matchingSchedules.length > 0 && (
+      {hasItems && (
         <div className="absolute inset-0 p-1 flex flex-col gap-1 overflow-y-auto">
           {matchingSchedules.map(schedule => (
             <div
