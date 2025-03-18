@@ -1,4 +1,3 @@
-
 import { Navigation } from "@/components/layout/Navigation";
 import { Card } from "@/components/ui/card";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
@@ -13,7 +12,7 @@ import { WeeklyTimeboxing } from "@/components/calendar/WeeklyTimeboxing";
 import { DndContext, DragEndEvent } from "@dnd-kit/core";
 import { useTodos } from "@/hooks/useTodos";
 import { Button } from "@/components/ui/button";
-import { CalendarRange, Settings, Calendar, CalendarClock } from "lucide-react";
+import { CalendarRange, Settings, CalendarIcon, CalendarClock } from "lucide-react";
 import {
   Popover,
   PopoverContent,
