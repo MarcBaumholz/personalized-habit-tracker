@@ -6,12 +6,15 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Users, Calendar, Trophy, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Participant {
   id: string;
   name: string;
   avatar: string;
   progress: number;
+  user_id?: string;
 }
 
 export interface ChallengeProps {
@@ -35,6 +38,40 @@ export const ChallengeCard = ({ id, title, description, category, target, curren
   
   const displayedParticipants = participants.slice(0, 5);
   const remainingParticipants = participants.length - 5;
+  
+  // Get current user session
+  const { data: session } = useQuery({
+    queryKey: ['session'],
+    queryFn: async () => {
+      const { data } = await supabase.auth.getSession();
+      return data.session;
+    }
+  });
+
+  // Check if user is participating
+  const { data: userParticipation } = useQuery({
+    queryKey: ['user-participation', id, session?.user?.id],
+    enabled: !!session?.user?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('challenge_participants')
+        .select('*')
+        .eq('challenge_id', id)
+        .eq('user_id', session!.user.id)
+        .single();
+        
+      if (error && error.code !== 'PGRST116') throw error;
+      return data;
+    }
+  });
+
+  // Override isJoined with the actual participation status from the database
+  const realIsJoined = userParticipation ? true : isJoined;
+
+  const handleJoinOrView = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate(`/community-challenge/${id}`);
+  };
 
   return (
     <Card className="p-6 hover:shadow-md transition-shadow border border-blue-100/60 cursor-pointer" onClick={() => navigate(`/community-challenge/${id}`)}>
@@ -95,14 +132,11 @@ export const ChallengeCard = ({ id, title, description, category, target, curren
         </div>
 
         <Button 
-          variant={isJoined ? "outline" : "default"} 
+          variant={realIsJoined ? "outline" : "default"} 
           className="mt-4 w-full"
-          onClick={(e) => {
-            e.stopPropagation();
-            navigate(`/community-challenge/${id}`);
-          }}
+          onClick={handleJoinOrView}
         >
-          {isJoined ? "Zur Challenge" : "Beitreten"}
+          {realIsJoined ? "Zur Challenge" : "Beitreten"}
         </Button>
       </div>
     </Card>

@@ -1,11 +1,13 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ChallengeCard, ChallengeProps } from "./ChallengeCard";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Users, Search, Filter, Plus } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 // Sample data for demo
 const SAMPLE_CHALLENGES: ChallengeProps[] = [
@@ -71,15 +73,67 @@ const SAMPLE_CHALLENGES: ChallengeProps[] = [
 
 export const CommunityChallenges = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [challenges, setChallenges] = useState<ChallengeProps[]>(SAMPLE_CHALLENGES);
   
-  const filteredChallenges = SAMPLE_CHALLENGES.filter(challenge => 
+  // Get current user
+  const { data: session } = useQuery({
+    queryKey: ['session'],
+    queryFn: async () => {
+      const { data } = await supabase.auth.getSession();
+      return data.session;
+    }
+  });
+
+  // Get challenge participants
+  const { data: participations } = useQuery({
+    queryKey: ['participations', session?.user?.id],
+    enabled: !!session?.user?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('challenge_participants')
+        .select(`
+          id, 
+          challenge_id, 
+          user_id, 
+          progress
+        `)
+        .eq('user_id', session!.user.id);
+      
+      if (error) throw error;
+      return data;
+    },
+    initialData: []
+  });
+
+  // Update challenges with user participation data
+  useEffect(() => {
+    if (participations && participations.length > 0) {
+      const updatedChallenges = SAMPLE_CHALLENGES.map(challenge => {
+        const participation = participations.find(p => p.challenge_id === challenge.id);
+        return {
+          ...challenge,
+          isJoined: !!participation
+        };
+      });
+      setChallenges(updatedChallenges);
+    } else {
+      setChallenges(SAMPLE_CHALLENGES);
+    }
+  }, [participations]);
+  
+  const filteredChallenges = challenges.filter(challenge => 
     challenge.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     challenge.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
     challenge.category.toLowerCase().includes(searchQuery.toLowerCase())
   );
   
-  const joinedChallenges = filteredChallenges.filter(challenge => challenge.isJoined);
-  const availableChallenges = filteredChallenges.filter(challenge => !challenge.isJoined);
+  const joinedChallenges = filteredChallenges.filter(challenge => 
+    challenge.isJoined || participations?.some(p => p.challenge_id === challenge.id)
+  );
+  
+  const availableChallenges = filteredChallenges.filter(challenge => 
+    !challenge.isJoined && !participations?.some(p => p.challenge_id === challenge.id)
+  );
 
   return (
     <div className="space-y-8">
