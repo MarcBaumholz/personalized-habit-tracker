@@ -92,6 +92,20 @@ const SAMPLE_CHALLENGES: ChallengeProps[] = [
   }
 ];
 
+// Dummy participants data with realistic names and avatars
+const DUMMY_PARTICIPANTS = [
+  { id: 'dummy1', name: 'Anna Schmidt', avatar: '/placeholder.svg', progress: 32, user_id: 'dummy1' },
+  { id: 'dummy2', name: 'Max Mustermann', avatar: '/placeholder.svg', progress: 45, user_id: 'dummy2' },
+  { id: 'dummy3', name: 'Laura Meyer', avatar: '/placeholder.svg', progress: 28, user_id: 'dummy3' },
+  { id: 'dummy4', name: 'Thomas Weber', avatar: '/placeholder.svg', progress: 37, user_id: 'dummy4' },
+  { id: 'dummy5', name: 'Sarah Wagner', avatar: '/placeholder.svg', progress: 19, user_id: 'dummy5' },
+  { id: 'dummy6', name: 'Michael Becker', avatar: '/placeholder.svg', progress: 41, user_id: 'dummy6' },
+  { id: 'dummy7', name: 'Julia Klein', avatar: '/placeholder.svg', progress: 22, user_id: 'dummy7' },
+  { id: 'dummy8', name: 'Markus Schneider', avatar: '/placeholder.svg', progress: 18, user_id: 'dummy8' },
+  { id: 'dummy9', name: 'Sophia Müller', avatar: '/placeholder.svg', progress: 33, user_id: 'dummy9' },
+  { id: 'dummy10', name: 'David Fischer', avatar: '/placeholder.svg', progress: 27, user_id: 'dummy10' }
+];
+
 interface ParticipantData {
   id: string;
   name: string;
@@ -111,7 +125,7 @@ interface ChallengeParticipant {
     full_name: string | null;
     avatar_url: string | null;
     username: string | null;
-  };
+  } | null;
 }
 
 export const ChallengeDetail = () => {
@@ -162,35 +176,57 @@ export const ChallengeDetail = () => {
   });
 
   // Get participants with their profiles
-  const { data: participants, isLoading: isLoadingParticipants } = useQuery({
+  const { data: dbParticipants, isLoading: isLoadingParticipants } = useQuery({
     queryKey: ['challenge-participants', id],
     enabled: !!id,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('challenge_participants')
-        .select(`
-          id,
-          challenge_id,
-          user_id,
-          progress,
-          created_at,
-          profiles:user_id(id, full_name, avatar_url, username)
-        `)
-        .eq('challenge_id', id);
-      
-      if (error) throw error;
-      
-      // Transform data to participants format
-      return data.map((p): ParticipantData => ({
-        id: p.id,
-        user_id: p.user_id,
-        name: p.profiles?.full_name || p.profiles?.username || 'Anonymous User',
-        avatar: p.profiles?.avatar_url || '',
-        progress: p.progress || 0
-      }));
-    },
-    initialData: challenge?.participants || []
+      try {
+        const { data, error } = await supabase
+          .from('challenge_participants')
+          .select(`
+            id,
+            challenge_id,
+            user_id,
+            progress,
+            created_at,
+            profiles:profiles(id, full_name, avatar_url, username)
+          `)
+          .eq('challenge_id', id);
+        
+        if (error) throw error;
+        
+        // Transform data to participants format
+        return data.map((p): ParticipantData => ({
+          id: p.id,
+          user_id: p.user_id,
+          name: p.profiles?.full_name || p.profiles?.username || 'Anonymous User',
+          avatar: p.profiles?.avatar_url || '/placeholder.svg',
+          progress: p.progress || 0
+        }));
+      } catch (error) {
+        console.error("Error fetching participants:", error);
+        return [];
+      }
+    }
   });
+
+  // Combine real participants with dummy data for a realistic display
+  const participants = React.useMemo(() => {
+    // Get a random subset of dummy participants based on challenge ID
+    const challengeNumber = parseInt(id || '1', 10) % 10;
+    const dummyCount = 5 + challengeNumber; // Between 5-15 dummy participants
+    const selectedDummies = DUMMY_PARTICIPANTS.slice(0, dummyCount).map(dummy => ({
+      ...dummy,
+      // Adjust progress randomly based on challenge ID to make it look unique
+      progress: Math.floor(dummy.progress * (0.8 + (challengeNumber / 10)))
+    }));
+    
+    // Combine real participants with dummies, but don't duplicate real users
+    const realUserIds = (dbParticipants || []).map(p => p.user_id);
+    const filteredDummies = selectedDummies.filter(d => !realUserIds.includes(d.user_id));
+    
+    return [...(dbParticipants || []), ...filteredDummies];
+  }, [dbParticipants, id]);
 
   // Calculate total progress
   const totalProgress = participants?.reduce((sum, p) => sum + p.progress, 0) || 0;
@@ -208,11 +244,17 @@ export const ChallengeDetail = () => {
           challenge_id: id!,
           user_id: session.user.id,
           progress: userParticipant.progress,
-          created_at: new Date().toISOString()
+          created_at: new Date().toISOString(),
+          profile: profile ? {
+            id: profile.id,
+            full_name: profile.full_name,
+            avatar_url: profile.avatar_url,
+            username: profile.username
+          } : null
         });
       }
     }
-  }, [session, participants, id]);
+  }, [session, participants, id, profile]);
 
   // Join challenge mutation
   const joinChallengeMutation = useMutation({
@@ -319,7 +361,7 @@ export const ChallengeDetail = () => {
         <div className="p-12 bg-gray-50 rounded-lg border border-gray-200">
           <h2 className="text-xl font-bold mb-2">Challenge nicht gefunden</h2>
           <p className="text-gray-600 mb-6">Die gesuchte Challenge konnte nicht gefunden werden.</p>
-          <Button onClick={() => navigate('/toolbox')}>
+          <Button onClick={() => navigate('/community')}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Zurück zur Übersicht
           </Button>
@@ -340,7 +382,7 @@ export const ChallengeDetail = () => {
       <Button 
         variant="outline" 
         className="mb-6" 
-        onClick={() => navigate('/toolbox')}
+        onClick={() => navigate('/community')}
       >
         <ArrowLeft className="mr-2 h-4 w-4" />
         Zurück zur Übersicht

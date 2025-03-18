@@ -8,8 +8,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CommunityChallenges } from "@/components/community/CommunityChallenges";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 const Community = () => {
+  const navigate = useNavigate();
+  
   // Get current user
   const { data: session } = useQuery({
     queryKey: ['session'],
@@ -35,6 +38,7 @@ const Community = () => {
     }
   });
 
+  // Dummy user posts for now
   const posts = [
     {
       id: 1,
@@ -57,6 +61,28 @@ const Community = () => {
       description: "Meine Erfahrungen mit der 4-Stunden Deep Work Routine",
       likes: 18,
       comments: 3,
+    },
+    {
+      id: 3,
+      user: {
+        name: "Thomas W.",
+        avatar: "/placeholder.svg",
+      },
+      habit: "Lesegewohnheiten",
+      description: "1000 Seiten in 2 Monaten - Ein Erfahrungsbericht",
+      likes: 31,
+      comments: 7,
+    },
+    {
+      id: 4,
+      user: {
+        name: "Julia M.",
+        avatar: "/placeholder.svg",
+      },
+      habit: "Fitness",
+      description: "Mein Weg zu 100km Laufen im Monat - Tipps für Anfänger",
+      likes: 42,
+      comments: 12,
     },
   ];
 
