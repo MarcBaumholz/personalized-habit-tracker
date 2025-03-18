@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -31,7 +30,6 @@ import {
 import { format, differenceInDays } from "date-fns";
 import * as React from "react";
 
-// Sample data for demo with updated dates
 const SAMPLE_CHALLENGES: ChallengeProps[] = [
   {
     id: '1',
@@ -93,7 +91,6 @@ const SAMPLE_CHALLENGES: ChallengeProps[] = [
   }
 ];
 
-// Dummy participants data with realistic names and avatars
 const DUMMY_PARTICIPANTS = [
   { id: 'dummy1', name: 'Anna Schmidt', avatar: '/placeholder.svg', progress: 32, user_id: 'dummy1' },
   { id: 'dummy2', name: 'Max Mustermann', avatar: '/placeholder.svg', progress: 45, user_id: 'dummy2' },
@@ -143,11 +140,9 @@ export const ChallengeDetail = () => {
   const [isAddProgressOpen, setIsAddProgressOpen] = useState(false);
   const [userParticipation, setUserParticipation] = useState<ChallengeParticipant | null>(null);
   
-  // Get challenge data
   const { data: challenge, isLoading: isLoadingChallenge } = useQuery({
     queryKey: ['challenge', id],
     queryFn: async () => {
-      // For now, use the sample data
       const foundChallenge = SAMPLE_CHALLENGES.find(c => c.id === id);
       if (!foundChallenge) {
         throw new Error("Challenge not found");
@@ -156,7 +151,6 @@ export const ChallengeDetail = () => {
     }
   });
   
-  // Get current user
   const { data: session } = useQuery({
     queryKey: ['session'],
     queryFn: async () => {
@@ -165,7 +159,6 @@ export const ChallengeDetail = () => {
     }
   });
 
-  // Get user profile
   const { data: profile } = useQuery({
     queryKey: ['profile', session?.user?.id],
     enabled: !!session?.user?.id,
@@ -181,13 +174,11 @@ export const ChallengeDetail = () => {
     }
   });
 
-  // Get participants with their profiles
   const { data: dbParticipants, isLoading: isLoadingParticipants } = useQuery({
     queryKey: ['challenge-participants', id],
     enabled: !!id,
     queryFn: async () => {
       try {
-        // First fetch the challenge participants
         const { data: participantsData, error: participantsError } = await supabase
           .from('challenge_participants')
           .select('id, challenge_id, user_id, progress, created_at')
@@ -195,7 +186,6 @@ export const ChallengeDetail = () => {
         
         if (participantsError) throw participantsError;
         
-        // Then fetch profiles for each participant
         const participantsWithProfiles: ParticipantData[] = await Promise.all(
           participantsData.map(async (participant) => {
             const { data: profileData, error: profileError } = await supabase
@@ -233,28 +223,22 @@ export const ChallengeDetail = () => {
     }
   });
 
-  // Combine real participants with dummy data for a realistic display
   const participants = React.useMemo(() => {
-    // Get a random subset of dummy participants based on challenge ID
     const challengeNumber = parseInt(id || '1', 10) % 10;
-    const dummyCount = 8 + challengeNumber; // Between 8-18 dummy participants
+    const dummyCount = 8 + challengeNumber;
     const selectedDummies = DUMMY_PARTICIPANTS.slice(0, dummyCount).map(dummy => ({
       ...dummy,
-      // Adjust progress randomly based on challenge ID to make it look unique
       progress: Math.floor(dummy.progress * (0.8 + (challengeNumber / 10)))
     }));
     
-    // Combine real participants with dummies, but don't duplicate real users
     const realUserIds = (dbParticipants || []).map(p => p.user_id);
     const filteredDummies = selectedDummies.filter(d => !realUserIds.includes(d.user_id));
     
     return [...(dbParticipants || []), ...filteredDummies];
   }, [dbParticipants, id]);
 
-  // Calculate total progress
   const totalProgress = participants?.reduce((sum, p) => sum + p.progress, 0) || 0;
 
-  // Check if user is already participating
   useEffect(() => {
     if (session?.user?.id && participants) {
       const userParticipant = participants.find(
@@ -279,7 +263,6 @@ export const ChallengeDetail = () => {
     }
   }, [session, participants, id, profile]);
 
-  // Join challenge mutation
   const joinChallengeMutation = useMutation({
     mutationFn: async () => {
       if (!session?.user?.id) throw new Error("You must be logged in to join a challenge");
@@ -314,7 +297,6 @@ export const ChallengeDetail = () => {
     }
   });
 
-  // Add progress mutation
   const addProgressMutation = useMutation({
     mutationFn: async (progress: number) => {
       if (!userParticipation) throw new Error("You must join the challenge first");
@@ -366,7 +348,11 @@ export const ChallengeDetail = () => {
     
     addProgressMutation.mutate(Number(newProgress));
   };
-  
+
+  const handleBackToOverview = () => {
+    navigate('/community');
+  };
+
   if (isLoadingChallenge) {
     return (
       <div className="container max-w-4xl mx-auto p-8 text-center">
@@ -384,7 +370,7 @@ export const ChallengeDetail = () => {
         <div className="p-12 bg-gray-50 rounded-lg border border-gray-200">
           <h2 className="text-xl font-bold mb-2">Challenge nicht gefunden</h2>
           <p className="text-gray-600 mb-6">Die gesuchte Challenge konnte nicht gefunden werden.</p>
-          <Button onClick={() => navigate('/community')}>
+          <Button onClick={handleBackToOverview}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Zurück zur Übersicht
           </Button>
@@ -395,7 +381,6 @@ export const ChallengeDetail = () => {
 
   const progressPercentage = Math.min(100, Math.round((totalProgress / challenge.target.value) * 100));
   
-  // Calculate days remaining until the end date
   const today = new Date();
   const endDate = new Date(challenge.endDate);
   const daysRemaining = Math.max(0, differenceInDays(endDate, today));
@@ -405,7 +390,7 @@ export const ChallengeDetail = () => {
       <Button 
         variant="outline" 
         className="mb-6" 
-        onClick={() => navigate('/community')}
+        onClick={handleBackToOverview}
       >
         <ArrowLeft className="mr-2 h-4 w-4" />
         Zurück zur Übersicht
@@ -710,3 +695,4 @@ export const ChallengeDetail = () => {
     </div>
   );
 };
+
