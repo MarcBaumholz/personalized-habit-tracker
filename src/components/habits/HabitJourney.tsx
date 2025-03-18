@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -104,9 +105,11 @@ export const HabitJourney = () => {
         payload.obstacles = obstacles;
       }
       
-      if (srhiResponses) {
+      if (srhiResponses && Object.keys(srhiResponses).length > 0) {
         payload.srhi_responses = JSON.stringify(srhiResponses);
       }
+      
+      console.log("Saving reflection with payload:", payload);
         
       const { data, error } = await supabase
         .from("habit_reflections")
@@ -230,9 +233,7 @@ export const HabitJourney = () => {
                   <BellDot className={`h-4 w-4 ${
                     needsReflection(habit) 
                       ? "text-red-500" 
-                      : hasCompletedReflection(habit) 
-                        ? "text-gray-700" 
-                        : ""
+                      : "text-gray-700"
                   }`} />
                   {needsReflection(habit) && (
                     <span className="absolute -top-1 -right-1 h-2 w-2 bg-red-500 rounded-full"></span>

@@ -50,6 +50,7 @@ export const ReflectionDialog = ({
       setCurrentReflection("");
       setObstacles("");
       setSrhi({});
+      setActiveTab("reflection");
     }
   }, [isOpen]);
   
@@ -67,6 +68,16 @@ export const ReflectionDialog = ({
   const latestReflection = getLatestReflection();
   
   const handleReflectionSubmit = () => {
+    // Validate that we have at least reflection text or obstacles
+    if (!currentReflection.trim() && !obstacles.trim()) {
+      toast({
+        title: "Bitte fülle mindestens ein Feld aus",
+        description: "Entweder Reflexion oder Hürden müssen ausgefüllt sein.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     onSubmit(currentReflection, obstacles);
     setCurrentReflection("");
     setObstacles("");
@@ -102,6 +113,16 @@ export const ReflectionDialog = ({
       ...prev,
       [index]: value
     }));
+  };
+
+  const formatSrhiResponse = (responses: string) => {
+    try {
+      const parsed = JSON.parse(responses || "{}");
+      return parsed;
+    } catch (error) {
+      console.error("Error parsing SRHI responses:", error);
+      return {};
+    }
   };
 
   return (
@@ -216,9 +237,9 @@ export const ReflectionDialog = ({
                         <div>
                           <h4 className="font-medium text-sm">SRHI-Antworten</h4>
                           <ul className="text-sm space-y-1">
-                            {Object.entries(JSON.parse(ref.srhi_responses || "{}")).map(([idx, val]) => (
+                            {Object.entries(formatSrhiResponse(ref.srhi_responses)).map(([idx, val]) => (
                               <li key={idx}>
-                                {questions[parseInt(idx)]}: {String(val)}
+                                {questions[parseInt(idx)]}: {val}
                               </li>
                             ))}
                           </ul>
