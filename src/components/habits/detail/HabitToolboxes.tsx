@@ -117,6 +117,8 @@ export const HabitToolboxes = ({ toolboxes = [], habitId, onToolboxUpdate }: Hab
       routine: "Was ist die eigentliche Handlung?",
       reward: "Wie belohnst du dich?",
       minimal_dose: "Kleinste sinnvolle Einheit",
+      impact_area: ["Gewohnheitsanalyse", "Verhalten verstehen"],
+      type: "toolkit"
     },
     {
       id: "morning-routine",
