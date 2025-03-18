@@ -20,20 +20,20 @@ export interface HabitSchedule {
   };
 }
 
-// Update the TodoSchedule interface to match the actual data structure from Supabase
+// Define TodoSchedule interface to match the actual data structure
 export interface TodoSchedule {
   id: string;
   title: string;
-  scheduled_time: string | null;
-  scheduled_date?: string | null;
-  position_x?: number | null;
-  position_y?: number | null;
-  category?: string | null;
   completed?: boolean;
   created_at?: string;
   due_date?: string;
   priority?: number;
   user_id?: string;
+  category?: string | null;
+  scheduled_time: string | null;
+  scheduled_date?: string | null;
+  position_x?: number | null;
+  position_y?: number | null;
 }
 
 export interface CalendarPreference {
@@ -107,8 +107,7 @@ export const useCalendarData = (date: Date | undefined) => {
         .eq("user_id", user.id)
         .not("scheduled_time", "is", null);
 
-      // Use type assertion to convert the todos data to TodoSchedule
-      // This is safe because the TodoSchedule interface has been updated to match the structure
+      // Use type assertion to convert todos data to TodoSchedule
       return (data || []) as unknown as TodoSchedule[];
     },
   });
