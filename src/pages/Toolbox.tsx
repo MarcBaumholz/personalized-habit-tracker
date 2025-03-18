@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { AddHabitDialog } from "@/components/habits/AddHabitDialog";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Brain, Target, Calendar, List, BookOpen, Clock, Lightbulb, Package, Users, Search, Filter, Plus } from "lucide-react";
+import { Brain, Target, Calendar, List, BookOpen, Clock, Lightbulb, Package, Users, Search, Filter, Plus, InfinityIcon } from "lucide-react";
 import { ToolboxHeader } from "@/components/toolbox/ToolboxHeader";
 import { ToolboxCarousel } from "@/components/toolbox/ToolboxCarousel";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -225,6 +225,26 @@ const INSPIRATION_TOOLKITS: InspirationToolkit[] = [
     routine: "90 Minuten fokussierte Arbeit",
     reward: "Sichtbare Fortschritte und Erfolgserlebnisse",
     minimal_dose: "25 Minuten Pomodoro-Session",
+  },
+  {
+    id: "hooked-model",
+    title: "Hooked-Modell",
+    description: "Entwickle gewohnheitsbildende Produkte nach Nir Eyal",
+    icon: InfinityIcon,
+    category: "Produktstrategie",
+    example: "Analyse der Nutzergewohnheiten wie bei Social Media Apps",
+    steps: [
+      "Identifiziere Auslöser (extern & intern)",
+      "Definiere eine einfache Aktion",
+      "Biete variable Belohnungen",
+      "Fordere eine Nutzerinvestition",
+      "Analysiere mit der 5-Whys-Methode"
+    ],
+    cue: "Identifizierte Nutzerbedürfnisse",
+    craving: "Wiederkehrende Nutzung deines Produkts",
+    routine: "Hook-Zyklus implementieren",
+    reward: "Loyale, gewohnheitsgesteuerte Nutzer",
+    minimal_dose: "Ein minimaler Hook-Zyklus pro Feature"
   },
   {
     id: "habit-tracking",

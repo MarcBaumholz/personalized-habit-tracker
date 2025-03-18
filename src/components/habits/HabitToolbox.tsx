@@ -5,8 +5,7 @@ import { ImplementationIntentions } from "@/components/habits/ImplementationInte
 import { HabitStacking } from "@/components/habits/HabitStacking";
 import { EmotionalAnchoring } from "@/components/toolbox/EmotionalAnchoring";
 import { MinimalDoseCalculator } from "@/components/habits/MinimalDoseCalculator";
-import { HookedModel } from "@/components/habits/HookedModel";
-import { Hammer, ArrowRightLeft, Brain, Star, Infinity } from "lucide-react";
+import { Hammer, ArrowRightLeft, Brain, Star } from "lucide-react";
 
 interface HabitToolboxProps {
   habitId: string;
@@ -37,7 +36,7 @@ export const HabitToolbox = ({ habitId, onUpdate, activeTab = "intentions", onTa
           onValueChange={handleTabChange} 
           className="w-full"
         >
-          <TabsList className="grid grid-cols-5 w-full rounded-none p-0 h-auto">
+          <TabsList className="grid grid-cols-4 w-full rounded-none p-0 h-auto">
             <TabsTrigger value="intentions" className="py-3 rounded-none data-[state=active]:bg-blue-50">
               <div className="flex flex-col items-center gap-1">
                 <ArrowRightLeft className="h-4 w-4" />
@@ -62,12 +61,6 @@ export const HabitToolbox = ({ habitId, onUpdate, activeTab = "intentions", onTa
                 <span className="text-xs">Min. Dosis</span>
               </div>
             </TabsTrigger>
-            <TabsTrigger value="hooked" className="py-3 rounded-none data-[state=active]:bg-cyan-50">
-              <div className="flex flex-col items-center gap-1">
-                <Infinity className="h-4 w-4" />
-                <span className="text-xs">Hooked</span>
-              </div>
-            </TabsTrigger>
           </TabsList>
           
           <TabsContent value="intentions" className="p-0 m-0 border-none">
@@ -89,10 +82,6 @@ export const HabitToolbox = ({ habitId, onUpdate, activeTab = "intentions", onTa
           
           <TabsContent value="minimal" className="p-0 m-0 border-none">
             <MinimalDoseCalculator habitId={habitId} onSave={onUpdate} />
-          </TabsContent>
-          
-          <TabsContent value="hooked" className="p-0 m-0 border-none">
-            <HookedModel habitId={habitId} onSave={onUpdate} />
           </TabsContent>
         </Tabs>
       </CardContent>
