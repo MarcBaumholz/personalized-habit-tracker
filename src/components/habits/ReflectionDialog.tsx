@@ -239,7 +239,7 @@ export const ReflectionDialog = ({
                           <ul className="text-sm space-y-1">
                             {Object.entries(formatSrhiResponse(ref.srhi_responses)).map(([idx, val]) => (
                               <li key={idx}>
-                                {questions[parseInt(idx)]}: {val}
+                                {questions[parseInt(idx)]}: {String(val)}
                               </li>
                             ))}
                           </ul>

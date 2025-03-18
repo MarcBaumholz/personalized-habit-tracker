@@ -130,6 +130,14 @@ export const HabitJourney = () => {
         description: "Deine Reflexion wurde erfolgreich gespeichert.",
       });
     },
+    onError: (error) => {
+      console.error("Error in saveReflectionMutation:", error);
+      toast({
+        title: "Fehler beim Speichern",
+        description: "Deine Reflexion konnte nicht gespeichert werden.",
+        variant: "destructive"
+      });
+    }
   });
 
   const calculateProgress = (habit: any) => {
