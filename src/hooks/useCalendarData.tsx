@@ -5,6 +5,37 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 
+// Define explicit types to avoid circular references
+export interface HabitSchedule {
+  id: string;
+  habit_id: string;
+  user_id: string;
+  scheduled_time: string | null;
+  scheduled_date: string | null;
+  position_x: number | null;
+  position_y: number | null;
+  habits?: {
+    id: string;
+    name: string;
+    category: string | null;
+  };
+}
+
+export interface TodoSchedule {
+  id: string;
+  title: string;
+  scheduled_time: string | null;
+  scheduled_date: string | null;
+  position_x: number | null;
+  position_y: number | null;
+}
+
+export interface CalendarPreference {
+  start_time: string;
+  end_time: string;
+  default_view: string;
+}
+
 export const DEFAULT_PREFERENCES = {
   start_time: '06:00:00',
   end_time: '21:00:00',
@@ -53,7 +84,7 @@ export const useCalendarData = (date: Date | undefined) => {
         .eq("user_id", user.id)
         .eq("scheduled_date", format(date || new Date(), "yyyy-MM-dd"));
 
-      return data || [];
+      return (data || []) as HabitSchedule[];
     },
   });
 
@@ -70,7 +101,7 @@ export const useCalendarData = (date: Date | undefined) => {
         .eq("user_id", user.id)
         .not("scheduled_time", "is", null);
 
-      return data || [];
+      return (data || []) as TodoSchedule[];
     },
   });
 
@@ -93,7 +124,7 @@ export const useCalendarData = (date: Date | undefined) => {
 
   // Save preferences mutation
   const savePreferencesMutation = useMutation({
-    mutationFn: async (preferences: any) => {
+    mutationFn: async (preferences: Partial<CalendarPreference>) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
@@ -134,7 +165,7 @@ export const useCalendarData = (date: Date | undefined) => {
 
   // Update schedule position mutation
   const updateScheduleMutation = useMutation({
-    mutationFn: async ({ id, updates }: { id: string, updates: any }) => {
+    mutationFn: async ({ id, updates }: { id: string, updates: Partial<HabitSchedule> }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
@@ -191,12 +222,12 @@ export const useCalendarData = (date: Date | undefined) => {
 
   // Update todo schedule mutation
   const updateTodoScheduleMutation = useMutation({
-    mutationFn: async ({ id, updates }: { id: string, updates: any }) => {
+    mutationFn: async ({ id, updates }: { id: string, updates: Partial<TodoSchedule> }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
       // Check if the time slot is already occupied
-      if (updates.scheduled_time) {
+      if (updates.scheduled_time && updates.scheduled_date) {
         const { data: existingSchedules } = await supabase
           .from("habit_schedules")
           .select("id")
