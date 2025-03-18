@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Info } from "lucide-react";
+import { Info, ArrowRight } from "lucide-react";
 
 interface KeystoneHabit {
   name: string;
@@ -148,7 +148,7 @@ export const KeystoneHabitsSetup = ({ onComplete, existingHabits = [] }: Keyston
   const skipToHome = () => {
     toast({
       title: "Onboarding abgeschlossen",
-      description: "Du wirst weitergeleitet zur Startseite...",
+      description: "Du wirst zur Startseite weitergeleitet...",
     });
     navigate("/");
   };
@@ -183,17 +183,26 @@ export const KeystoneHabitsSetup = ({ onComplete, existingHabits = [] }: Keyston
       {hasExistingHabits && (
         <Alert className="bg-blue-50 border-blue-200">
           <Info className="h-4 w-4 text-blue-600" />
-          <AlertTitle className="text-blue-700">Du hast bereits Keystone Habits</AlertTitle>
+          <AlertTitle className="text-blue-700">Vorhandene Keystone Habits</AlertTitle>
           <AlertDescription className="text-blue-600">
-            Du hast bereits {existingHabits.length} Keystone Habits definiert. 
-            Du kannst weitere hinzufügen oder diesen Schritt überspringen.
-            <div className="mt-2">
+            <div className="mb-2">Deine aktuellen Keystone Habits:</div>
+            <ul className="list-disc pl-5 mb-3 space-y-1">
+              {existingHabits.slice(0, 3).map((habit) => (
+                <li key={habit.id} className="text-blue-800">
+                  {habit.habit_name} ({habit.life_area})
+                </li>
+              ))}
+              {existingHabits.length > 3 && (
+                <li className="text-blue-800">...und weitere</li>
+              )}
+            </ul>
+            <div className="flex justify-end">
               <Button 
                 onClick={skipToHome} 
-                variant="outline"
-                className="bg-blue-100 hover:bg-blue-200 border-blue-300"
+                className="bg-blue-600 hover:bg-blue-700 text-white"
               >
-                Überspringen
+                Diesen Schritt überspringen
+                <ArrowRight className="ml-1 h-4 w-4" />
               </Button>
             </div>
           </AlertDescription>
