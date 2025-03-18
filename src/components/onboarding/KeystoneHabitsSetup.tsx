@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Info } from "lucide-react";
 
 interface KeystoneHabit {
   name: string;
@@ -21,7 +23,24 @@ interface KeystoneHabit {
   why: string;
 }
 
-export const KeystoneHabitsSetup = ({ onComplete }: { onComplete: () => void }) => {
+interface KeystoneHabitFromDB {
+  id: string;
+  habit_name: string;
+  description: string | null;
+  user_id: string;
+  life_area: string;
+  is_active: boolean | null;
+  guideline: string | null;
+  created_at: string;
+  habit_id: string | null;
+}
+
+interface KeystoneHabitsSetupProps {
+  onComplete: () => void;
+  existingHabits?: KeystoneHabitFromDB[];
+}
+
+export const KeystoneHabitsSetup = ({ onComplete, existingHabits = [] }: KeystoneHabitsSetupProps) => {
   const [habits, setHabits] = useState<KeystoneHabit[]>([
     { 
       name: "", 
@@ -47,6 +66,7 @@ export const KeystoneHabitsSetup = ({ onComplete }: { onComplete: () => void }) 
   const [showWiseImage, setShowWiseImage] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const hasExistingHabits = existingHabits.length > 0;
 
   const updateHabit = (index: number, field: keyof KeystoneHabit, value: string) => {
     const newHabits = [...habits];
@@ -69,6 +89,8 @@ export const KeystoneHabitsSetup = ({ onComplete }: { onComplete: () => void }) 
       if (!user) throw new Error("No user found");
 
       for (const habit of habits) {
+        if (!habit.name || !habit.why_description) continue;
+        
         // Create the normal habit first
         const { data: habitData, error: habitError } = await supabase
           .from("habits")
@@ -123,6 +145,14 @@ export const KeystoneHabitsSetup = ({ onComplete }: { onComplete: () => void }) 
     }
   };
 
+  const skipToHome = () => {
+    toast({
+      title: "Onboarding abgeschlossen",
+      description: "Du wirst weitergeleitet zur Startseite...",
+    });
+    navigate("/");
+  };
+
   if (showWiseImage) {
     return (
       <div className="max-w-2xl mx-auto text-center space-y-6">
@@ -149,6 +179,26 @@ export const KeystoneHabitsSetup = ({ onComplete }: { onComplete: () => void }) 
           Definiere zwei Schlüsselgewohnheiten, die den größten positiven Einfluss auf dein Leben haben werden
         </p>
       </div>
+
+      {hasExistingHabits && (
+        <Alert className="bg-blue-50 border-blue-200">
+          <Info className="h-4 w-4 text-blue-600" />
+          <AlertTitle className="text-blue-700">Du hast bereits Keystone Habits</AlertTitle>
+          <AlertDescription className="text-blue-600">
+            Du hast bereits {existingHabits.length} Keystone Habits definiert. 
+            Du kannst weitere hinzufügen oder diesen Schritt überspringen.
+            <div className="mt-2">
+              <Button 
+                onClick={skipToHome} 
+                variant="outline"
+                className="bg-blue-100 hover:bg-blue-200 border-blue-300"
+              >
+                Überspringen
+              </Button>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
 
       {habits.map((habit, index) => (
         <div key={index} className="space-y-4 p-4 border rounded-lg bg-blue-50">
