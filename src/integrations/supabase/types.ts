@@ -385,6 +385,62 @@ export type Database = {
           },
         ]
       }
+      habit_hooked_models: {
+        Row: {
+          action: string | null
+          created_at: string
+          five_whys: string[] | null
+          habit_id: string
+          habit_zone_frequency: string | null
+          habit_zone_value: string | null
+          id: string
+          investment: string | null
+          reward_description: string | null
+          reward_type: string | null
+          trigger_external: string | null
+          trigger_internal: string | null
+          user_id: string
+        }
+        Insert: {
+          action?: string | null
+          created_at?: string
+          five_whys?: string[] | null
+          habit_id: string
+          habit_zone_frequency?: string | null
+          habit_zone_value?: string | null
+          id?: string
+          investment?: string | null
+          reward_description?: string | null
+          reward_type?: string | null
+          trigger_external?: string | null
+          trigger_internal?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string | null
+          created_at?: string
+          five_whys?: string[] | null
+          habit_id?: string
+          habit_zone_frequency?: string | null
+          habit_zone_value?: string | null
+          id?: string
+          investment?: string | null
+          reward_description?: string | null
+          reward_type?: string | null
+          trigger_external?: string | null
+          trigger_internal?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "habit_hooked_models_habit_id_fkey"
+            columns: ["habit_id"]
+            isOneToOne: false
+            referencedRelation: "habits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       habit_reflections: {
         Row: {
           created_at: string

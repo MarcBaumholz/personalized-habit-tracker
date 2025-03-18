@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,7 +22,7 @@ export const HookedModel = ({ habitId, onSave }: HookedModelProps) => {
     trigger_external: "",
     trigger_internal: "",
     action: "",
-    reward_type: "tribe", // Default reward type
+    reward_type: "tribe" as "tribe" | "hunt" | "self", // Default reward type
     reward_description: "",
     investment: "",
     five_whys: ["", "", "", "", ""],
@@ -127,9 +127,9 @@ export const HookedModel = ({ habitId, onSave }: HookedModelProps) => {
   };
 
   // Load data when component mounts
-  useState(() => {
+  useEffect(() => {
     loadHookedModel();
-  });
+  }, [habitId]);
 
   return (
     <div className="space-y-6 p-6">
