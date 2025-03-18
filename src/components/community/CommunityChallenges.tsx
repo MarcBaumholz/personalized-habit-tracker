@@ -19,7 +19,7 @@ const SAMPLE_CHALLENGES: ChallengeProps[] = [
       unit: 'km'
     },
     currentProgress: 63,
-    endDate: '2023-11-30',
+    endDate: '2025-04-05',
     participants: [
       { id: '1', name: 'Anna Schmidt', avatar: '', progress: 15 },
       { id: '2', name: 'Max Mustermann', avatar: '', progress: 22 },
@@ -40,7 +40,7 @@ const SAMPLE_CHALLENGES: ChallengeProps[] = [
       unit: 'Minuten'
     },
     currentProgress: 210,
-    endDate: '2023-12-15',
+    endDate: '2025-04-15',
     participants: [
       { id: '1', name: 'Anna Schmidt', avatar: '', progress: 70 },
       { id: '2', name: 'Max Mustermann', avatar: '', progress: 80 },
@@ -51,14 +51,14 @@ const SAMPLE_CHALLENGES: ChallengeProps[] = [
   {
     id: '3',
     title: '1000 Seiten lesen',
-    description: 'Gemeinsam 1000 Seiten in einem Monat lesen',
+    description: 'Gemeinsam 1000 Seiten in zwei Monaten lesen',
     category: 'Bildung',
     target: {
       value: 1000,
       unit: 'Seiten'
     },
     currentProgress: 450,
-    endDate: '2023-12-31',
+    endDate: '2025-04-05',
     participants: [
       { id: '1', name: 'Laura Meyer', avatar: '', progress: 150 },
       { id: '2', name: 'Thomas Weber', avatar: '', progress: 125 },
