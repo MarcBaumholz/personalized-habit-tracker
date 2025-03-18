@@ -14,7 +14,7 @@ export const WeeklyProgress = ({ data }: WeeklyProgressProps) => {
         <ResponsiveContainer width="100%" height="100%">
           <LineChart 
             data={data}
-            margin={{ top: 5, right: 10, left: -20, bottom: 5 }}
+            margin={{ top: 5, right: 10, left: 10, bottom: 5 }}
           >
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis 
@@ -24,14 +24,23 @@ export const WeeklyProgress = ({ data }: WeeklyProgressProps) => {
             />
             <YAxis 
               tick={{ fontSize: 12 }}
-              width={30}
+              width={40}
+              tickMargin={5}
             />
-            <Tooltip />
+            <Tooltip 
+              contentStyle={{ 
+                backgroundColor: 'white', 
+                border: '1px solid #f0f0f0',
+                borderRadius: '8px',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
+              }} 
+            />
             <Line 
               type="monotone" 
               dataKey="completions" 
               stroke="hsl(var(--primary))"
               strokeWidth={2}
+              activeDot={{ r: 6 }}
             />
           </LineChart>
         </ResponsiveContainer>

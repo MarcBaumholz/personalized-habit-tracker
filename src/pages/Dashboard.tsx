@@ -8,7 +8,7 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50">
       <Navigation />
-      <main className="container px-4 md:px-6 lg:px-8 py-8">
+      <main className="container px-4 md:px-6 lg:px-8 py-8 max-w-7xl mx-auto">
         <Tabs defaultValue="overview" className="space-y-8">
           <TabsList className="w-full grid grid-cols-2 p-1 bg-blue-100/50 rounded-xl">
             <TabsTrigger 

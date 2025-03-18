@@ -50,8 +50,8 @@ export const DashboardOverview = () => {
   });
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Dein Fortschritt</h1>
+    <div className="space-y-8">
+      <h1 className="text-2xl font-bold text-blue-800">Dein Fortschritt</h1>
       
       <MetricCards
         streak={stats?.streak || 0}
@@ -62,12 +62,12 @@ export const DashboardOverview = () => {
 
       <YearlyActivity />
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <CategoryDistribution data={stats?.categoryData || []} />
         <WeeklyProgress data={stats?.weeklyData || []} />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <HabitProgress data={stats?.progressData || []} />
         <TodoList />
       </div>
