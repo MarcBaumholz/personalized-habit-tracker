@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Pencil, Check, X } from "lucide-react";
@@ -24,13 +24,59 @@ export const EditableProfileBlock = ({
 }: EditableProfileBlockProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(content);
+  const [displayContent, setDisplayContent] = useState(content);
   const { toast } = useToast();
+
+  // Update local state when content prop changes
+  useEffect(() => {
+    setEditedContent(content);
+    setDisplayContent(content);
+  }, [content]);
 
   const handleSave = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
+      // First check if we need to save to onboarding_responses
+      if (sectionKey === "motivation" || sectionKey === "challenges" || 
+          sectionKey === "curiosities" || sectionKey === "values" || 
+          sectionKey === "current_habits") {
+        
+        // Check if response already exists
+        const { data: existingResponse, error: checkError } = await supabase
+          .from('onboarding_responses')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('question_key', sectionKey)
+          .maybeSingle();
+        
+        if (checkError) throw checkError;
+        
+        if (existingResponse) {
+          // Update existing response
+          const { error } = await supabase
+            .from('onboarding_responses')
+            .update({ response: editedContent })
+            .eq('user_id', user.id)
+            .eq('question_key', sectionKey);
+          
+          if (error) throw error;
+        } else {
+          // Insert new response
+          const { error } = await supabase
+            .from('onboarding_responses')
+            .insert({
+              user_id: user.id,
+              question_key: sectionKey,
+              response: editedContent
+            });
+          
+          if (error) throw error;
+        }
+      }
+
+      // Always save to profile_sections as well (for future-proofing)
       const { error } = await supabase
         .from('profile_sections')
         .upsert({
@@ -43,6 +89,9 @@ export const EditableProfileBlock = ({
 
       if (error) throw error;
 
+      // Update the displayed content
+      setDisplayContent(editedContent);
+      
       toast({
         title: "Gespeichert",
         description: "Deine Änderungen wurden erfolgreich gespeichert.",
@@ -51,6 +100,7 @@ export const EditableProfileBlock = ({
       setIsEditing(false);
       if (onUpdate) onUpdate();
     } catch (error) {
+      console.error("Error saving content:", error);
       toast({
         title: "Fehler",
         description: "Deine Änderungen konnten nicht gespeichert werden.",
@@ -87,7 +137,7 @@ export const EditableProfileBlock = ({
               size="sm"
               onClick={() => {
                 setIsEditing(false);
-                setEditedContent(content);
+                setEditedContent(displayContent); // Reset to current display content
               }}
               className="hover:bg-red-50 text-red-600"
             >
@@ -104,7 +154,7 @@ export const EditableProfileBlock = ({
           className="min-h-[100px] border-blue-200 focus:border-blue-400"
         />
       ) : (
-        <p className="text-blue-600">{content}</p>
+        <p className="text-blue-600">{displayContent}</p>
       )}
     </Card>
   );

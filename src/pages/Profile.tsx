@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Navigation } from "@/components/layout/Navigation";
 import { Button } from "@/components/ui/button";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -22,154 +22,254 @@ const Profile = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isFollowing, setIsFollowing] = useState(false);
+  const [profileSections, setProfileSections] = useState<Record<string, string>>({});
   
-  const { data: responses } = useQuery({
+  // Query for onboarding responses
+  const { data: responses, isLoading: loadingResponses } = useQuery({
     queryKey: ["onboarding-responses"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("onboarding_responses")
         .select("*")
         .eq("user_id", user.id);
+
+      if (error) {
+        console.error("Error fetching onboarding responses:", error);
+        return [];
+      }
 
       return data || [];
     },
   });
 
+  // Query for profile sections
+  const { data: sections, isLoading: loadingSections } = useQuery({
+    queryKey: ["profile-sections"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
+
+      const { data, error } = await supabase
+        .from("profile_sections")
+        .select("*")
+        .eq("user_id", user.id);
+
+      if (error) {
+        console.error("Error fetching profile sections:", error);
+        return [];
+      }
+
+      return data || [];
+    },
+  });
+
+  // Combine onboarding responses and profile sections
+  useEffect(() => {
+    const combinedSections: Record<string, string> = {};
+    
+    // First add onboarding responses
+    if (responses) {
+      responses.forEach(item => {
+        combinedSections[item.question_key] = item.response;
+      });
+    }
+    
+    // Then override with profile sections if they exist
+    if (sections) {
+      sections.forEach(item => {
+        if (item.content && item.content.text) {
+          combinedSections[item.section_key] = item.content.text;
+        }
+      });
+    }
+    
+    setProfileSections(combinedSections);
+  }, [responses, sections]);
+
+  // Get user profile
   const { data: userProfile } = useQuery({
     queryKey: ["user-profile"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", user.id)
         .single();
 
+      if (error) {
+        console.error("Error fetching user profile:", error);
+        return null;
+      }
+
       return data;
     },
   });
 
+  // Get keystone habits
   const { data: keystoneHabits } = useQuery({
     queryKey: ["keystone-habits"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("keystone_habits")
         .select("*")
         .eq("user_id", user.id);
+
+      if (error) {
+        console.error("Error fetching keystone habits:", error);
+        return [];
+      }
 
       return data || [];
     },
   });
 
+  // Get active habits
   const { data: activeHabits } = useQuery({
     queryKey: ["active-habits"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("habits")
         .select("*")
         .eq("user_id", user.id)
         .eq("paused", false)
         .order("created_at", { ascending: false });
 
+      if (error) {
+        console.error("Error fetching active habits:", error);
+        return [];
+      }
+
       return data || [];
     },
   });
 
+  // Get life areas
   const { data: lifeAreas } = useQuery({
     queryKey: ["life-areas"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("onboarding_responses")
         .select("*")
         .eq("user_id", user.id)
         .eq("question_key", "life_areas");
+
+      if (error) {
+        console.error("Error fetching life areas:", error);
+        return [];
+      }
 
       const firstResponse = data?.[0]?.response;
       return firstResponse ? JSON.parse(firstResponse) : [];
     },
   });
 
+  // Get Big Five results
   const { data: bigFiveResults } = useQuery({
     queryKey: ["big-five-results"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("big_five_results")
         .select("*")
         .eq("user_id", user.id)
         .order('created_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error fetching Big Five results:", error);
+        return null;
+      }
 
       return data;
     },
   });
 
+  // Get coaching reflections
   const { data: coachingReflections } = useQuery({
     queryKey: ["coaching-reflections"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("coaching_reflections")
         .select("*")
         .eq("user_id", user.id)
         .order("reflection_date", { ascending: false })
-        .limit(1);
+        .limit(1)
+        .maybeSingle();
 
-      return data?.[0];
+      if (error) {
+        console.error("Error fetching coaching reflections:", error);
+        return null;
+      }
+
+      return data || null;
     },
   });
 
+  // Get ZRM resources
   const { data: zrmResources } = useQuery({
     queryKey: ["zrm-resources"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("zrm_resources")
         .select("*")
         .eq("user_id", user.id);
+
+      if (error) {
+        console.error("Error fetching ZRM resources:", error);
+        return [];
+      }
 
       return data || [];
     },
   });
 
+  // Get attitude goals
   const { data: attitudeGoals } = useQuery({
     queryKey: ["attitude-goals"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("attitude_goals")
         .select("*")
         .eq("user_id", user.id);
+
+      if (error) {
+        console.error("Error fetching attitude goals:", error);
+        return [];
+      }
 
       return data || [];
     },
   });
 
   const getResponse = (key: string) => {
-    return responses?.find(r => r.question_key === key)?.response || "";
+    return profileSections[key] || "";
   };
 
   const handleFollowToggle = () => {
@@ -233,6 +333,14 @@ const Profile = () => {
 
       if (goalsError) throw goalsError;
 
+      // Delete profile sections
+      const { error: sectionsError } = await supabase
+        .from("profile_sections")
+        .delete()
+        .eq("user_id", user.id);
+
+      if (sectionsError) throw sectionsError;
+
       toast({
         title: "Onboarding neu gestartet",
         description: "Alle deine Daten wurden zurückgesetzt. Du kannst jetzt von vorne beginnen.",
@@ -244,6 +352,7 @@ const Profile = () => {
       // Redirect to onboarding
       navigate("/onboarding");
     } catch (error) {
+      console.error("Error restarting onboarding:", error);
       toast({
         title: "Fehler",
         description: "Das Onboarding konnte nicht neu gestartet werden.",
@@ -284,19 +393,28 @@ const Profile = () => {
                     title="Motivation"
                     content={getResponse("motivation")}
                     sectionKey="motivation"
-                    onUpdate={() => queryClient.invalidateQueries({ queryKey: ["onboarding-responses"] })}
+                    onUpdate={() => {
+                      queryClient.invalidateQueries({ queryKey: ["onboarding-responses"] });
+                      queryClient.invalidateQueries({ queryKey: ["profile-sections"] });
+                    }}
                   />
                   <EditableProfileBlock
                     title="Herausforderungen"
                     content={getResponse("challenges")}
                     sectionKey="challenges"
-                    onUpdate={() => queryClient.invalidateQueries({ queryKey: ["onboarding-responses"] })}
+                    onUpdate={() => {
+                      queryClient.invalidateQueries({ queryKey: ["onboarding-responses"] });
+                      queryClient.invalidateQueries({ queryKey: ["profile-sections"] });
+                    }}
                   />
                   <EditableProfileBlock
                     title="Neugier & Veränderung"
                     content={getResponse("curiosities")}
                     sectionKey="curiosities"
-                    onUpdate={() => queryClient.invalidateQueries({ queryKey: ["onboarding-responses"] })}
+                    onUpdate={() => {
+                      queryClient.invalidateQueries({ queryKey: ["onboarding-responses"] });
+                      queryClient.invalidateQueries({ queryKey: ["profile-sections"] });
+                    }}
                   />
                 </div>
               </Card>
@@ -308,13 +426,19 @@ const Profile = () => {
                     title="Werte & Normen"
                     content={getResponse("values")}
                     sectionKey="values"
-                    onUpdate={() => queryClient.invalidateQueries({ queryKey: ["onboarding-responses"] })}
+                    onUpdate={() => {
+                      queryClient.invalidateQueries({ queryKey: ["onboarding-responses"] });
+                      queryClient.invalidateQueries({ queryKey: ["profile-sections"] });
+                    }}
                   />
                   <EditableProfileBlock
                     title="Aktuelle Gewohnheiten"
                     content={getResponse("current_habits")}
                     sectionKey="current_habits"
-                    onUpdate={() => queryClient.invalidateQueries({ queryKey: ["onboarding-responses"] })}
+                    onUpdate={() => {
+                      queryClient.invalidateQueries({ queryKey: ["onboarding-responses"] });
+                      queryClient.invalidateQueries({ queryKey: ["profile-sections"] });
+                    }}
                   />
                 </div>
               </Card>
