@@ -4,29 +4,58 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ImplementationIntentions } from "@/components/habits/ImplementationIntentions";
 import { EmotionalAnchoring } from "@/components/toolbox/EmotionalAnchoring";
 import { MinimalDoseCalculator } from "@/components/habits/MinimalDoseCalculator";
-import { ArrowRightLeft, Brain, Star } from "lucide-react";
+import { ArrowLeft, ArrowRightLeft, Brain, Star } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 interface HabitToolboxProps {
   habitId: string;
   onUpdate?: () => void;
   activeTab?: string;
   onTabChange?: (value: string) => void;
+  showBackButton?: boolean;
 }
 
-export const HabitToolbox = ({ habitId, onUpdate, activeTab = "intentions", onTabChange }: HabitToolboxProps) => {
+export const HabitToolbox = ({ 
+  habitId, 
+  onUpdate, 
+  activeTab = "intentions", 
+  onTabChange,
+  showBackButton = false 
+}: HabitToolboxProps) => {
+  const navigate = useNavigate();
+  
   const handleTabChange = (value: string) => {
     if (onTabChange) {
       onTabChange(value);
     }
   };
 
+  const handleBackToToolbox = () => {
+    navigate('/toolbox');
+  };
+
   return (
     <Card className="shadow-sm border">
       <CardHeader className="bg-white pb-2">
-        <CardTitle className="text-xl">Aktives Werkzeug</CardTitle>
-        <CardDescription>
-          Wissenschaftlich fundierte Werkzeuge zur besseren Gewohnheitsbildung
-        </CardDescription>
+        <div className="flex justify-between items-center">
+          <div>
+            <CardTitle className="text-xl">Aktives Werkzeug</CardTitle>
+            <CardDescription>
+              Wissenschaftlich fundierte Werkzeuge zur besseren Gewohnheitsbildung
+            </CardDescription>
+          </div>
+          {showBackButton && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleBackToToolbox}
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Zurück zur Toolbox
+            </Button>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="p-0">
         <Tabs 

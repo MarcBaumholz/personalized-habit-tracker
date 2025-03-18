@@ -1,11 +1,21 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, LineChart, Line } from 'recharts';
 import { format, startOfMonth, eachDayOfInterval, endOfMonth } from "date-fns";
 import { de } from "date-fns/locale";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export const AdvancedAnalytics = () => {
+  const navigate = useNavigate();
+  
+  const handleBackToToolbox = () => {
+    navigate('/toolbox');
+  };
+
   const { data: analyticsData } = useQuery({
     queryKey: ["habit-analytics"],
     queryFn: async () => {
@@ -65,7 +75,17 @@ export const AdvancedAnalytics = () => {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl md:text-2xl font-bold">Erweiterte Analyse</h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-xl md:text-2xl font-bold">Erweiterte Analyse</h1>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={handleBackToToolbox}
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Zurück zur Toolbox
+        </Button>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="p-4 md:p-6">
