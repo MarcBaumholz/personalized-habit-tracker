@@ -1,5 +1,6 @@
+
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@/hooks/useUser";
 
@@ -50,8 +51,28 @@ export interface CalendarPreference {
   created_at: string;
 }
 
+export interface HabitScheduleUpdate {
+  id: string;
+  updates: {
+    scheduled_time: string;
+    position_x: number;
+    position_y: number;
+  };
+}
+
+export interface TodoScheduleUpdate {
+  id: string;
+  updates: {
+    scheduled_time: string;
+    scheduled_date: string;
+    position_x: number;
+    position_y: number;
+  };
+}
+
 export const useCalendarData = (selectedDate: Date) => {
   const { user } = useUser();
+  const queryClient = useQueryClient();
   const [calendarPreference, setCalendarPreference] = useState<CalendarPreference | null>(null);
 
   const { data: habits } = useQuery({
@@ -71,7 +92,7 @@ export const useCalendarData = (selectedDate: Date) => {
   });
 
   // For the query that was causing the excessive type depth, use a type assertion:
-  const { data: todos } = useQuery({
+  const { data: todoSchedules } = useQuery({
     queryKey: ["todos", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -87,6 +108,23 @@ export const useCalendarData = (selectedDate: Date) => {
 
       // Use type assertion to fix the excessive type depth error
       return data as unknown as TodoSchedule[];
+    },
+    enabled: !!user,
+  });
+
+  const { data: schedules } = useQuery({
+    queryKey: ["habit_schedules", user?.id, selectedDate],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("habit_schedules")
+        .select("*, habits(name, category)")
+        .eq("user_id", user?.id);
+      
+      if (error) {
+        console.error("Error fetching habit schedules:", error);
+        return [];
+      }
+      return data || [];
     },
     enabled: !!user,
   });
@@ -133,6 +171,155 @@ export const useCalendarData = (selectedDate: Date) => {
     fetchCalendarPreference();
   }, [user]);
 
+  const updateScheduleMutation = useMutation({
+    mutationFn: async ({ id, updates }: HabitScheduleUpdate) => {
+      const { data, error } = await supabase
+        .from("habit_schedules")
+        .update(updates)
+        .eq("id", id)
+        .select();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["habit_schedules"] });
+    },
+  });
+
+  const updateTodoScheduleMutation = useMutation({
+    mutationFn: async ({ id, updates }: TodoScheduleUpdate) => {
+      const { data, error } = await supabase
+        .from("todos")
+        .update(updates)
+        .eq("id", id)
+        .select();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["todos"] });
+    },
+  });
+
+  const deleteScheduleMutation = useMutation({
+    mutationFn: async (scheduleId: string) => {
+      const { data, error } = await supabase
+        .from("habit_schedules")
+        .delete()
+        .eq("id", scheduleId);
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["habit_schedules"] });
+    },
+  });
+
+  const deleteTodoScheduleMutation = useMutation({
+    mutationFn: async (todoId: string) => {
+      const { data, error } = await supabase
+        .from("todos")
+        .update({ scheduled_time: null, scheduled_date: null })
+        .eq("id", todoId);
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["todos"] });
+    },
+  });
+
+  const handleTimeSlotClick = (time: string, date: Date) => {
+    console.log(`Time slot clicked: ${time} on ${date.toDateString()}`);
+  };
+
+  const handleScheduleTodo = async (todo: any, time: string, day: Date) => {
+    try {
+      const formattedDate = day.toISOString().split("T")[0];
+      
+      await supabase
+        .from("todos")
+        .update({ 
+          scheduled_time: time,
+          scheduled_date: formattedDate,
+          position_x: 1,
+          position_y: 1
+        })
+        .eq("id", todo.id);
+      
+      queryClient.invalidateQueries({ queryKey: ["todos"] });
+    } catch (error) {
+      console.error("Error scheduling todo:", error);
+    }
+  };
+
+  const handleScheduleHabit = async (habit: any, time: string, day: Date) => {
+    try {
+      const formattedDate = day.toISOString().split("T")[0];
+      
+      await supabase
+        .from("habit_schedules")
+        .insert({
+          habit_id: habit.id,
+          user_id: user?.id,
+          scheduled_time: time,
+          scheduled_date: formattedDate,
+          position_x: 1,
+          position_y: 1
+        });
+      
+      queryClient.invalidateQueries({ queryKey: ["habit_schedules"] });
+    } catch (error) {
+      console.error("Error scheduling habit:", error);
+    }
+  };
+
+  const handleSavePreferences = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    
+    const formData = new FormData(e.currentTarget);
+    const startTime = formData.get('startTime') as string;
+    const endTime = formData.get('endTime') as string;
+    
+    try {
+      if (calendarPreference) {
+        // Update existing preferences
+        await supabase
+          .from("calendar_preferences")
+          .update({
+            start_time: startTime,
+            end_time: endTime,
+          })
+          .eq("user_id", user?.id);
+      } else {
+        // Create new preferences
+        await supabase
+          .from("calendar_preferences")
+          .insert({
+            user_id: user?.id,
+            start_time: startTime,
+            end_time: endTime,
+            default_view: 'week'
+          });
+      }
+      
+      // Refresh calendar preferences
+      const { data: updatedPreference } = await supabase
+        .from("calendar_preferences")
+        .select("*")
+        .eq("user_id", user?.id)
+        .single();
+        
+      setCalendarPreference(updatedPreference);
+    } catch (error) {
+      console.error("Error saving calendar preferences:", error);
+    }
+  };
+
   const calendarEvents: CalendarEvent[] = [];
 
   // Map habits to calendar events
@@ -157,7 +344,7 @@ export const useCalendarData = (selectedDate: Date) => {
     });
   });
 
-  todos?.forEach((todo) => {
+  todoSchedules?.forEach((todo) => {
     if (todo.scheduled_time && todo.scheduled_date) {
       const [hours, minutes] = todo.scheduled_time.split(":").map(Number);
       const eventDate = new Date(todo.scheduled_date);
@@ -178,5 +365,19 @@ export const useCalendarData = (selectedDate: Date) => {
     }
   });
 
-  return { calendarEvents, calendarPreference };
+  return { 
+    calendarEvents, 
+    calendarPreferences: calendarPreference, 
+    habits,
+    schedules,
+    todoSchedules,
+    handleTimeSlotClick,
+    handleScheduleTodo,
+    handleScheduleHabit,
+    handleSavePreferences,
+    updateScheduleMutation,
+    updateTodoScheduleMutation,
+    deleteScheduleMutation,
+    deleteTodoScheduleMutation
+  };
 };
