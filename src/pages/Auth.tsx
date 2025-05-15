@@ -15,6 +15,7 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
+  const [isPasswordReset, setIsPasswordReset] = useState(false);
 
   useEffect(() => {
     // Check if user is already logged in
@@ -76,6 +77,33 @@ const Auth = () => {
     }
   };
 
+  const handlePasswordReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth`,
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Password reset email sent",
+        description: "Please check your email to reset your password.",
+      });
+      setIsPasswordReset(false); // Return to login view
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleGoogleAuth = async () => {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
@@ -94,79 +122,137 @@ const Auth = () => {
     }
   };
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-[#1A1F2C] p-4">
-      <Card className="w-full max-w-md p-8 space-y-6 bg-[#242B3D] border-none shadow-xl">
-        <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold text-white">
-            {isSignUp ? "Create Account" : "Welcome Back"}
-          </h1>
-          <p className="text-gray-400">
-            {isSignUp
-              ? "Sign up to start building better habits"
-              : "Sign in to continue your journey"}
-          </p>
+  const renderPasswordResetForm = () => (
+    <>
+      <div className="text-center space-y-2">
+        <h1 className="text-3xl font-bold text-white">Reset Password</h1>
+        <p className="text-gray-400">
+          Enter your email address to receive a password reset link
+        </p>
+      </div>
+
+      <form onSubmit={handlePasswordReset} className="space-y-4">
+        <div className="space-y-2">
+          <Input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            className="bg-[#1A1F2C] border-gray-700 text-white placeholder:text-gray-500"
+          />
         </div>
-
-        <form onSubmit={handleEmailAuth} className="space-y-4">
-          <div className="space-y-2">
-            <Input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="bg-[#1A1F2C] border-gray-700 text-white placeholder:text-gray-500"
-            />
-          </div>
-          <div className="space-y-2">
-            <Input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="bg-[#1A1F2C] border-gray-700 text-white placeholder:text-gray-500"
-            />
-          </div>
-          <Button 
-            type="submit" 
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white" 
-            disabled={loading}
-          >
-            {isSignUp ? "Sign Up" : "Sign In"}
-          </Button>
-        </form>
-
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-700"></div>
-          </div>
-          <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-[#242B3D] text-gray-400">Or</span>
-          </div>
-        </div>
-
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full border-gray-700 text-white hover:bg-[#1A1F2C]"
-          onClick={handleGoogleAuth}
+        <Button 
+          type="submit" 
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white" 
+          disabled={loading}
         >
-          <FcGoogle className="mr-2 h-5 w-5" />
-          Continue with Google
+          Send Reset Link
         </Button>
-
         <p className="text-center text-sm text-gray-400">
-          {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
           <button
             type="button"
             className="text-blue-500 hover:text-blue-400"
-            onClick={() => setIsSignUp(!isSignUp)}
+            onClick={() => setIsPasswordReset(false)}
           >
-            {isSignUp ? "Sign In" : "Sign Up"}
+            Back to Login
           </button>
         </p>
+      </form>
+    </>
+  );
+
+  const renderAuthForm = () => (
+    <>
+      <div className="text-center space-y-2">
+        <h1 className="text-3xl font-bold text-white">
+          {isSignUp ? "Create Account" : "Welcome Back"}
+        </h1>
+        <p className="text-gray-400">
+          {isSignUp
+            ? "Sign up to start building better habits"
+            : "Sign in to continue your journey"}
+        </p>
+      </div>
+
+      <form onSubmit={handleEmailAuth} className="space-y-4">
+        <div className="space-y-2">
+          <Input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            className="bg-[#1A1F2C] border-gray-700 text-white placeholder:text-gray-500"
+          />
+        </div>
+        <div className="space-y-2">
+          <Input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            className="bg-[#1A1F2C] border-gray-700 text-white placeholder:text-gray-500"
+          />
+        </div>
+        <Button 
+          type="submit" 
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white" 
+          disabled={loading}
+        >
+          {isSignUp ? "Sign Up" : "Sign In"}
+        </Button>
+        
+        {!isSignUp && (
+          <p className="text-center text-sm text-gray-400">
+            <button
+              type="button"
+              className="text-blue-500 hover:text-blue-400"
+              onClick={() => setIsPasswordReset(true)}
+            >
+              Forgot Password?
+            </button>
+          </p>
+        )}
+      </form>
+
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-gray-700"></div>
+        </div>
+        <div className="relative flex justify-center text-sm">
+          <span className="px-2 bg-[#242B3D] text-gray-400">Or</span>
+        </div>
+      </div>
+
+      <Button
+        type="button"
+        variant="outline"
+        className="w-full border-gray-700 text-white hover:bg-[#1A1F2C]"
+        onClick={handleGoogleAuth}
+      >
+        <FcGoogle className="mr-2 h-5 w-5" />
+        Continue with Google
+      </Button>
+
+      <p className="text-center text-sm text-gray-400">
+        {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
+        <button
+          type="button"
+          className="text-blue-500 hover:text-blue-400"
+          onClick={() => setIsSignUp(!isSignUp)}
+        >
+          {isSignUp ? "Sign In" : "Sign Up"}
+        </button>
+      </p>
+    </>
+  );
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-[#1A1F2C] p-4">
+      <Card className="w-full max-w-md p-8 space-y-6 bg-[#242B3D] border-none shadow-xl">
+        {isPasswordReset ? renderPasswordResetForm() : renderAuthForm()}
       </Card>
     </div>
   );
