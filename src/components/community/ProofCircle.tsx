@@ -9,6 +9,13 @@ import { useToast } from "@/hooks/use-toast";
 import { Camera, Plus, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
+import { 
+  Carousel, 
+  CarouselContent, 
+  CarouselItem, 
+  CarouselPrevious, 
+  CarouselNext 
+} from "@/components/ui/carousel";
 
 interface ProofItem {
   id: string;
@@ -31,6 +38,7 @@ export const ProofCircle = ({ challengeId, proofs = [] }: ProofCircleProps) => {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [progressValue, setProgressValue] = useState<number>(0);
+  const [selectedProof, setSelectedProof] = useState<ProofItem | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -138,6 +146,16 @@ export const ProofCircle = ({ challengeId, proofs = [] }: ProofCircleProps) => {
     });
   };
 
+  // Group proofs by date for the carousel
+  const proofsByDate = proofs.reduce<Record<string, ProofItem[]>>((acc, proof) => {
+    const date = new Date(proof.created_at).toLocaleDateString('de-DE');
+    if (!acc[date]) {
+      acc[date] = [];
+    }
+    acc[date].push(proof);
+    return acc;
+  }, {});
+
   return (
     <div className="mt-8">
       <div className="flex justify-between items-center mb-4">
@@ -148,27 +166,46 @@ export const ProofCircle = ({ challengeId, proofs = [] }: ProofCircleProps) => {
         </Button>
       </div>
       
-      {/* Proof Circle */}
-      <div className="flex flex-wrap gap-3 items-center justify-center my-6">
-        {proofs && proofs.length > 0 ? (
-          proofs.map((proof) => (
-            <div key={proof.id} className="relative">
-              <Avatar className="h-16 w-16 border-2 border-white shadow-md">
-                <AvatarImage src={proof.image_url} alt="Beweis" />
-                <AvatarFallback>{proof.user_name?.[0] || "P"}</AvatarFallback>
-              </Avatar>
-              <div className="absolute -bottom-1 -right-1 bg-blue-600 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center font-medium">
-                +{proof.progress_value}
-              </div>
+      {/* Proof Carousel by Date */}
+      {Object.keys(proofsByDate).length > 0 ? (
+        <div className="space-y-6">
+          {Object.entries(proofsByDate).map(([date, dailyProofs]) => (
+            <div key={date} className="space-y-2">
+              <h4 className="font-medium text-sm text-gray-600">{date}</h4>
+              <Carousel className="w-full">
+                <CarouselContent>
+                  {dailyProofs.map((proof) => (
+                    <CarouselItem key={proof.id} className="basis-1/2 md:basis-1/3 lg:basis-1/4">
+                      <div 
+                        className="relative cursor-pointer" 
+                        onClick={() => setSelectedProof(proof)}
+                      >
+                        <Avatar className="h-20 w-20 rounded-md border-2 border-white shadow-md mx-auto">
+                          <AvatarImage src={proof.image_url} alt="Beweis" className="object-cover" />
+                          <AvatarFallback className="text-lg">{proof.user_name?.[0] || "P"}</AvatarFallback>
+                        </Avatar>
+                        <div className="absolute -bottom-1 -right-1 bg-blue-600 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center font-medium">
+                          +{proof.progress_value}
+                        </div>
+                        <p className="text-xs text-center mt-2 text-gray-600 truncate max-w-[90px] mx-auto">
+                          {proof.user_name || "Anonymous"}
+                        </p>
+                      </div>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                <CarouselPrevious className="-left-2 bg-white" />
+                <CarouselNext className="-right-2 bg-white" />
+              </Carousel>
             </div>
-          ))
-        ) : (
-          <div className="text-center py-8 w-full text-gray-500">
-            <p>Noch keine Beweise vorhanden.</p>
-            <p className="text-sm">Sei der Erste, der seinen Fortschritt dokumentiert!</p>
-          </div>
-        )}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-8 w-full text-gray-500">
+          <p>Noch keine Beweise vorhanden.</p>
+          <p className="text-sm">Sei der Erste, der seinen Fortschritt dokumentiert!</p>
+        </div>
+      )}
       
       {/* Upload Dialog - Mobile Optimized */}
       <Dialog open={isUploadOpen} onOpenChange={setIsUploadOpen}>
@@ -248,6 +285,46 @@ export const ProofCircle = ({ challengeId, proofs = [] }: ProofCircleProps) => {
               </Button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Proof Detail Dialog */}
+      <Dialog open={!!selectedProof} onOpenChange={(open) => !open && setSelectedProof(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Fortschritt-Details</DialogTitle>
+          </DialogHeader>
+          
+          {selectedProof && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <Avatar className="h-10 w-10">
+                  <AvatarImage src={selectedProof.user_avatar} />
+                  <AvatarFallback>{selectedProof.user_name?.[0] || "U"}</AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="font-medium">{selectedProof.user_name || "Anonymous"}</p>
+                  <p className="text-sm text-gray-500">
+                    {new Date(selectedProof.created_at).toLocaleString('de-DE')}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="rounded-lg overflow-hidden border">
+                <img 
+                  src={selectedProof.image_url} 
+                  alt="Proof" 
+                  className="w-full object-contain max-h-[300px]" 
+                />
+              </div>
+              
+              <div className="bg-blue-50 p-3 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  Fortschritt: <span className="font-bold">+{selectedProof.progress_value}</span>
+                </p>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

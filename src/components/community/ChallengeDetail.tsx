@@ -5,11 +5,22 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ArrowLeft, Calendar, Trophy, Users } from "lucide-react";
+import { ArrowLeft, Calendar, Trophy, Users, Edit, Trash2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ProofCircle } from "./ProofCircle";
+import { useState } from "react";
+import { EditChallengeDialog } from "./EditChallengeDialog";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogFooter 
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 
 type ProofItem = {
   id: string;
@@ -22,11 +33,21 @@ type ProofItem = {
   user_avatar?: string;
 }
 
+type Participant = {
+  id: string;
+  name: string;
+  avatar: string;
+  progress: number;
+}
+
 export const ChallengeDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isManageParticipantsOpen, setIsManageParticipantsOpen] = useState(false);
+  const [newParticipantEmail, setNewParticipantEmail] = useState("");
   
   // Get current user
   const { data: session } = useQuery({
@@ -59,7 +80,7 @@ export const ChallengeDetail = () => {
     queryKey: ['challenge-proofs', id],
     enabled: !!id,
     queryFn: async () => {
-      // Custom query implementation to avoid TypeScript issues
+      // Fixed query to properly handle the join with profiles table
       const { data, error } = await supabase
         .from('challenge_proofs')
         .select(`
@@ -84,8 +105,8 @@ export const ChallengeDetail = () => {
         image_url: item.image_url,
         progress_value: item.progress_value,
         created_at: item.created_at,
-        user_name: item.profiles?.full_name,
-        user_avatar: item.profiles?.avatar_url
+        user_name: item.profiles?.full_name || 'Anonymous',
+        user_avatar: item.profiles?.avatar_url || ''
       })) as ProofItem[];
     }
   });
@@ -179,11 +200,90 @@ export const ChallengeDetail = () => {
     }
   });
   
+  const removeParticipantMutation = useMutation({
+    mutationFn: async (participantId: string) => {
+      const { data, error } = await supabase
+        .from('challenge_participants')
+        .delete()
+        .eq('user_id', participantId)
+        .eq('challenge_id', id!);
+        
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['challenge-participation'] });
+      toast({
+        title: "Teilnehmer entfernt",
+        description: "Der Teilnehmer wurde aus der Challenge entfernt.",
+      });
+    },
+    onError: (error) => {
+      console.error("Remove participant error:", error);
+      toast({
+        title: "Fehler beim Entfernen",
+        description: "Bitte versuche es später erneut.",
+        variant: "destructive"
+      });
+    }
+  });
+  
+  const addParticipantMutation = useMutation({
+    mutationFn: async (email: string) => {
+      // First, get the user ID from the email
+      const { data: userData, error: userError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', email)
+        .single();
+        
+      if (userError) throw userError;
+      
+      if (!userData) {
+        throw new Error("Benutzer nicht gefunden.");
+      }
+      
+      // Then add the user to the challenge
+      const { data, error } = await supabase
+        .from('challenge_participants')
+        .insert({
+          user_id: userData.id,
+          challenge_id: id!,
+          progress: 0
+        });
+        
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      setNewParticipantEmail("");
+      queryClient.invalidateQueries({ queryKey: ['challenge-participation'] });
+      toast({
+        title: "Teilnehmer hinzugefügt",
+        description: "Der Teilnehmer wurde zur Challenge hinzugefügt.",
+      });
+    },
+    onError: (error) => {
+      console.error("Add participant error:", error);
+      toast({
+        title: "Fehler beim Hinzufügen",
+        description: error instanceof Error ? error.message : "Bitte versuche es später erneut.",
+        variant: "destructive"
+      });
+    }
+  });
+  
   const handleJoinLeave = () => {
     if (participation) {
       leaveChallengeMutation.mutate();
     } else {
       joinChallengeMutation.mutate();
+    }
+  };
+  
+  const handleAddParticipant = () => {
+    if (newParticipantEmail.trim()) {
+      addParticipantMutation.mutate(newParticipantEmail);
     }
   };
   
@@ -202,6 +302,17 @@ export const ChallengeDetail = () => {
           Zurück zu Challenges
         </Button>
         
+        <div className="flex flex-wrap justify-between items-center mb-4">
+          <h1 className="text-2xl font-bold">{challenge.title}</h1>
+          <Button 
+            onClick={() => setIsEditOpen(true)}
+            className="bg-blue-600"
+          >
+            <Edit className="h-4 w-4 mr-2" />
+            Challenge bearbeiten
+          </Button>
+        </div>
+        
         <Card>
           <CardContent className="p-4 md:p-6">
             <div className="flex flex-col md:flex-row justify-between gap-6">
@@ -210,7 +321,6 @@ export const ChallengeDetail = () => {
                 <div className="inline-flex h-6 items-center rounded-full bg-blue-100 px-3 text-sm font-medium text-blue-800 mb-3">
                   {challenge.category}
                 </div>
-                <h1 className="text-2xl font-bold mb-2">{challenge.title}</h1>
                 <p className="text-gray-600 mb-4">{challenge.description}</p>
                 
                 <div className="flex flex-wrap gap-4 mb-6 text-sm">
@@ -238,16 +348,26 @@ export const ChallengeDetail = () => {
                   <Progress value={progressPercentage} className="h-3" />
                 </div>
                 
-                <Button 
-                  onClick={handleJoinLeave}
-                  variant={participation ? "outline" : "default"}
-                  className={participation ? "border-red-300 text-red-700 hover:bg-red-50" : ""}
-                  disabled={joinChallengeMutation.isPending || leaveChallengeMutation.isPending}
-                >
-                  {joinChallengeMutation.isPending || leaveChallengeMutation.isPending ? 
-                    "Wird bearbeitet..." : 
-                    (participation ? "Challenge verlassen" : "Challenge beitreten")}
-                </Button>
+                <div className="flex space-x-3">
+                  <Button 
+                    onClick={handleJoinLeave}
+                    variant={participation ? "outline" : "default"}
+                    className={participation ? "border-red-300 text-red-700 hover:bg-red-50" : ""}
+                    disabled={joinChallengeMutation.isPending || leaveChallengeMutation.isPending}
+                  >
+                    {joinChallengeMutation.isPending || leaveChallengeMutation.isPending ? 
+                      "Wird bearbeitet..." : 
+                      (participation ? "Challenge verlassen" : "Challenge beitreten")}
+                  </Button>
+                  
+                  <Button 
+                    variant="outline"
+                    onClick={() => setIsManageParticipantsOpen(true)}
+                  >
+                    <Users className="h-4 w-4 mr-2" />
+                    Teilnehmer verwalten
+                  </Button>
+                </div>
               </div>
               
               {/* Participants */}
@@ -280,6 +400,75 @@ export const ChallengeDetail = () => {
             <ProofCircle challengeId={id || ''} proofs={proofs} />
           </CardContent>
         </Card>
+        
+        {/* Edit Challenge Dialog */}
+        <EditChallengeDialog 
+          open={isEditOpen} 
+          onOpenChange={setIsEditOpen} 
+          challengeId={id || ''} 
+          challenge={challenge}
+        />
+        
+        {/* Manage Participants Dialog */}
+        <Dialog open={isManageParticipantsOpen} onOpenChange={setIsManageParticipantsOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Teilnehmer verwalten</DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-4 my-4">
+              <div className="space-y-2">
+                <Label htmlFor="new-participant">Neuen Teilnehmer hinzufügen</Label>
+                <div className="flex space-x-2">
+                  <Input 
+                    id="new-participant" 
+                    placeholder="E-Mail-Adresse" 
+                    value={newParticipantEmail}
+                    onChange={(e) => setNewParticipantEmail(e.target.value)}
+                  />
+                  <Button 
+                    onClick={handleAddParticipant}
+                    disabled={addParticipantMutation.isPending || !newParticipantEmail.trim()}
+                  >
+                    Hinzufügen
+                  </Button>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Aktuelle Teilnehmer</Label>
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                  {challenge.participants.map(participant => (
+                    <div key={participant.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-6 w-6">
+                          <AvatarImage src={participant.avatar} />
+                          <AvatarFallback>{participant.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <span className="text-sm">{participant.name}</span>
+                      </div>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-red-600 hover:text-red-800 hover:bg-red-100"
+                        onClick={() => removeParticipantMutation.mutate(participant.id)}
+                        disabled={removeParticipantMutation.isPending}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            
+            <DialogFooter>
+              <Button onClick={() => setIsManageParticipantsOpen(false)}>
+                Schließen
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </main>
     </div>
   );
