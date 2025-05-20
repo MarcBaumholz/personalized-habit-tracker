@@ -31,7 +31,6 @@ export const ProofCircle = ({ challengeId, proofs = [] }: ProofCircleProps) => {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [progressValue, setProgressValue] = useState<number>(0);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -75,8 +74,7 @@ export const ProofCircle = ({ challengeId, proofs = [] }: ProofCircleProps) => {
           user_id: user.id,
           image_url: publicUrl,
           progress_value: progress
-        })
-        .select();
+        });
         
       if (proofError) throw proofError;
       
@@ -144,7 +142,7 @@ export const ProofCircle = ({ challengeId, proofs = [] }: ProofCircleProps) => {
     <div className="mt-8">
       <div className="flex justify-between items-center mb-4">
         <h3 className="font-bold text-lg">Beweise & Fortschritt</h3>
-        <Button onClick={() => setIsUploadOpen(true)} size="sm">
+        <Button onClick={() => setIsUploadOpen(true)} size="sm" className="bg-blue-600">
           <Plus className="h-4 w-4 mr-2" />
           Fortschritt hinzufügen
         </Button>
@@ -152,8 +150,8 @@ export const ProofCircle = ({ challengeId, proofs = [] }: ProofCircleProps) => {
       
       {/* Proof Circle */}
       <div className="flex flex-wrap gap-3 items-center justify-center my-6">
-        {proofs.length > 0 ? (
-          proofs.map((proof, index) => (
+        {proofs && proofs.length > 0 ? (
+          proofs.map((proof) => (
             <div key={proof.id} className="relative">
               <Avatar className="h-16 w-16 border-2 border-white shadow-md">
                 <AvatarImage src={proof.image_url} alt="Beweis" />
@@ -172,7 +170,7 @@ export const ProofCircle = ({ challengeId, proofs = [] }: ProofCircleProps) => {
         )}
       </div>
       
-      {/* Upload Dialog */}
+      {/* Upload Dialog - Mobile Optimized */}
       <Dialog open={isUploadOpen} onOpenChange={setIsUploadOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -182,13 +180,13 @@ export const ProofCircle = ({ challengeId, proofs = [] }: ProofCircleProps) => {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="proof-image">Beweisfoto</Label>
-              <div className="border-2 border-dashed rounded-lg p-6 text-center relative">
+              <div className="border-2 border-dashed rounded-lg p-6 text-center relative min-h-[180px] flex items-center justify-center">
                 {previewUrl ? (
-                  <div className="relative">
+                  <div className="relative w-full">
                     <img 
                       src={previewUrl} 
                       alt="Vorschau" 
-                      className="mx-auto max-h-48 rounded" 
+                      className="mx-auto max-h-48 rounded object-contain" 
                     />
                     <button 
                       type="button" 
@@ -202,15 +200,22 @@ export const ProofCircle = ({ challengeId, proofs = [] }: ProofCircleProps) => {
                     </button>
                   </div>
                 ) : (
-                  <>
-                    <Camera className="h-8 w-8 mx-auto text-gray-400 mb-2" />
-                    <p className="text-sm text-gray-500">Klicke hier oder ziehe ein Foto hierher</p>
-                  </>
+                  <div className="flex flex-col items-center">
+                    <Button 
+                      type="button" 
+                      className="bg-blue-600 rounded-full w-16 h-16 mb-2 flex items-center justify-center"
+                      onClick={() => document.getElementById('proof-image')?.click()}
+                    >
+                      <Camera className="h-8 w-8" />
+                    </Button>
+                    <p className="text-sm text-gray-500">Foto aufnehmen oder auswählen</p>
+                  </div>
                 )}
                 <Input
                   id="proof-image"
                   type="file"
                   accept="image/*"
+                  capture="environment"
                   onChange={handleFileChange}
                   className="absolute inset-0 opacity-0 cursor-pointer"
                 />
@@ -218,12 +223,12 @@ export const ProofCircle = ({ challengeId, proofs = [] }: ProofCircleProps) => {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="progress-value">Fortschritt</Label>
+              <Label htmlFor="progress-value">Dein heutiger Fortschritt</Label>
               <div className="flex items-center gap-2">
                 <Input 
                   id="progress-value"
                   type="number" 
-                  value={progressValue}
+                  value={progressValue || ''}
                   onChange={(e) => setProgressValue(Number(e.target.value))}
                   min="0"
                   step="0.1"
@@ -233,19 +238,13 @@ export const ProofCircle = ({ challengeId, proofs = [] }: ProofCircleProps) => {
               </div>
             </div>
             
-            <div className="flex justify-end gap-2 pt-2">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => setIsUploadOpen(false)}
-              >
-                Abbrechen
-              </Button>
+            <div className="pt-2">
               <Button 
                 type="submit" 
                 disabled={!selectedImage || progressValue <= 0 || uploadProofMutation.isPending}
+                className="w-full bg-blue-600 py-6 text-lg"
               >
-                {uploadProofMutation.isPending ? "Wird hochgeladen..." : "Hochladen"}
+                {uploadProofMutation.isPending ? "Wird hochgeladen..." : "Fortschritt dokumentieren"}
               </Button>
             </div>
           </form>

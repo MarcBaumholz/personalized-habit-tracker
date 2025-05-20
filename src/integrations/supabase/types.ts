@@ -272,6 +272,33 @@ export type Database = {
         }
         Relationships: []
       }
+      challenge_proofs: {
+        Row: {
+          challenge_id: string
+          created_at: string
+          id: string
+          image_url: string
+          progress_value: number
+          user_id: string
+        }
+        Insert: {
+          challenge_id: string
+          created_at?: string
+          id?: string
+          image_url: string
+          progress_value: number
+          user_id: string
+        }
+        Update: {
+          challenge_id?: string
+          created_at?: string
+          id?: string
+          image_url?: string
+          progress_value?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       coaching_reflections: {
         Row: {
           challenges: string | null

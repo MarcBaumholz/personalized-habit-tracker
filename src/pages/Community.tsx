@@ -9,9 +9,16 @@ import { CommunityChallenges } from "@/components/community/CommunityChallenges"
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const Community = () => {
   const navigate = useNavigate();
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   
   // Get current user
   const { data: session } = useQuery({
@@ -125,6 +132,13 @@ const Community = () => {
           </TabsList>
 
           <TabsContent value="challenges">
+            <div className="flex justify-between items-center mb-6">
+              <h1 className="text-2xl font-bold">Community Challenges</h1>
+              <Button onClick={() => setIsCreateDialogOpen(true)} className="bg-blue-600">
+                <Plus className="h-4 w-4 mr-2" />
+                Neue Challenge
+              </Button>
+            </div>
             <CommunityChallenges />
           </TabsContent>
 
@@ -175,6 +189,65 @@ const Community = () => {
             </div>
           </TabsContent>
         </Tabs>
+        
+        {/* Create Challenge Dialog */}
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Neue Challenge erstellen</DialogTitle>
+            </DialogHeader>
+            
+            <form className="space-y-4">
+              <div>
+                <Label htmlFor="title">Titel</Label>
+                <Input id="title" placeholder="z.B. '100 km Laufen'" />
+              </div>
+              
+              <div>
+                <Label htmlFor="category">Kategorie</Label>
+                <Select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Wähle eine Kategorie" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="fitness">Fitness</SelectItem>
+                    <SelectItem value="bildung">Bildung</SelectItem>
+                    <SelectItem value="ernährung">Ernährung</SelectItem>
+                    <SelectItem value="finanzen">Finanzen</SelectItem>
+                    <SelectItem value="mindfulness">Mindfulness</SelectItem>
+                    <SelectItem value="sonstiges">Sonstiges</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label htmlFor="description">Beschreibung</Label>
+                <Textarea id="description" placeholder="Worum geht es in dieser Challenge?" />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="target">Zielwert</Label>
+                  <Input id="target" type="number" min="1" placeholder="z.B. 100" />
+                </div>
+                <div>
+                  <Label htmlFor="unit">Einheit</Label>
+                  <Input id="unit" placeholder="z.B. 'km' oder 'Seiten'" />
+                </div>
+              </div>
+              
+              <div>
+                <Label htmlFor="end-date">Enddatum</Label>
+                <Input id="end-date" type="date" />
+              </div>
+            </form>
+            
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>Abbrechen</Button>
+              <Button type="submit" className="bg-blue-600">Challenge erstellen</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </main>
     </div>
   );

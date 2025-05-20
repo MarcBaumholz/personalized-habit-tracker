@@ -8,9 +8,19 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ArrowLeft, Calendar, Trophy, Users } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { ProofCircle } from "./ProofCircle";
+
+type ProofItem = {
+  id: string;
+  user_id: string;
+  challenge_id: string;
+  image_url: string;
+  created_at: string;
+  progress_value: number;
+  user_name?: string;
+  user_avatar?: string;
+}
 
 export const ChallengeDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -49,6 +59,7 @@ export const ChallengeDetail = () => {
     queryKey: ['challenge-proofs', id],
     enabled: !!id,
     queryFn: async () => {
+      // Custom query implementation to avoid TypeScript issues
       const { data, error } = await supabase
         .from('challenge_proofs')
         .select(`
@@ -58,34 +69,41 @@ export const ChallengeDetail = () => {
           image_url,
           progress_value,
           created_at,
-          profiles:user_id(full_name, avatar_url)
+          profiles:user_id (full_name, avatar_url)
         `)
-        .eq('challenge_id', id)
+        .eq('challenge_id', id as string)
         .order('created_at', { ascending: false });
         
       if (error) throw error;
-      
-      return data?.map(proof => ({
-        ...proof,
-        user_name: proof.profiles?.full_name,
-        user_avatar: proof.profiles?.avatar_url
-      })) || [];
+
+      // Transform the data to match our expected format
+      return (data || []).map(item => ({
+        id: item.id,
+        user_id: item.user_id,
+        challenge_id: item.challenge_id,
+        image_url: item.image_url,
+        progress_value: item.progress_value,
+        created_at: item.created_at,
+        user_name: item.profiles?.full_name,
+        user_avatar: item.profiles?.avatar_url
+      })) as ProofItem[];
     }
   });
   
   // Sample challenge data - in a real app, this would come from the database
   const challenge = {
     id: id,
-    title: id === '1' ? '100 km Laufen' : '1000 Seiten lesen',
+    title: id === '1' ? '100 km Laufen' : id === '3' ? '1000 Seiten lesen' : 'Challenge',
     description: id === '1' ? 
       'Gemeinsam 100 km in einem Monat laufen - für mehr Bewegung und Gesundheit!' : 
-      'Gemeinsam 1000 Seiten in zwei Monaten lesen - für mehr Wissen und geistige Fitness!',
-    category: id === '1' ? 'Fitness' : 'Bildung',
+      id === '3' ? 'Gemeinsam 1000 Seiten in zwei Monaten lesen - für mehr Wissen und geistige Fitness!' : 
+      'Eine gemeinsame Challenge für mehr Motivation!',
+    category: id === '1' ? 'Fitness' : id === '3' ? 'Bildung' : 'Allgemein',
     target: { 
-      value: id === '1' ? 100 : 1000, 
-      unit: id === '1' ? 'km' : 'Seiten' 
+      value: id === '1' ? 100 : id === '3' ? 1000 : 50, 
+      unit: id === '1' ? 'km' : id === '3' ? 'Seiten' : 'Einheiten' 
     },
-    currentProgress: id === '1' ? 63 : 450,
+    currentProgress: id === '1' ? 63 : id === '3' ? 450 : 25,
     endDate: '2025-04-05',
     participants: [
       { id: '1', name: 'Anna Schmidt', avatar: '', progress: 15 },
@@ -185,7 +203,7 @@ export const ChallengeDetail = () => {
         </Button>
         
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4 md:p-6">
             <div className="flex flex-col md:flex-row justify-between gap-6">
               {/* Challenge Info */}
               <div className="flex-1">
@@ -258,7 +276,7 @@ export const ChallengeDetail = () => {
               </div>
             </div>
             
-            {/* Proof Circle */}
+            {/* Proof Circle with mobile-optimized UI */}
             <ProofCircle challengeId={id || ''} proofs={proofs} />
           </CardContent>
         </Card>
