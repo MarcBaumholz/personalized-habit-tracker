@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { Navigation } from "@/components/layout/Navigation";
 import { Button } from "@/components/ui/button";
@@ -22,6 +21,12 @@ import {
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 
+// Define proper types for profile and proof data
+type Profile = {
+  full_name?: string;
+  avatar_url?: string;
+}
+
 type ProofItem = {
   id: string;
   user_id: string;
@@ -31,6 +36,7 @@ type ProofItem = {
   progress_value: number;
   user_name?: string;
   user_avatar?: string;
+  profiles?: Profile;
 }
 
 type Participant = {
@@ -75,29 +81,26 @@ export const ChallengeDetail = () => {
     }
   });
   
-  // Get challenge proofs
+  // Get challenge proofs - Fixed query to handle profiles correctly
   const { data: proofs } = useQuery({
     queryKey: ['challenge-proofs', id],
     enabled: !!id,
     queryFn: async () => {
-      // Fixed query to properly handle the join with profiles table
       const { data, error } = await supabase
         .from('challenge_proofs')
         .select(`
-          id,
-          user_id,
-          challenge_id,
-          image_url,
-          progress_value,
-          created_at,
-          profiles:user_id (full_name, avatar_url)
+          *,
+          profiles:user_id (
+            full_name, 
+            avatar_url
+          )
         `)
         .eq('challenge_id', id as string)
         .order('created_at', { ascending: false });
         
       if (error) throw error;
 
-      // Transform the data to match our expected format
+      // Transform the data to match our expected ProofItem format
       return (data || []).map(item => ({
         id: item.id,
         user_id: item.user_id,
@@ -105,8 +108,10 @@ export const ChallengeDetail = () => {
         image_url: item.image_url,
         progress_value: item.progress_value,
         created_at: item.created_at,
+        // Safely access the profile data
         user_name: item.profiles?.full_name || 'Anonymous',
-        user_avatar: item.profiles?.avatar_url || ''
+        user_avatar: item.profiles?.avatar_url || '',
+        profiles: item.profiles
       })) as ProofItem[];
     }
   });
@@ -133,7 +138,7 @@ export const ChallengeDetail = () => {
       { id: '4', name: 'Thomas Weber', avatar: '', progress: 8 },
       { id: '5', name: 'Sarah Wagner', avatar: '', progress: 5 },
       { id: '6', name: 'Michael Becker', avatar: '', progress: 3 }
-    ]
+    ] as Participant[]
   };
   
   const joinChallengeMutation = useMutation({
@@ -397,7 +402,7 @@ export const ChallengeDetail = () => {
             </div>
             
             {/* Proof Circle with mobile-optimized UI */}
-            <ProofCircle challengeId={id || ''} proofs={proofs} />
+            <ProofCircle challengeId={id || ''} proofs={proofs || []} />
           </CardContent>
         </Card>
         
