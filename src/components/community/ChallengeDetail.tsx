@@ -1,46 +1,91 @@
-import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+
+import { useParams, useNavigate } from "react-router-dom";
+import { Navigation } from "@/components/layout/Navigation";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ArrowLeft, Calendar, Trophy, Users } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { ChallengeProps } from "./ChallengeCard";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { 
-  Users, 
-  Calendar, 
-  Trophy, 
-  TrendingUp,
-  ArrowLeft,
-  Plus,
-  Info,
-  Check,
-  Clock,
-  Target,
-  Activity,
-  Share2
-} from "lucide-react";
-import { format, differenceInDays } from "date-fns";
-import * as React from "react";
+import { ProofCircle } from "./ProofCircle";
 
-const SAMPLE_CHALLENGES: ChallengeProps[] = [
-  {
-    id: '1',
-    title: '100 km Laufen',
-    description: 'Gemeinsam 100 km in einem Monat laufen',
-    category: 'Fitness',
-    target: {
-      value: 100,
-      unit: 'km'
+export const ChallengeDetail = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
+  // Get current user
+  const { data: session } = useQuery({
+    queryKey: ['session'],
+    queryFn: async () => {
+      const { data } = await supabase.auth.getSession();
+      return data.session;
+    }
+  });
+  
+  // Check if user is participating
+  const { data: participation } = useQuery({
+    queryKey: ['challenge-participation', id, session?.user?.id],
+    enabled: !!id && !!session?.user?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('challenge_participants')
+        .select('*')
+        .eq('challenge_id', id)
+        .eq('user_id', session!.user.id)
+        .single();
+        
+      if (error && error.code !== 'PGRST116') throw error;
+      return data;
+    }
+  });
+  
+  // Get challenge proofs
+  const { data: proofs } = useQuery({
+    queryKey: ['challenge-proofs', id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('challenge_proofs')
+        .select(`
+          id,
+          user_id,
+          challenge_id,
+          image_url,
+          progress_value,
+          created_at,
+          profiles:user_id(full_name, avatar_url)
+        `)
+        .eq('challenge_id', id)
+        .order('created_at', { ascending: false });
+        
+      if (error) throw error;
+      
+      return data?.map(proof => ({
+        ...proof,
+        user_name: proof.profiles?.full_name,
+        user_avatar: proof.profiles?.avatar_url
+      })) || [];
+    }
+  });
+  
+  // Sample challenge data - in a real app, this would come from the database
+  const challenge = {
+    id: id,
+    title: id === '1' ? '100 km Laufen' : '1000 Seiten lesen',
+    description: id === '1' ? 
+      'Gemeinsam 100 km in einem Monat laufen - für mehr Bewegung und Gesundheit!' : 
+      'Gemeinsam 1000 Seiten in zwei Monaten lesen - für mehr Wissen und geistige Fitness!',
+    category: id === '1' ? 'Fitness' : 'Bildung',
+    target: { 
+      value: id === '1' ? 100 : 1000, 
+      unit: id === '1' ? 'km' : 'Seiten' 
     },
-    currentProgress: 63,
+    currentProgress: id === '1' ? 63 : 450,
     endDate: '2025-04-05',
     participants: [
       { id: '1', name: 'Anna Schmidt', avatar: '', progress: 15 },
@@ -49,650 +94,175 @@ const SAMPLE_CHALLENGES: ChallengeProps[] = [
       { id: '4', name: 'Thomas Weber', avatar: '', progress: 8 },
       { id: '5', name: 'Sarah Wagner', avatar: '', progress: 5 },
       { id: '6', name: 'Michael Becker', avatar: '', progress: 3 }
-    ],
-    isJoined: true
-  },
-  {
-    id: '2',
-    title: '30 Tage Meditation',
-    description: 'Jeden Tag 10 Minuten meditieren',
-    category: 'Achtsamkeit',
-    target: {
-      value: 300,
-      unit: 'Minuten'
-    },
-    currentProgress: 210,
-    endDate: '2025-04-15',
-    participants: [
-      { id: '1', name: 'Anna Schmidt', avatar: '', progress: 70 },
-      { id: '2', name: 'Max Mustermann', avatar: '', progress: 80 },
-      { id: '3', name: 'Sarah Wagner', avatar: '', progress: 60 }
-    ],
-    isJoined: false
-  },
-  {
-    id: '3',
-    title: '1000 Seiten lesen',
-    description: 'Gemeinsam 1000 Seiten in zwei Monaten lesen',
-    category: 'Bildung',
-    target: {
-      value: 1000,
-      unit: 'Seiten'
-    },
-    currentProgress: 450,
-    endDate: '2025-04-05',
-    participants: [
-      { id: '1', name: 'Laura Meyer', avatar: '', progress: 150 },
-      { id: '2', name: 'Thomas Weber', avatar: '', progress: 125 },
-      { id: '3', name: 'Sarah Wagner', avatar: '', progress: 100 },
-      { id: '4', name: 'Michael Becker', avatar: '', progress: 75 }
-    ],
-    isJoined: true
-  }
-];
-
-const DUMMY_PARTICIPANTS = [
-  { id: 'dummy1', name: 'Anna Schmidt', avatar: '/placeholder.svg', progress: 32, user_id: 'dummy1' },
-  { id: 'dummy2', name: 'Max Mustermann', avatar: '/placeholder.svg', progress: 45, user_id: 'dummy2' },
-  { id: 'dummy3', name: 'Laura Meyer', avatar: '/placeholder.svg', progress: 28, user_id: 'dummy3' },
-  { id: 'dummy4', name: 'Thomas Weber', avatar: '/placeholder.svg', progress: 37, user_id: 'dummy4' },
-  { id: 'dummy5', name: 'Sarah Wagner', avatar: '/placeholder.svg', progress: 19, user_id: 'dummy5' },
-  { id: 'dummy6', name: 'Michael Becker', avatar: '/placeholder.svg', progress: 41, user_id: 'dummy6' },
-  { id: 'dummy7', name: 'Julia Klein', avatar: '/placeholder.svg', progress: 22, user_id: 'dummy7' },
-  { id: 'dummy8', name: 'Markus Schneider', avatar: '/placeholder.svg', progress: 18, user_id: 'dummy8' },
-  { id: 'dummy9', name: 'Sophia Müller', avatar: '/placeholder.svg', progress: 33, user_id: 'dummy9' },
-  { id: 'dummy10', name: 'David Fischer', avatar: '/placeholder.svg', progress: 27, user_id: 'dummy10' },
-  { id: 'dummy11', name: 'Emma Hoffmann', avatar: '/placeholder.svg', progress: 31, user_id: 'dummy11' },
-  { id: 'dummy12', name: 'Felix Schulz', avatar: '/placeholder.svg', progress: 42, user_id: 'dummy12' },
-  { id: 'dummy13', name: 'Hannah Bauer', avatar: '/placeholder.svg', progress: 24, user_id: 'dummy13' },
-  { id: 'dummy14', name: 'Lukas Richter', avatar: '/placeholder.svg', progress: 38, user_id: 'dummy14' },
-  { id: 'dummy15', name: 'Lena Krüger', avatar: '/placeholder.svg', progress: 29, user_id: 'dummy15' }
-];
-
-interface ParticipantData {
-  id: string;
-  name: string;
-  avatar: string;
-  progress: number;
-  user_id?: string; // For matching with current user
-}
-
-interface ChallengeParticipant {
-  id: string;
-  challenge_id: string;
-  user_id: string;
-  progress: number;
-  created_at: string;
-  profile?: {
-    id: string;
-    full_name: string | null;
-    avatar_url: string | null;
-    username: string | null;
-  } | null;
-}
-
-export const ChallengeDetail = () => {
-  const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [newProgress, setNewProgress] = useState("");
-  const [isAddProgressOpen, setIsAddProgressOpen] = useState(false);
-  const [userParticipation, setUserParticipation] = useState<ChallengeParticipant | null>(null);
+    ]
+  };
   
-  const { data: challenge, isLoading: isLoadingChallenge } = useQuery({
-    queryKey: ['challenge', id],
-    queryFn: async () => {
-      const foundChallenge = SAMPLE_CHALLENGES.find(c => c.id === id);
-      if (!foundChallenge) {
-        throw new Error("Challenge not found");
-      }
-      return foundChallenge;
-    }
-  });
-  
-  const { data: session } = useQuery({
-    queryKey: ['session'],
-    queryFn: async () => {
-      const { data } = await supabase.auth.getSession();
-      return data.session;
-    }
-  });
-
-  const { data: profile } = useQuery({
-    queryKey: ['profile', session?.user?.id],
-    enabled: !!session?.user?.id,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', session!.user.id)
-        .single();
-      
-      if (error) throw error;
-      return data;
-    }
-  });
-
-  const { data: dbParticipants, isLoading: isLoadingParticipants } = useQuery({
-    queryKey: ['challenge-participants', id],
-    enabled: !!id,
-    queryFn: async () => {
-      try {
-        const { data: participantsData, error: participantsError } = await supabase
-          .from('challenge_participants')
-          .select('id, challenge_id, user_id, progress, created_at')
-          .eq('challenge_id', id);
-        
-        if (participantsError) throw participantsError;
-        
-        const participantsWithProfiles: ParticipantData[] = await Promise.all(
-          participantsData.map(async (participant) => {
-            const { data: profileData, error: profileError } = await supabase
-              .from('profiles')
-              .select('id, full_name, avatar_url, username')
-              .eq('id', participant.user_id)
-              .single();
-            
-            if (profileError) {
-              console.error("Error fetching profile for participant:", profileError);
-              return {
-                id: participant.id,
-                user_id: participant.user_id,
-                name: 'Anonymous User',
-                avatar: '/placeholder.svg',
-                progress: participant.progress || 0
-              };
-            }
-            
-            return {
-              id: participant.id,
-              user_id: participant.user_id,
-              name: profileData.full_name || profileData.username || 'Anonymous User',
-              avatar: profileData.avatar_url || '/placeholder.svg',
-              progress: participant.progress || 0
-            };
-          })
-        );
-        
-        return participantsWithProfiles;
-      } catch (error) {
-        console.error("Error fetching participants:", error);
-        return [];
-      }
-    }
-  });
-
-  const participants = React.useMemo(() => {
-    const challengeNumber = parseInt(id || '1', 10) % 10;
-    const dummyCount = 8 + challengeNumber;
-    const selectedDummies = DUMMY_PARTICIPANTS.slice(0, dummyCount).map(dummy => ({
-      ...dummy,
-      progress: Math.floor(dummy.progress * (0.8 + (challengeNumber / 10)))
-    }));
-    
-    const realUserIds = (dbParticipants || []).map(p => p.user_id);
-    const filteredDummies = selectedDummies.filter(d => !realUserIds.includes(d.user_id));
-    
-    return [...(dbParticipants || []), ...filteredDummies];
-  }, [dbParticipants, id]);
-
-  const totalProgress = participants?.reduce((sum, p) => sum + p.progress, 0) || 0;
-
-  useEffect(() => {
-    if (session?.user?.id && participants) {
-      const userParticipant = participants.find(
-        p => p.user_id === session.user.id
-      );
-      
-      if (userParticipant) {
-        setUserParticipation({
-          id: userParticipant.id,
-          challenge_id: id!,
-          user_id: session.user.id,
-          progress: userParticipant.progress,
-          created_at: new Date().toISOString(),
-          profile: profile ? {
-            id: profile.id,
-            full_name: profile.full_name,
-            avatar_url: profile.avatar_url,
-            username: profile.username
-          } : null
-        });
-      }
-    }
-  }, [session, participants, id, profile]);
-
   const joinChallengeMutation = useMutation({
     mutationFn: async () => {
-      if (!session?.user?.id) throw new Error("You must be logged in to join a challenge");
+      if (!session?.user) throw new Error("Not authenticated");
       
       const { data, error } = await supabase
         .from('challenge_participants')
         .insert({
-          challenge_id: id!,
           user_id: session.user.id,
+          challenge_id: id!,
           progress: 0
-        })
-        .select()
-        .single();
-      
+        });
+        
       if (error) throw error;
       return data;
     },
-    onSuccess: (data) => {
-      setUserParticipation(data);
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['challenge-participation', id, session?.user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['user-participations', session?.user?.id] });
       toast({
         title: "Challenge beigetreten",
-        description: `Du bist jetzt Teil der Challenge ${challenge?.title}`,
+        description: "Du nimmst jetzt an dieser Challenge teil!",
       });
-      queryClient.invalidateQueries({ queryKey: ['challenge-participants', id] });
     },
     onError: (error) => {
+      console.error("Join error:", error);
       toast({
-        title: "Fehler beim Beitreten",
-        description: error.message,
-        variant: "destructive",
+        title: "Beitritt fehlgeschlagen",
+        description: "Bitte versuche es später erneut.",
+        variant: "destructive"
       });
     }
   });
-
-  const addProgressMutation = useMutation({
-    mutationFn: async (progress: number) => {
-      if (!userParticipation) throw new Error("You must join the challenge first");
+  
+  const leaveChallengeMutation = useMutation({
+    mutationFn: async () => {
+      if (!session?.user) throw new Error("Not authenticated");
       
       const { data, error } = await supabase
         .from('challenge_participants')
-        .update({ 
-          progress: userParticipation.progress + progress 
-        })
-        .eq('id', userParticipation.id)
-        .select()
-        .single();
-      
+        .delete()
+        .eq('user_id', session.user.id)
+        .eq('challenge_id', id!);
+        
       if (error) throw error;
       return data;
     },
-    onSuccess: (data) => {
-      setUserParticipation(data);
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['challenge-participation', id, session?.user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['user-participations', session?.user?.id] });
       toast({
-        title: "Fortschritt hinzugefügt",
-        description: `Du hast ${newProgress} ${challenge?.target.unit} zu deinem Fortschritt hinzugefügt.`,
+        title: "Challenge verlassen",
+        description: "Du nimmst nicht mehr an dieser Challenge teil.",
       });
-      queryClient.invalidateQueries({ queryKey: ['challenge-participants', id] });
-      setNewProgress("");
-      setIsAddProgressOpen(false);
     },
     onError: (error) => {
+      console.error("Leave error:", error);
       toast({
-        title: "Fehler beim Hinzufügen des Fortschritts",
-        description: error.message,
-        variant: "destructive",
+        title: "Verlassen fehlgeschlagen",
+        description: "Bitte versuche es später erneut.",
+        variant: "destructive"
       });
     }
   });
-
-  const handleJoinChallenge = () => {
-    joinChallengeMutation.mutate();
-  };
-
-  const handleAddProgress = () => {
-    if (!newProgress || isNaN(Number(newProgress)) || Number(newProgress) <= 0) {
-      toast({
-        title: "Ungültige Eingabe",
-        description: "Bitte gib einen gültigen Wert ein.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    addProgressMutation.mutate(Number(newProgress));
-  };
-
-  const handleBackToOverview = () => {
-    navigate('/community');
-  };
-
-  if (isLoadingChallenge) {
-    return (
-      <div className="container max-w-4xl mx-auto p-8 text-center">
-        <div className="p-12 bg-gray-50 rounded-lg border border-gray-200">
-          <h2 className="text-xl font-bold mb-2">Laden...</h2>
-          <p className="text-gray-600 mb-6">Die Challenge-Daten werden geladen.</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!challenge) {
-    return (
-      <div className="container max-w-4xl mx-auto p-8 text-center">
-        <div className="p-12 bg-gray-50 rounded-lg border border-gray-200">
-          <h2 className="text-xl font-bold mb-2">Challenge nicht gefunden</h2>
-          <p className="text-gray-600 mb-6">Die gesuchte Challenge konnte nicht gefunden werden.</p>
-          <Button onClick={handleBackToOverview}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Zurück zur Übersicht
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  const progressPercentage = Math.min(100, Math.round((totalProgress / challenge.target.value) * 100));
   
-  const today = new Date();
-  const endDate = new Date(challenge.endDate);
-  const daysRemaining = Math.max(0, differenceInDays(endDate, today));
+  const handleJoinLeave = () => {
+    if (participation) {
+      leaveChallengeMutation.mutate();
+    } else {
+      joinChallengeMutation.mutate();
+    }
+  };
+  
+  const progressPercentage = Math.min(100, Math.round((challenge.currentProgress / challenge.target.value) * 100));
   
   return (
-    <div className="container max-w-5xl mx-auto py-8 px-4 sm:px-6">
-      <Button 
-        variant="outline" 
-        className="mb-6" 
-        onClick={handleBackToOverview}
-      >
-        <ArrowLeft className="mr-2 h-4 w-4" />
-        Zurück zur Übersicht
-      </Button>
-      
-      <div className="grid md:grid-cols-3 gap-6">
-        <div className="md:col-span-2 space-y-6">
-          <Card>
-            <CardHeader className="pb-2">
-              <div className="flex justify-between items-start">
-                <div>
-                  <Badge variant="outline" className="mb-2 text-blue-700 bg-blue-50 hover:bg-blue-100 border-blue-200">
-                    {challenge.category}
-                  </Badge>
-                  <CardTitle className="text-2xl">{challenge.title}</CardTitle>
-                </div>
-                <Button variant="outline" size="sm">
-                  <Share2 className="h-4 w-4 mr-2" />
-                  Teilen
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600 mb-6">{challenge.description}</p>
-              
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="p-4 bg-blue-50 rounded-lg">
-                  <div className="flex items-center mb-2">
-                    <Trophy className="h-5 w-5 text-blue-600 mr-2" />
-                    <span className="font-medium">Ziel</span>
-                  </div>
-                  <p className="text-lg font-bold text-blue-700">
-                    {challenge.target.value} {challenge.target.unit}
-                  </p>
-                </div>
-                
-                <div className="p-4 bg-blue-50 rounded-lg">
-                  <div className="flex items-center mb-2">
-                    <Calendar className="h-5 w-5 text-blue-600 mr-2" />
-                    <span className="font-medium">Enddatum</span>
-                  </div>
-                  <p className="text-lg font-bold text-blue-700">
-                    {format(new Date(challenge.endDate), 'dd.MM.yyyy')}
-                  </p>
-                </div>
-              </div>
-              
-              <div className="space-y-2 mb-6">
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="font-medium text-gray-700">Gruppenfortschritt</span>
-                  <span className="text-blue-700">
-                    {totalProgress} von {challenge.target.value} {challenge.target.unit} ({progressPercentage}%)
-                  </span>
-                </div>
-                <Progress value={progressPercentage} className="h-3" />
-              </div>
-              
-              {userParticipation ? (
-                <Dialog open={isAddProgressOpen} onOpenChange={setIsAddProgressOpen}>
-                  <DialogTrigger asChild>
-                    <Button className="w-full">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Fortschritt hinzufügen
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Fortschritt hinzufügen</DialogTitle>
-                      <DialogDescription>
-                        Trage deinen Fortschritt für die Challenge "{challenge.title}" ein.
-                      </DialogDescription>
-                    </DialogHeader>
-                    
-                    <div className="space-y-4 py-4">
-                      <div className="flex items-center gap-4">
-                        <Input
-                          type="number"
-                          placeholder={`Anzahl in ${challenge.target.unit}`}
-                          value={newProgress}
-                          onChange={(e) => setNewProgress(e.target.value)}
-                          min="0"
-                          step="0.01"
-                        />
-                        <span className="text-gray-500 whitespace-nowrap">{challenge.target.unit}</span>
-                      </div>
-                    </div>
-                    
-                    <DialogFooter>
-                      <Button variant="outline" onClick={() => setIsAddProgressOpen(false)}>
-                        Abbrechen
-                      </Button>
-                      <Button onClick={handleAddProgress}>
-                        <Check className="h-4 w-4 mr-2" />
-                        Bestätigen
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-              ) : (
-                <Button 
-                  className="w-full" 
-                  onClick={handleJoinChallenge}
-                  disabled={joinChallengeMutation.isPending}
-                >
-                  {joinChallengeMutation.isPending ? "Wird beigetreten..." : "Challenge beitreten"}
-                </Button>
-              )}
-            </CardContent>
-          </Card>
-          
-          <Tabs defaultValue="progress">
-            <TabsList className="w-full">
-              <TabsTrigger value="progress" className="flex-1">Fortschritt</TabsTrigger>
-              <TabsTrigger value="details" className="flex-1">Details</TabsTrigger>
-              <TabsTrigger value="discussion" className="flex-1">Diskussion</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="progress" className="pt-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Fortschritt der Teilnehmer</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ScrollArea className="h-[400px] pr-4">
-                    <div className="space-y-4">
-                      {participants
-                        .sort((a, b) => b.progress - a.progress)
-                        .map((participant, index) => {
-                          const participantPercentage = Math.round((participant.progress / challenge.target.value) * 100);
-                          const isCurrentUser = participant.user_id === session?.user?.id;
-                          
-                          return (
-                            <div key={participant.id} className={`flex items-center gap-4 ${isCurrentUser ? 'bg-blue-50 p-2 rounded-md' : ''}`}>
-                              <div className="flex-shrink-0">
-                                <Avatar className="h-10 w-10">
-                                  <AvatarImage src={participant.avatar} alt={participant.name} />
-                                  <AvatarFallback className={`${isCurrentUser ? 'bg-blue-200 text-blue-800' : 'bg-blue-100 text-blue-800'}`}>
-                                    {participant.name.split(' ').map(n => n[0]).join('')}
-                                  </AvatarFallback>
-                                </Avatar>
-                              </div>
-                              
-                              <div className="flex-1 min-w-0">
-                                <div className="flex justify-between items-center mb-1">
-                                  <p className="font-medium text-gray-800 truncate">
-                                    {participant.name} {isCurrentUser && '(Du)'}
-                                  </p>
-                                  <div className="flex items-center">
-                                    <Badge 
-                                      variant="outline" 
-                                      className={`mr-2 ${index < 3 ? 'bg-yellow-50 text-yellow-700 border-yellow-200' : 'bg-gray-50'}`}
-                                    >
-                                      {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
-                                    </Badge>
-                                    <span className="text-sm font-medium">
-                                      {participant.progress} {challenge.target.unit}
-                                    </span>
-                                  </div>
-                                </div>
-                                <Progress value={participantPercentage} className="h-2" />
-                              </div>
-                            </div>
-                          );
-                        })}
-                    </div>
-                  </ScrollArea>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="details" className="pt-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Challenge-Details</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div>
-                      <h4 className="font-medium text-gray-700 mb-2">Beschreibung</h4>
-                      <p className="text-gray-600">
-                        {challenge.description}
-                      </p>
-                    </div>
-                    
-                    <div>
-                      <h4 className="font-medium text-gray-700 mb-2">Regeln</h4>
-                      <ul className="list-disc pl-5 text-gray-600 space-y-1">
-                        <li>Jeder Teilnehmer trägt seinen individuellen Fortschritt ein</li>
-                        <li>Die Fortschritte werden zum Gruppenfortschritt zusammengezählt</li>
-                        <li>Die Challenge endet am {new Date(challenge.endDate).toLocaleDateString('de-DE')}</li>
-                        <li>Alle Aktivitäten müssen ehrlich und korrekt eingetragen werden</li>
-                      </ul>
-                    </div>
-                    
-                    <div>
-                      <h4 className="font-medium text-gray-700 mb-2">Tipps</h4>
-                      <ul className="list-disc pl-5 text-gray-600 space-y-1">
-                        <li>Regelmäßiges Tracken hilft, den Überblick zu behalten</li>
-                        <li>Unterstütze andere Teilnehmer mit motivierenden Kommentaren</li>
-                        <li>Teile deine Erfolge und Herausforderungen in der Diskussion</li>
-                      </ul>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="discussion" className="pt-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Diskussion</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center py-8">
-                    <Info className="h-12 w-12 mx-auto text-gray-300 mb-4" />
-                    <p className="text-gray-500">Die Diskussionsfunktion wird bald verfügbar sein.</p>
-                    <p className="text-gray-400 text-sm mt-2">Hier kannst du dich mit anderen Teilnehmern austauschen.</p>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </div>
+    <div className="min-h-screen bg-background">
+      <Navigation />
+      <main className="container py-6">
+        <Button 
+          variant="ghost" 
+          className="mb-6" 
+          onClick={() => navigate('/community')}
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Zurück zu Challenges
+        </Button>
         
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Team-Status</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex flex-col md:flex-row justify-between gap-6">
+              {/* Challenge Info */}
+              <div className="flex-1">
+                <div className="inline-flex h-6 items-center rounded-full bg-blue-100 px-3 text-sm font-medium text-blue-800 mb-3">
+                  {challenge.category}
+                </div>
+                <h1 className="text-2xl font-bold mb-2">{challenge.title}</h1>
+                <p className="text-gray-600 mb-4">{challenge.description}</p>
+                
+                <div className="flex flex-wrap gap-4 mb-6 text-sm">
                   <div className="flex items-center">
-                    <Users className="h-5 w-5 text-blue-600 mr-2" />
-                    <span className="font-medium">Teilnehmer</span>
+                    <Trophy className="h-4 w-4 text-blue-600 mr-2" />
+                    <span>Ziel: {challenge.target.value} {challenge.target.unit}</span>
                   </div>
-                  <span className="text-lg font-bold text-blue-700">{participants.length}</span>
+                  <div className="flex items-center">
+                    <Calendar className="h-4 w-4 text-blue-600 mr-2" />
+                    <span>Endet am {new Date(challenge.endDate).toLocaleDateString('de-DE')}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <Users className="h-4 w-4 text-blue-600 mr-2" />
+                    <span>{challenge.participants.length} Teilnehmer</span>
+                  </div>
                 </div>
                 
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center">
-                    <Activity className="h-5 w-5 text-blue-600 mr-2" />
-                    <span className="font-medium">Aktivitätsrate</span>
+                <div className="space-y-2 mb-6">
+                  <div className="flex justify-between text-sm">
+                    <span className="font-medium">Gesamtfortschritt</span>
+                    <span className="text-blue-700">
+                      {challenge.currentProgress} von {challenge.target.value} {challenge.target.unit}
+                    </span>
                   </div>
-                  <span className="text-lg font-bold text-blue-700">78%</span>
+                  <Progress value={progressPercentage} className="h-3" />
                 </div>
                 
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center">
-                    <Clock className="h-5 w-5 text-blue-600 mr-2" />
-                    <span className="font-medium">Verbleibend</span>
-                  </div>
-                  <span className="text-lg font-bold text-blue-700">{daysRemaining} Tage</span>
-                </div>
-                
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center">
-                    <Target className="h-5 w-5 text-blue-600 mr-2" />
-                    <span className="font-medium">Ziel-Prognose</span>
-                  </div>
-                  <span className="text-lg font-bold text-green-600">
-                    {progressPercentage >= 50 ? "Erreichbar" : "Herausfordernd"}
-                  </span>
-                </div>
+                <Button 
+                  onClick={handleJoinLeave}
+                  variant={participation ? "outline" : "default"}
+                  className={participation ? "border-red-300 text-red-700 hover:bg-red-50" : ""}
+                  disabled={joinChallengeMutation.isPending || leaveChallengeMutation.isPending}
+                >
+                  {joinChallengeMutation.isPending || leaveChallengeMutation.isPending ? 
+                    "Wird bearbeitet..." : 
+                    (participation ? "Challenge verlassen" : "Challenge beitreten")}
+                </Button>
               </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Top Beitragende</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {participants
-                  .sort((a, b) => b.progress - a.progress)
-                  .slice(0, 3)
-                  .map((participant, index) => (
-                    <div key={participant.id} className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <div className="mr-3 flex-shrink-0 text-lg font-bold text-blue-700 w-5">
-                          {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
+              
+              {/* Participants */}
+              <div className="md:w-1/3 bg-gray-50 p-4 rounded-lg">
+                <h3 className="font-semibold mb-4">Teilnehmer</h3>
+                <div className="space-y-3 max-h-80 overflow-y-auto pr-2">
+                  {challenge.participants.map(participant => (
+                    <div key={participant.id} className="flex items-center gap-3">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={participant.avatar} />
+                        <AvatarFallback>{participant.name.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <div className="flex justify-between text-sm mb-1">
+                          <span className="font-medium">{participant.name}</span>
+                          <span>{participant.progress} {challenge.target.unit}</span>
                         </div>
-                        <Avatar className="h-8 w-8 mr-2">
-                          <AvatarImage src={participant.avatar} alt={participant.name} />
-                          <AvatarFallback className="bg-blue-100 text-blue-800 text-xs">
-                            {participant.name.split(' ').map(n => n[0]).join('')}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="font-medium">{participant.name}</span>
+                        <Progress 
+                          value={Math.round((participant.progress / challenge.target.value) * 100)} 
+                          className="h-1.5" 
+                        />
                       </div>
-                      <span className="text-blue-700 font-semibold">
-                        {participant.progress} {challenge.target.unit}
-                      </span>
                     </div>
                   ))}
+                </div>
               </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+            </div>
+            
+            {/* Proof Circle */}
+            <ProofCircle challengeId={id || ''} proofs={proofs} />
+          </CardContent>
+        </Card>
+      </main>
     </div>
   );
 };
-

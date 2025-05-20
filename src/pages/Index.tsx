@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Navigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { ChevronRight } from "lucide-react";
+import { SubscribedChallenges } from "@/components/community/SubscribedChallenges";
 
 const Index = () => {
   const { data: hasCompletedOnboarding, isLoading } = useQuery({
@@ -73,6 +74,11 @@ const Index = () => {
             value={calculateOverallProgress()} 
             className="h-2 bg-blue-100 mt-2"
           />
+        </Card>
+
+        {/* Community Challenges section */}
+        <Card className="mb-6 p-4 shadow-sm border-0 rounded-lg">
+          <SubscribedChallenges />
         </Card>
 
         {/* Two-column layout with habits and todos */}

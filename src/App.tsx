@@ -16,6 +16,7 @@ import Toolbox from "./pages/Toolbox";
 import Archive from "./pages/Archive";
 import HabitDetail from "./pages/HabitDetail";
 import { ChallengeDetail } from "./components/community/ChallengeDetail";
+import Community from "./pages/Community";
 
 const queryClient = new QueryClient();
 
@@ -86,6 +87,10 @@ const App = () => {
             <Route
               path="/habits/:id"
               element={session ? <HabitDetail /> : <Navigate to="/auth" />}
+            />
+            <Route
+              path="/community"
+              element={session ? <Community /> : <Navigate to="/auth" />}
             />
             <Route
               path="/community-challenge/:id"
