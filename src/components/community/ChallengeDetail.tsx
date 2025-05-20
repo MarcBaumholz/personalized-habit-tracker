@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from "react-router-dom";
 import { Navigation } from "@/components/layout/Navigation";
 import { Button } from "@/components/ui/button";
@@ -9,17 +10,19 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ProofCircle } from "./ProofCircle";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { EditChallengeDialog } from "./EditChallengeDialog";
 import { 
   Dialog, 
   DialogContent, 
   DialogHeader, 
   DialogTitle, 
-  DialogFooter 
+  DialogFooter,
+  DialogDescription 
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { useUser } from "@/hooks/useUser";
 
 // Define proper types for profile and proof data
 type Profile = {
@@ -51,9 +54,12 @@ export const ChallengeDetail = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useUser();
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isManageParticipantsOpen, setIsManageParticipantsOpen] = useState(false);
   const [newParticipantEmail, setNewParticipantEmail] = useState("");
+  const [participants, setParticipants] = useState<Participant[]>([]);
+  const [totalProgress, setTotalProgress] = useState(0);
   
   // Get current user
   const { data: session } = useQuery({
@@ -77,6 +83,27 @@ export const ChallengeDetail = () => {
         .single();
         
       if (error && error.code !== 'PGRST116') throw error;
+      return data;
+    }
+  });
+  
+  // Get all participants
+  const { data: challengeParticipants } = useQuery({
+    queryKey: ['challenge-participants', id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('challenge_participants')
+        .select(`
+          *,
+          profiles:user_id (
+            full_name,
+            avatar_url
+          )
+        `)
+        .eq('challenge_id', id as string);
+        
+      if (error) throw error;
       return data;
     }
   });
@@ -106,15 +133,34 @@ export const ChallengeDetail = () => {
         user_id: item.user_id,
         challenge_id: item.challenge_id,
         image_url: item.image_url,
-        progress_value: item.progress_value,
+        progress_value: item.progress_value || 0,
         created_at: item.created_at,
-        // Safely access the profile data
-        user_name: item.profiles?.full_name || 'Anonymous',
-        user_avatar: item.profiles?.avatar_url || '',
+        // Handle undefined profiles safely
+        user_name: item.profiles ? item.profiles.full_name || 'Anonymous' : 'Anonymous',
+        user_avatar: item.profiles ? item.profiles.avatar_url || '' : '',
         profiles: item.profiles
       })) as ProofItem[];
     }
   });
+  
+  // Update participants and total progress when data changes
+  useEffect(() => {
+    if (challengeParticipants && challengeParticipants.length > 0) {
+      // Create participant list from real data
+      const mappedParticipants = challengeParticipants.map(p => ({
+        id: p.user_id,
+        name: p.profiles?.full_name || 'Anonymous User',
+        avatar: p.profiles?.avatar_url || '',
+        progress: p.progress || 0
+      }));
+      
+      setParticipants(mappedParticipants);
+      
+      // Calculate total progress
+      const total = mappedParticipants.reduce((sum, p) => sum + p.progress, 0);
+      setTotalProgress(total);
+    }
+  }, [challengeParticipants]);
   
   // Sample challenge data - in a real app, this would come from the database
   const challenge = {
@@ -129,9 +175,9 @@ export const ChallengeDetail = () => {
       value: id === '1' ? 100 : id === '3' ? 1000 : 50, 
       unit: id === '1' ? 'km' : id === '3' ? 'Seiten' : 'Einheiten' 
     },
-    currentProgress: id === '1' ? 63 : id === '3' ? 450 : 25,
+    currentProgress: totalProgress || (id === '1' ? 63 : id === '3' ? 450 : 25),
     endDate: '2025-04-05',
-    participants: [
+    participants: participants.length > 0 ? participants : [
       { id: '1', name: 'Anna Schmidt', avatar: '', progress: 15 },
       { id: '2', name: 'Max Mustermann', avatar: '', progress: 22 },
       { id: '3', name: 'Laura Meyer', avatar: '', progress: 10 },
@@ -159,6 +205,7 @@ export const ChallengeDetail = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['challenge-participation', id, session?.user?.id] });
       queryClient.invalidateQueries({ queryKey: ['user-participations', session?.user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['challenge-participants', id] });
       toast({
         title: "Challenge beigetreten",
         description: "Du nimmst jetzt an dieser Challenge teil!",
@@ -190,6 +237,7 @@ export const ChallengeDetail = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['challenge-participation', id, session?.user?.id] });
       queryClient.invalidateQueries({ queryKey: ['user-participations', session?.user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['challenge-participants', id] });
       toast({
         title: "Challenge verlassen",
         description: "Du nimmst nicht mehr an dieser Challenge teil.",
@@ -217,7 +265,7 @@ export const ChallengeDetail = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['challenge-participation'] });
+      queryClient.invalidateQueries({ queryKey: ['challenge-participants', id] });
       toast({
         title: "Teilnehmer entfernt",
         description: "Der Teilnehmer wurde aus der Challenge entfernt.",
@@ -262,7 +310,7 @@ export const ChallengeDetail = () => {
     },
     onSuccess: () => {
       setNewParticipantEmail("");
-      queryClient.invalidateQueries({ queryKey: ['challenge-participation'] });
+      queryClient.invalidateQueries({ queryKey: ['challenge-participants', id] });
       toast({
         title: "Teilnehmer hinzugefügt",
         description: "Der Teilnehmer wurde zur Challenge hinzugefügt.",
@@ -419,6 +467,9 @@ export const ChallengeDetail = () => {
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>Teilnehmer verwalten</DialogTitle>
+              <DialogDescription>
+                Hier kannst du Teilnehmer hinzufügen und entfernen.
+              </DialogDescription>
             </DialogHeader>
             
             <div className="space-y-4 my-4">

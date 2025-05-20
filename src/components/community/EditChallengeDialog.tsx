@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -40,7 +40,7 @@ export const EditChallengeDialog = ({ open, onOpenChange, challengeId, challenge
   const updateChallengeMutation = useMutation({
     mutationFn: async () => {
       // In a real app, we would update the challenge details in the database
-      // For now, we're just simulating this action
+      // Currently this is a simulation since we don't have a full backend implemented
       
       // const { data, error } = await supabase
       //   .from('challenges')
@@ -89,6 +89,9 @@ export const EditChallengeDialog = ({ open, onOpenChange, challengeId, challenge
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Challenge bearbeiten</DialogTitle>
+          <DialogDescription>
+            Bearbeite die Details deiner Challenge.
+          </DialogDescription>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -143,12 +146,20 @@ export const EditChallengeDialog = ({ open, onOpenChange, challengeId, challenge
             </div>
             <div>
               <Label htmlFor="target-unit">Einheit</Label>
-              <Input 
-                id="target-unit" 
-                value={targetUnit} 
-                onChange={(e) => setTargetUnit(e.target.value)} 
-                placeholder="z.B. 'km' oder 'Seiten'" 
-              />
+              <Select value={targetUnit} onValueChange={setTargetUnit}>
+                <SelectTrigger id="target-unit">
+                  <SelectValue placeholder="Wähle eine Einheit" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="km">Kilometer (km)</SelectItem>
+                  <SelectItem value="Seiten">Seiten</SelectItem>
+                  <SelectItem value="Minuten">Minuten</SelectItem>
+                  <SelectItem value="Stunden">Stunden</SelectItem>
+                  <SelectItem value="Tage">Tage</SelectItem>
+                  <SelectItem value="Mal">Wiederholungen</SelectItem>
+                  <SelectItem value="Einheiten">Einheiten</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
           
