@@ -1,4 +1,5 @@
 
+
 import { useParams, useNavigate } from "react-router-dom";
 import { Navigation } from "@/components/layout/Navigation";
 import { Button } from "@/components/ui/button";
@@ -127,11 +128,7 @@ export const ChallengeDetail = () => {
         .from('challenge_participants')
         .select(`
           *,
-          profiles:user_id (
-            id,
-            full_name,
-            avatar_url
-          )
+          profiles(id, full_name, avatar_url)
         `)
         .eq('challenge_id', id as string);
         
@@ -149,11 +146,7 @@ export const ChallengeDetail = () => {
         .from('challenge_proofs')
         .select(`
           *,
-          profiles:user_id (
-            id,
-            full_name, 
-            avatar_url
-          )
+          profiles(id, full_name, avatar_url)
         `)
         .eq('challenge_id', id as string)
         .order('created_at', { ascending: false });
@@ -404,17 +397,12 @@ export const ChallengeDetail = () => {
       if (error) throw error;
       
       // 4. Update user's progress in the challenge
-      const { error: updateError } = await supabase
+      const { data: participantData, error: updateError } = await supabase
         .from('challenge_participants')
-        .update({ 
-          progress: supabase.rpc('increment_participant_progress', { 
-            p_user_id: session.user.id, 
-            p_challenge_id: id!, 
-            p_progress_value: progressValue
-          }) 
-        })
+        .update({ progress: progressValue })
         .eq('user_id', session.user.id)
-        .eq('challenge_id', id!);
+        .eq('challenge_id', id!)
+        .select();
         
       if (updateError) throw updateError;
       
