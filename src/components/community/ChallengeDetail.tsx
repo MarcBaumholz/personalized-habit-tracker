@@ -30,6 +30,16 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 // Define proper types for user profile and proof data
 type Profile = {
@@ -68,6 +78,7 @@ type ChallengeData = {
   currentProgress: number;
   endDate: string;
   participants: Participant[];
+  created_by?: string;
 }
 
 // Group proofs by date for the carousel
@@ -91,6 +102,9 @@ export const ChallengeDetail = () => {
   const [progressValue, setProgressValue] = useState(0);
   const [proofImage, setProofImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isDeleteProofDialogOpen, setIsDeleteProofDialogOpen] = useState(false);
+  const [proofToDelete, setProofToDelete] = useState<ProofItem | null>(null);
+  const [realChallenge, setRealChallenge] = useState<any>(null);
   
   // Get current user
   const { data: session } = useQuery({
@@ -98,6 +112,33 @@ export const ChallengeDetail = () => {
     queryFn: async () => {
       const { data } = await supabase.auth.getSession();
       return data.session;
+    }
+  });
+  
+  // Get challenge data
+  const { data: challengeData, isLoading: isChallengeLoading } = useQuery({
+    queryKey: ['challenge-data', id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('community_challenges')
+        .select('*')
+        .eq('id', id as string)
+        .single();
+      
+      // Also query for challenges that match legacy_id (for backwards compatibility)
+      if (error) {
+        const { data: legacyData, error: legacyError } = await supabase
+          .from('community_challenges')
+          .select('*')
+          .eq('legacy_id', id as string)
+          .single();
+        
+        if (legacyError) throw error;
+        return legacyData;
+      }
+      
+      return data;
     }
   });
   
@@ -226,8 +267,26 @@ export const ChallengeDetail = () => {
     }
   }, [proofs]);
   
+  // Update real challenge from database data
+  useEffect(() => {
+    if (challengeData) {
+      setRealChallenge({
+        id: challengeData.id,
+        title: challengeData.title,
+        description: challengeData.description,
+        category: challengeData.category,
+        target: {
+          value: challengeData.target_value,
+          unit: challengeData.target_unit
+        },
+        endDate: challengeData.end_date,
+        created_by: challengeData.created_by
+      });
+    }
+  }, [challengeData]);
+  
   // Sample challenge data - in a real app, this would come from the database
-  const challenge: ChallengeData = {
+  const challenge: ChallengeData = realChallenge || {
     id: id || '',
     title: id === '1' ? '100 km Laufen' : id === '3' ? '1000 Seiten lesen' : 'Challenge',
     description: id === '1' ? 
@@ -423,7 +482,11 @@ export const ChallengeDetail = () => {
       // 4. Update user's progress in the challenge
       const { data: participantData, error: updateError } = await supabase
         .from('challenge_participants')
-        .update({ progress: progressValue })
+        .update({ progress: supabase.rpc('increment_participant_progress', { 
+          p_user_id: session.user.id,
+          p_challenge_id: id!,
+          p_progress_value: progressValue
+        }) })
         .eq('user_id', session.user.id)
         .eq('challenge_id', id!)
         .select();
@@ -452,6 +515,92 @@ export const ChallengeDetail = () => {
       console.error("Add proof error:", error);
       toast({
         title: "Fehler beim Hinzufügen",
+        description: "Bitte versuche es später erneut.",
+        variant: "destructive"
+      });
+    }
+  });
+  
+  // Delete proof mutation
+  const deleteProofMutation = useMutation({
+    mutationFn: async (proofId: string) => {
+      if (!session?.user) throw new Error("Not authenticated");
+      
+      // 1. Get the proof details to adjust the progress
+      const { data: proofData, error: fetchError } = await supabase
+        .from('challenge_proofs')
+        .select('*')
+        .eq('id', proofId)
+        .single();
+        
+      if (fetchError) throw fetchError;
+      
+      // 2. Delete the proof record
+      const { error: deleteError } = await supabase
+        .from('challenge_proofs')
+        .delete()
+        .eq('id', proofId)
+        .eq('user_id', session.user.id); // Ensure only the owner can delete
+        
+      if (deleteError) throw deleteError;
+      
+      // 3. Update the user's progress in the challenge
+      // First, get current progress
+      const { data: currentProgress, error: progressError } = await supabase
+        .from('challenge_participants')
+        .select('progress')
+        .eq('user_id', session.user.id)
+        .eq('challenge_id', id!)
+        .single();
+        
+      if (progressError) throw progressError;
+      
+      // Then update with reduced progress
+      const newProgress = Math.max(0, (currentProgress?.progress || 0) - proofData.progress_value);
+      
+      const { error: updateError } = await supabase
+        .from('challenge_participants')
+        .update({ progress: newProgress })
+        .eq('user_id', session.user.id)
+        .eq('challenge_id', id!);
+        
+      if (updateError) throw updateError;
+      
+      // 4. Extract filename from URL to delete from storage
+      try {
+        const url = new URL(proofData.image_url);
+        const pathParts = url.pathname.split('/');
+        const filename = pathParts[pathParts.length - 1];
+        
+        if (filename) {
+          await supabase.storage
+            .from('challenge-proofs')
+            .remove([`public/${filename}`]);
+        }
+      } catch (e) {
+        console.error("Error deleting file from storage:", e);
+        // Continue even if storage deletion fails
+      }
+      
+      return proofData;
+    },
+    onSuccess: () => {
+      setProofToDelete(null);
+      setIsDeleteProofDialogOpen(false);
+      
+      // Refresh data
+      queryClient.invalidateQueries({ queryKey: ['challenge-proofs', id] });
+      queryClient.invalidateQueries({ queryKey: ['challenge-participants', id] });
+      
+      toast({
+        title: "Beweis gelöscht",
+        description: "Der Fortschrittsbeweis wurde erfolgreich gelöscht.",
+      });
+    },
+    onError: (error) => {
+      console.error("Delete proof error:", error);
+      toast({
+        title: "Fehler beim Löschen",
         description: "Bitte versuche es später erneut.",
         variant: "destructive"
       });
@@ -492,7 +641,42 @@ export const ChallengeDetail = () => {
     }
   };
   
+  const handleDeleteProof = (proof: ProofItem) => {
+    if (user?.id !== proof.user_id) {
+      toast({
+        title: "Nicht erlaubt",
+        description: "Du kannst nur deine eigenen Beweise löschen.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setProofToDelete(proof);
+    setIsDeleteProofDialogOpen(true);
+  };
+  
+  const confirmDeleteProof = () => {
+    if (proofToDelete) {
+      deleteProofMutation.mutate(proofToDelete.id);
+    }
+  };
+  
   const progressPercentage = Math.min(100, Math.round((challenge.currentProgress / challenge.target.value) * 100));
+  
+  const canEdit = user && (challengeData?.created_by === user.id);
+  
+  if (isChallengeLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <main className="container py-6">
+          <div className="flex items-center justify-center h-64">
+            <p className="text-gray-500">Lade Challenge...</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
   
   return (
     <div className="min-h-screen bg-background">
@@ -509,13 +693,15 @@ export const ChallengeDetail = () => {
         
         <div className="flex flex-wrap justify-between items-center mb-4">
           <h1 className="text-2xl font-bold">{challenge.title}</h1>
-          <Button 
-            onClick={() => setIsEditOpen(true)}
-            className="bg-blue-600"
-          >
-            <Edit className="h-4 w-4 mr-2" />
-            Challenge bearbeiten
-          </Button>
+          {canEdit && (
+            <Button 
+              onClick={() => setIsEditOpen(true)}
+              className="bg-blue-600"
+            >
+              <Edit className="h-4 w-4 mr-2" />
+              Challenge bearbeiten
+            </Button>
+          )}
         </div>
         
         <Card>
@@ -639,13 +825,25 @@ export const ChallengeDetail = () => {
                         <CarouselContent>
                           {dateProofs.map(proof => (
                             <CarouselItem key={proof.id} className="md:basis-1/3 lg:basis-1/4">
-                              <div className="bg-gray-50 rounded-lg p-3 h-full">
+                              <div className="bg-gray-50 rounded-lg p-3 h-full relative">
                                 <div className="aspect-square w-full relative overflow-hidden rounded-md mb-2">
                                   <img 
                                     src={proof.image_url} 
                                     alt="Proof" 
                                     className="object-cover w-full h-full" 
                                   />
+                                  
+                                  {/* Delete button for own proofs */}
+                                  {user?.id === proof.user_id && (
+                                    <Button 
+                                      variant="destructive" 
+                                      size="icon" 
+                                      className="absolute top-2 right-2 h-8 w-8 rounded-full bg-opacity-70"
+                                      onClick={() => handleDeleteProof(proof)}
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  )}
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <Avatar className="h-6 w-6">
@@ -860,6 +1058,28 @@ export const ChallengeDetail = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        
+        {/* Delete Proof Confirmation Dialog */}
+        <AlertDialog open={isDeleteProofDialogOpen} onOpenChange={setIsDeleteProofDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Beweis löschen?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Möchtest du diesen Beweis wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
+                Der Fortschritt von {proofToDelete?.progress_value} {challenge.target.unit} wird von deiner Gesamtleistung abgezogen.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={confirmDeleteProof}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                Löschen
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </main>
     </div>
   );

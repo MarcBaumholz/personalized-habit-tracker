@@ -8,6 +8,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Users, Search, Filter, Plus } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { CreateChallengeDialog } from "./CreateChallengeDialog";
+import { useNavigate } from "react-router-dom";
 
 // Sample data for demo
 const SAMPLE_CHALLENGES: ChallengeProps[] = [
@@ -74,6 +76,8 @@ const SAMPLE_CHALLENGES: ChallengeProps[] = [
 export const CommunityChallenges = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [challenges, setChallenges] = useState<ChallengeProps[]>(SAMPLE_CHALLENGES);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const navigate = useNavigate();
   
   // Get current user
   const { data: session } = useQuery({
@@ -83,10 +87,69 @@ export const CommunityChallenges = () => {
       return data.session;
     }
   });
+  
+  // Get real challenges from the database
+  const { data: realChallenges, refetch: refetchChallenges } = useQuery({
+    queryKey: ['challenges'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('community_challenges')
+        .select('*');
+        
+      if (error) throw error;
+      
+      // Map database challenges to correct format
+      const mappedChallenges = await Promise.all(data.map(async (challenge) => {
+        // Get participants
+        const { data: participantsData } = await supabase
+          .from('challenge_participants')
+          .select('user_id, progress')
+          .eq('challenge_id', challenge.id);
+        
+        // Get profiles for participants
+        const participants = await Promise.all((participantsData || []).map(async (participant) => {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('full_name, avatar_url')
+            .eq('id', participant.user_id)
+            .single();
+            
+          return {
+            id: participant.user_id,
+            name: profile?.full_name || 'Anonymous User',
+            avatar: profile?.avatar_url || '',
+            progress: participant.progress || 0
+          };
+        }));
+        
+        // Calculate total progress
+        const totalProgress = participants.reduce((sum, p) => sum + p.progress, 0);
+        
+        return {
+          id: challenge.id,
+          title: challenge.title,
+          description: challenge.description,
+          category: challenge.category,
+          target: {
+            value: challenge.target_value,
+            unit: challenge.target_unit
+          },
+          currentProgress: totalProgress,
+          endDate: challenge.end_date,
+          participants,
+          isJoined: !!participantsData?.some(p => p.user_id === session?.user?.id),
+          legacyId: challenge.legacy_id
+        };
+      }));
+      
+      return mappedChallenges;
+    },
+    enabled: !!session?.user?.id
+  });
 
   // Get challenge participants
   const { data: participations } = useQuery({
-    queryKey: ['participations', session?.user?.id],
+    queryKey: ['user-participations', session?.user?.id],
     enabled: !!session?.user?.id,
     queryFn: async () => {
       const { data, error } = await supabase
@@ -105,9 +168,12 @@ export const CommunityChallenges = () => {
     initialData: []
   });
 
-  // Update challenges with user participation data
+  // Update challenges with real data and user participation
   useEffect(() => {
-    if (participations && participations.length > 0) {
+    if (realChallenges && realChallenges.length > 0) {
+      setChallenges([...realChallenges, ...SAMPLE_CHALLENGES.filter(c => 
+        !realChallenges.some(rc => rc.id === c.id || rc.legacyId === c.id))]);
+    } else if (participations && participations.length > 0) {
       const updatedChallenges = SAMPLE_CHALLENGES.map(challenge => {
         const participation = participations.find(p => p.challenge_id === challenge.id);
         return {
@@ -119,7 +185,7 @@ export const CommunityChallenges = () => {
     } else {
       setChallenges(SAMPLE_CHALLENGES);
     }
-  }, [participations]);
+  }, [realChallenges, participations]);
   
   const filteredChallenges = challenges.filter(challenge => 
     challenge.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -134,6 +200,10 @@ export const CommunityChallenges = () => {
   const availableChallenges = filteredChallenges.filter(challenge => 
     !challenge.isJoined && !participations?.some(p => p.challenge_id === challenge.id)
   );
+  
+  const handleCreateChallenge = () => {
+    setIsCreateDialogOpen(true);
+  };
 
   return (
     <div className="space-y-8">
@@ -152,7 +222,7 @@ export const CommunityChallenges = () => {
             <Filter className="h-4 w-4 mr-2" />
             Filter
           </Button>
-          <Button size="sm">
+          <Button size="sm" onClick={handleCreateChallenge}>
             <Plus className="h-4 w-4 mr-2" />
             Neue Challenge
           </Button>
@@ -197,6 +267,16 @@ export const CommunityChallenges = () => {
           </div>
         </CardContent>
       </Card>
+      
+      {/* Create Challenge Dialog */}
+      <CreateChallengeDialog 
+        open={isCreateDialogOpen}
+        onOpenChange={setIsCreateDialogOpen}
+        onChallengeCreated={(challengeId) => {
+          refetchChallenges();
+          navigate(`/community-challenge/${challengeId}`);
+        }}
+      />
     </div>
   );
 };

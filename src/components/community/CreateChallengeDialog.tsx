@@ -1,144 +1,80 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/useUser";
 
-interface EditChallengeDialogProps {
+interface CreateChallengeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  challengeId: string;
-  challenge: {
-    title: string;
-    description: string;
-    category: string;
-    target: {
-      value: number;
-      unit: string;
-    };
-    endDate: string;
-  };
+  onChallengeCreated?: (challengeId: string) => void;
 }
 
-export const EditChallengeDialog = ({ open, onOpenChange, challengeId, challenge }: EditChallengeDialogProps) => {
-  const [title, setTitle] = useState(challenge.title);
-  const [description, setDescription] = useState(challenge.description);
-  const [category, setCategory] = useState(challenge.category);
-  const [targetValue, setTargetValue] = useState(challenge.target.value.toString());
-  const [targetUnit, setTargetUnit] = useState(challenge.target.unit);
-  const [endDate, setEndDate] = useState(challenge.endDate);
+export const CreateChallengeDialog = ({ open, onOpenChange, onChallengeCreated }: CreateChallengeDialogProps) => {
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("Allgemein");
+  const [targetValue, setTargetValue] = useState("");
+  const [targetUnit, setTargetUnit] = useState("Einheiten");
+  const [endDate, setEndDate] = useState("");
   
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   const { user } = useUser();
   
-  // Check if challenge exists in the database
-  const { data: existingChallenge } = useQuery({
-    queryKey: ['edit-challenge', challengeId],
-    enabled: !!challengeId && open,
-    queryFn: async () => {
-      // Try to get by UUID first
-      let { data, error } = await supabase
-        .from('community_challenges')
-        .select('*')
-        .eq('id', challengeId)
-        .single();
-        
-      if (error) {
-        // Try to get by legacy ID
-        const { data: legacyData, error: legacyError } = await supabase
-          .from('community_challenges')
-          .select('*')
-          .eq('legacy_id', challengeId)
-          .single();
-          
-        if (!legacyError) {
-          return legacyData;
-        }
-        
-        // If neither UUID nor legacy ID worked, return null
-        return null;
-      }
-      
-      return data;
-    }
-  });
-  
-  // Update form when challenge data changes
-  useEffect(() => {
-    if (challenge) {
-      setTitle(challenge.title);
-      setDescription(challenge.description);
-      setCategory(challenge.category);
-      setTargetValue(challenge.target.value.toString());
-      setTargetUnit(challenge.target.unit);
-      setEndDate(challenge.endDate);
-    }
-  }, [challenge]);
-  
-  // The update mutation handles both creating new challenges and updating existing ones
-  const updateChallengeMutation = useMutation({
+  const createChallengeMutation = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error("Not authenticated");
       
-      const challengeData = {
-        title,
-        description,
-        category,
-        target_value: Number(targetValue),
-        target_unit: targetUnit,
-        end_date: endDate,
-        created_by: user.id
-      };
+      const { data, error } = await supabase
+        .from('community_challenges')
+        .insert({
+          title,
+          description,
+          category,
+          target_value: Number(targetValue),
+          target_unit: targetUnit,
+          end_date: endDate,
+          created_by: user.id
+        })
+        .select();
+        
+      if (error) throw error;
       
-      if (existingChallenge) {
-        // Update existing challenge
-        const { data, error } = await supabase
-          .from('community_challenges')
-          .update(challengeData)
-          .eq('id', existingChallenge.id);
-          
-        if (error) throw error;
-        
-        return { success: true, action: 'updated', id: existingChallenge.id };
-      } else {
-        // Create new challenge and set legacy_id for backwards compatibility
-        const { data, error } = await supabase
-          .from('community_challenges')
-          .insert({
-            ...challengeData,
-            legacy_id: challengeId
-          })
-          .select();
-          
-        if (error) throw error;
-        
-        return { success: true, action: 'created', id: data?.[0]?.id };
-      }
+      return data[0];
     },
-    onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ['challenge-data', challengeId] });
-      queryClient.invalidateQueries({ queryKey: ['edit-challenge', challengeId] });
+    onSuccess: (data) => {
+      // Reset form
+      setTitle("");
+      setDescription("");
+      setCategory("Allgemein");
+      setTargetValue("");
+      setTargetUnit("Einheiten");
+      setEndDate("");
       
+      // Close dialog
       onOpenChange(false);
+      
+      // Notify parent
+      if (onChallengeCreated && data.id) {
+        onChallengeCreated(data.id);
+      }
+      
       toast({
-        title: result.action === 'updated' ? "Challenge aktualisiert" : "Challenge erstellt",
-        description: result.action === 'updated' 
-          ? "Die Challenge wurde erfolgreich aktualisiert." 
-          : "Die Challenge wurde erfolgreich erstellt.",
+        title: "Challenge erstellt",
+        description: "Deine Challenge wurde erfolgreich erstellt.",
       });
     },
     onError: (error) => {
-      console.error("Update error:", error);
+      console.error("Creation error:", error);
       toast({
-        title: "Speichern fehlgeschlagen",
+        title: "Erstellung fehlgeschlagen",
         description: "Bitte versuche es später erneut.",
         variant: "destructive"
       });
@@ -147,16 +83,52 @@ export const EditChallengeDialog = ({ open, onOpenChange, challengeId, challenge
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    updateChallengeMutation.mutate();
+    
+    // Basic validation
+    if (!title.trim()) {
+      toast({
+        title: "Titel fehlt",
+        description: "Bitte gib einen Titel für deine Challenge ein.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (!targetValue || Number(targetValue) <= 0) {
+      toast({
+        title: "Ungültiger Zielwert",
+        description: "Bitte gib einen positiven Zielwert ein.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (!endDate) {
+      toast({
+        title: "Enddatum fehlt",
+        description: "Bitte gib ein Enddatum für deine Challenge ein.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    createChallengeMutation.mutate();
   };
+  
+  // Default to today + 1 month for the end date input
+  const defaultEndDate = (() => {
+    const date = new Date();
+    date.setMonth(date.getMonth() + 1);
+    return date.toISOString().split('T')[0];
+  })();
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Challenge bearbeiten</DialogTitle>
+          <DialogTitle>Neue Challenge erstellen</DialogTitle>
           <DialogDescription>
-            Bearbeite die Details deiner Challenge.
+            Erstelle eine Challenge und lade andere ein, mitzumachen.
           </DialogDescription>
         </DialogHeader>
         
@@ -236,6 +208,8 @@ export const EditChallengeDialog = ({ open, onOpenChange, challengeId, challenge
               type="date" 
               value={endDate} 
               onChange={(e) => setEndDate(e.target.value)} 
+              min={new Date().toISOString().split('T')[0]}
+              placeholder={defaultEndDate}
             />
           </div>
           
@@ -250,11 +224,9 @@ export const EditChallengeDialog = ({ open, onOpenChange, challengeId, challenge
             <Button 
               type="submit" 
               className="bg-blue-600"
-              disabled={updateChallengeMutation.isPending}
+              disabled={createChallengeMutation.isPending}
             >
-              {updateChallengeMutation.isPending ? 
-                (existingChallenge ? "Wird aktualisiert..." : "Wird erstellt...") : 
-                (existingChallenge ? "Speichern" : "Challenge erstellen")}
+              {createChallengeMutation.isPending ? "Wird erstellt..." : "Challenge erstellen"}
             </Button>
           </DialogFooter>
         </form>
