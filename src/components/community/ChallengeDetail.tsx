@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ArrowLeft, Calendar, Trophy, Users, Edit, Trash2 } from "lucide-react";
+import { ArrowLeft, Calendar, Trophy, Users, Edit, Trash2, Camera, Plus } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -23,11 +23,20 @@ import {
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useUser } from "@/hooks/useUser";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
-// Define proper types for profile and proof data
+// Define proper types for user profile and proof data
 type Profile = {
+  id?: string;
   full_name?: string;
   avatar_url?: string;
+  username?: string;
 }
 
 type ProofItem = {
@@ -37,9 +46,7 @@ type ProofItem = {
   image_url: string;
   created_at: string;
   progress_value: number;
-  user_name?: string;
-  user_avatar?: string;
-  profiles?: Profile;
+  profiles?: Profile | null;
 }
 
 type Participant = {
@@ -47,6 +54,25 @@ type Participant = {
   name: string;
   avatar: string;
   progress: number;
+}
+
+type ChallengeData = {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  target: { 
+    value: number; 
+    unit: string; 
+  };
+  currentProgress: number;
+  endDate: string;
+  participants: Participant[];
+}
+
+// Group proofs by date for the carousel
+type GroupedProofs = {
+  [date: string]: ProofItem[];
 }
 
 export const ChallengeDetail = () => {
@@ -57,9 +83,14 @@ export const ChallengeDetail = () => {
   const { user } = useUser();
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isManageParticipantsOpen, setIsManageParticipantsOpen] = useState(false);
+  const [isAddProofOpen, setIsAddProofOpen] = useState(false);
   const [newParticipantEmail, setNewParticipantEmail] = useState("");
   const [participants, setParticipants] = useState<Participant[]>([]);
+  const [groupedProofs, setGroupedProofs] = useState<GroupedProofs>({});
   const [totalProgress, setTotalProgress] = useState(0);
+  const [progressValue, setProgressValue] = useState(0);
+  const [proofImage, setProofImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   
   // Get current user
   const { data: session } = useQuery({
@@ -87,7 +118,7 @@ export const ChallengeDetail = () => {
     }
   });
   
-  // Get all participants
+  // Get all participants with profile information
   const { data: challengeParticipants } = useQuery({
     queryKey: ['challenge-participants', id],
     enabled: !!id,
@@ -97,6 +128,7 @@ export const ChallengeDetail = () => {
         .select(`
           *,
           profiles:user_id (
+            id,
             full_name,
             avatar_url
           )
@@ -108,7 +140,7 @@ export const ChallengeDetail = () => {
     }
   });
   
-  // Get challenge proofs - Fixed query to handle profiles correctly
+  // Get challenge proofs with profile information
   const { data: proofs } = useQuery({
     queryKey: ['challenge-proofs', id],
     enabled: !!id,
@@ -118,6 +150,7 @@ export const ChallengeDetail = () => {
         .select(`
           *,
           profiles:user_id (
+            id,
             full_name, 
             avatar_url
           )
@@ -126,8 +159,8 @@ export const ChallengeDetail = () => {
         .order('created_at', { ascending: false });
         
       if (error) throw error;
-
-      // Transform the data to match our expected ProofItem format
+      
+      // Transform to ensure type safety with proper null checking
       return (data || []).map(item => ({
         id: item.id,
         user_id: item.user_id,
@@ -135,18 +168,15 @@ export const ChallengeDetail = () => {
         image_url: item.image_url,
         progress_value: item.progress_value || 0,
         created_at: item.created_at,
-        // Handle undefined profiles safely
-        user_name: item.profiles ? item.profiles.full_name || 'Anonymous' : 'Anonymous',
-        user_avatar: item.profiles ? item.profiles.avatar_url || '' : '',
-        profiles: item.profiles
+        profiles: item.profiles as Profile | null
       })) as ProofItem[];
     }
   });
   
-  // Update participants and total progress when data changes
+  // Transform participants data when it changes
   useEffect(() => {
     if (challengeParticipants && challengeParticipants.length > 0) {
-      // Create participant list from real data
+      // Create participant list from real data with safe null checking
       const mappedParticipants = challengeParticipants.map(p => ({
         id: p.user_id,
         name: p.profiles?.full_name || 'Anonymous User',
@@ -162,9 +192,26 @@ export const ChallengeDetail = () => {
     }
   }, [challengeParticipants]);
   
+  // Group proofs by date when proof data changes
+  useEffect(() => {
+    if (proofs && proofs.length > 0) {
+      const grouped = proofs.reduce((acc, proof) => {
+        // Format date as YYYY-MM-DD
+        const date = new Date(proof.created_at).toISOString().split('T')[0];
+        if (!acc[date]) {
+          acc[date] = [];
+        }
+        acc[date].push(proof);
+        return acc;
+      }, {} as GroupedProofs);
+      
+      setGroupedProofs(grouped);
+    }
+  }, [proofs]);
+  
   // Sample challenge data - in a real app, this would come from the database
-  const challenge = {
-    id: id,
+  const challenge: ChallengeData = {
+    id: id || '',
     title: id === '1' ? '100 km Laufen' : id === '3' ? '1000 Seiten lesen' : 'Challenge',
     description: id === '1' ? 
       'Gemeinsam 100 km in einem Monat laufen - für mehr Bewegung und Gesundheit!' : 
@@ -184,7 +231,7 @@ export const ChallengeDetail = () => {
       { id: '4', name: 'Thomas Weber', avatar: '', progress: 8 },
       { id: '5', name: 'Sarah Wagner', avatar: '', progress: 5 },
       { id: '6', name: 'Michael Becker', avatar: '', progress: 3 }
-    ] as Participant[]
+    ]
   };
   
   const joinChallengeMutation = useMutation({
@@ -326,6 +373,79 @@ export const ChallengeDetail = () => {
     }
   });
   
+  // Add proof mutation
+  const addProofMutation = useMutation({
+    mutationFn: async ({ imageFile, progressValue }: { imageFile: File, progressValue: number }) => {
+      if (!session?.user) throw new Error("Not authenticated");
+      
+      // 1. Upload the image to storage
+      const fileName = `${Date.now()}_${imageFile.name}`;
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('challenge-proofs')
+        .upload(`public/${fileName}`, imageFile);
+        
+      if (uploadError) throw uploadError;
+      
+      // 2. Get the public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('challenge-proofs')
+        .getPublicUrl(`public/${fileName}`);
+      
+      // 3. Create the proof record
+      const { data, error } = await supabase
+        .from('challenge_proofs')
+        .insert({
+          user_id: session.user.id,
+          challenge_id: id!,
+          image_url: publicUrl,
+          progress_value: progressValue
+        });
+        
+      if (error) throw error;
+      
+      // 4. Update user's progress in the challenge
+      const { error: updateError } = await supabase
+        .from('challenge_participants')
+        .update({ 
+          progress: supabase.rpc('increment_participant_progress', { 
+            p_user_id: session.user.id, 
+            p_challenge_id: id!, 
+            p_progress_value: progressValue
+          }) 
+        })
+        .eq('user_id', session.user.id)
+        .eq('challenge_id', id!);
+        
+      if (updateError) throw updateError;
+      
+      return data;
+    },
+    onSuccess: () => {
+      // Reset form and close dialog
+      setProofImage(null);
+      setImagePreview(null);
+      setProgressValue(0);
+      setIsAddProofOpen(false);
+      
+      // Refresh data
+      queryClient.invalidateQueries({ queryKey: ['challenge-proofs', id] });
+      queryClient.invalidateQueries({ queryKey: ['challenge-participants', id] });
+      
+      toast({
+        title: "Fortschritt hinzugefügt",
+        description: "Dein Fortschritt wurde erfolgreich hinzugefügt!",
+      });
+    },
+    onError: (error) => {
+      console.error("Add proof error:", error);
+      toast({
+        title: "Fehler beim Hinzufügen",
+        description: "Bitte versuche es später erneut.",
+        variant: "destructive"
+      });
+    }
+  });
+  
   const handleJoinLeave = () => {
     if (participation) {
       leaveChallengeMutation.mutate();
@@ -337,6 +457,26 @@ export const ChallengeDetail = () => {
   const handleAddParticipant = () => {
     if (newParticipantEmail.trim()) {
       addParticipantMutation.mutate(newParticipantEmail);
+    }
+  };
+  
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setProofImage(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+  
+  const handleAddProof = () => {
+    if (proofImage && progressValue > 0) {
+      addProofMutation.mutate({ imageFile: proofImage, progressValue });
+    } else {
+      toast({
+        title: "Unvollständige Angaben",
+        description: "Bitte wähle ein Bild und gib einen Fortschrittswert ein.",
+        variant: "destructive"
+      });
     }
   };
   
@@ -401,17 +541,35 @@ export const ChallengeDetail = () => {
                   <Progress value={progressPercentage} className="h-3" />
                 </div>
                 
-                <div className="flex space-x-3">
-                  <Button 
-                    onClick={handleJoinLeave}
-                    variant={participation ? "outline" : "default"}
-                    className={participation ? "border-red-300 text-red-700 hover:bg-red-50" : ""}
-                    disabled={joinChallengeMutation.isPending || leaveChallengeMutation.isPending}
-                  >
-                    {joinChallengeMutation.isPending || leaveChallengeMutation.isPending ? 
-                      "Wird bearbeitet..." : 
-                      (participation ? "Challenge verlassen" : "Challenge beitreten")}
-                  </Button>
+                <div className="flex flex-wrap gap-3">
+                  {participation ? (
+                    <>
+                      <Button 
+                        onClick={() => setIsAddProofOpen(true)}
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        <Camera className="h-4 w-4 mr-2" />
+                        Fortschritt hinzufügen
+                      </Button>
+                      
+                      <Button 
+                        variant="outline"
+                        className="border-red-300 text-red-700 hover:bg-red-50"
+                        onClick={handleJoinLeave}
+                        disabled={leaveChallengeMutation.isPending}
+                      >
+                        Challenge verlassen
+                      </Button>
+                    </>
+                  ) : (
+                    <Button 
+                      onClick={handleJoinLeave}
+                      disabled={joinChallengeMutation.isPending}
+                    >
+                      {joinChallengeMutation.isPending ? 
+                        "Wird bearbeitet..." : "Challenge beitreten"}
+                    </Button>
+                  )}
                   
                   <Button 
                     variant="outline"
@@ -449,8 +607,93 @@ export const ChallengeDetail = () => {
               </div>
             </div>
             
-            {/* Proof Circle with mobile-optimized UI */}
-            <ProofCircle challengeId={id || ''} proofs={proofs || []} />
+            {/* Daily Proofs Carousel */}
+            <div className="mt-8">
+              <h3 className="font-semibold text-lg mb-4">Beweise & Fortschritte</h3>
+              
+              {Object.keys(groupedProofs).length > 0 ? (
+                <div className="space-y-6">
+                  {Object.entries(groupedProofs).map(([date, dateProofs]) => (
+                    <div key={date} className="space-y-2">
+                      <h4 className="font-medium text-gray-700">
+                        {new Date(date).toLocaleDateString('de-DE', { 
+                          weekday: 'long',
+                          year: 'numeric', 
+                          month: 'long', 
+                          day: 'numeric' 
+                        })}
+                      </h4>
+                      <Carousel className="w-full">
+                        <CarouselContent>
+                          {dateProofs.map(proof => (
+                            <CarouselItem key={proof.id} className="md:basis-1/3 lg:basis-1/4">
+                              <div className="bg-gray-50 rounded-lg p-3 h-full">
+                                <div className="aspect-square w-full relative overflow-hidden rounded-md mb-2">
+                                  <img 
+                                    src={proof.image_url} 
+                                    alt="Proof" 
+                                    className="object-cover w-full h-full" 
+                                  />
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Avatar className="h-6 w-6">
+                                    <AvatarImage src={proof.profiles?.avatar_url} />
+                                    <AvatarFallback>
+                                      {proof.profiles?.full_name?.charAt(0) || '?'}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <div>
+                                    <p className="text-xs font-medium truncate">
+                                      {proof.profiles?.full_name || 'Anonym'}
+                                    </p>
+                                    <p className="text-xs text-gray-500">
+                                      +{proof.progress_value} {challenge.target.unit}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            </CarouselItem>
+                          ))}
+                        </CarouselContent>
+                        <CarouselPrevious />
+                        <CarouselNext />
+                      </Carousel>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 border border-dashed rounded-md">
+                  <p className="text-gray-500">Noch keine Beweise für diese Challenge.</p>
+                  {participation && (
+                    <Button 
+                      onClick={() => setIsAddProofOpen(true)}
+                      variant="outline" 
+                      className="mt-2"
+                    >
+                      <Camera className="h-4 w-4 mr-2" />
+                      Sei der Erste
+                    </Button>
+                  )}
+                </div>
+              )}
+            </div>
+            
+            {/* Mobile: Add proof floating button */}
+            {participation && (
+              <div className="md:hidden fixed bottom-6 right-6 z-10">
+                <Button
+                  onClick={() => setIsAddProofOpen(true)}
+                  className="h-14 w-14 rounded-full bg-blue-600 shadow-lg p-0 flex items-center justify-center"
+                >
+                  <Camera className="h-6 w-6" />
+                </Button>
+              </div>
+            )}
+            
+            {/* ProofCircle component for legacy support */}
+            <div className="hidden">
+              <ProofCircle challengeId={id || ''} proofs={proofs || []} />
+            </div>
           </CardContent>
         </Card>
         
@@ -486,6 +729,7 @@ export const ChallengeDetail = () => {
                     onClick={handleAddParticipant}
                     disabled={addParticipantMutation.isPending || !newParticipantEmail.trim()}
                   >
+                    <Plus className="h-4 w-4 mr-1" />
                     Hinzufügen
                   </Button>
                 </div>
@@ -508,7 +752,7 @@ export const ChallengeDetail = () => {
                         size="sm" 
                         className="text-red-600 hover:text-red-800 hover:bg-red-100"
                         onClick={() => removeParticipantMutation.mutate(participant.id)}
-                        disabled={removeParticipantMutation.isPending}
+                        disabled={removeParticipantMutation.isPending || participant.id === session?.user?.id}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -521,6 +765,85 @@ export const ChallengeDetail = () => {
             <DialogFooter>
               <Button onClick={() => setIsManageParticipantsOpen(false)}>
                 Schließen
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        
+        {/* Add Proof Dialog */}
+        <Dialog open={isAddProofOpen} onOpenChange={setIsAddProofOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Fortschritt hinzufügen</DialogTitle>
+              <DialogDescription>
+                Teile deinen Fortschritt mit einem Beweisfoto.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="progress-value">Fortschritt in {challenge.target.unit}</Label>
+                <Input 
+                  id="progress-value" 
+                  type="number" 
+                  min="0.1"
+                  step="0.1"
+                  placeholder={`z.B. 5 ${challenge.target.unit}`}
+                  value={progressValue || ''}
+                  onChange={(e) => setProgressValue(parseFloat(e.target.value) || 0)}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Beweisfoto</Label>
+                {imagePreview ? (
+                  <div className="relative aspect-video w-full overflow-hidden rounded-md">
+                    <img 
+                      src={imagePreview} 
+                      alt="Preview" 
+                      className="object-cover w-full h-full" 
+                    />
+                    <Button 
+                      variant="destructive" 
+                      size="sm"
+                      className="absolute top-2 right-2 opacity-80"
+                      onClick={() => {
+                        setProofImage(null);
+                        setImagePreview(null);
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center h-40 bg-gray-50 rounded-md border-2 border-dashed border-gray-300">
+                    <label className="cursor-pointer flex flex-col items-center">
+                      <Camera className="h-8 w-8 mb-2 text-gray-400" />
+                      <span className="text-sm text-gray-500">Foto auswählen</span>
+                      <input 
+                        type="file" 
+                        accept="image/*"
+                        className="hidden" 
+                        onChange={handleFileChange}
+                      />
+                    </label>
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            <DialogFooter>
+              <Button 
+                variant="outline" 
+                onClick={() => setIsAddProofOpen(false)}
+              >
+                Abbrechen
+              </Button>
+              <Button 
+                onClick={handleAddProof}
+                disabled={!proofImage || progressValue <= 0 || addProofMutation.isPending}
+              >
+                {addProofMutation.isPending ? "Wird hochgeladen..." : "Fortschritt hinzufügen"}
               </Button>
             </DialogFooter>
           </DialogContent>
