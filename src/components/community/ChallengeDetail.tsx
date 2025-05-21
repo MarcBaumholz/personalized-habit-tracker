@@ -1,5 +1,4 @@
 
-
 import { useParams, useNavigate } from "react-router-dom";
 import { Navigation } from "@/components/layout/Navigation";
 import { Button } from "@/components/ui/button";
@@ -124,16 +123,31 @@ export const ChallengeDetail = () => {
     queryKey: ['challenge-participants', id],
     enabled: !!id,
     queryFn: async () => {
-      const { data, error } = await supabase
+      // First fetch participants
+      const { data: participantsData, error: participantsError } = await supabase
         .from('challenge_participants')
-        .select(`
-          *,
-          profiles(id, full_name, avatar_url)
-        `)
+        .select('*')
         .eq('challenge_id', id as string);
         
-      if (error) throw error;
-      return data;
+      if (participantsError) throw participantsError;
+      
+      // Then fetch profiles for each participant
+      const participantsWithProfiles = await Promise.all(
+        participantsData.map(async (participant) => {
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('id, full_name, avatar_url')
+            .eq('id', participant.user_id)
+            .single();
+            
+          return {
+            ...participant,
+            profile: profileData
+          };
+        })
+      );
+      
+      return participantsWithProfiles;
     }
   });
   
@@ -142,27 +156,37 @@ export const ChallengeDetail = () => {
     queryKey: ['challenge-proofs', id],
     enabled: !!id,
     queryFn: async () => {
-      const { data, error } = await supabase
+      // First fetch proofs
+      const { data: proofsData, error: proofsError } = await supabase
         .from('challenge_proofs')
-        .select(`
-          *,
-          profiles(id, full_name, avatar_url)
-        `)
+        .select('*')
         .eq('challenge_id', id as string)
         .order('created_at', { ascending: false });
         
-      if (error) throw error;
+      if (proofsError) throw proofsError;
       
-      // Transform to ensure type safety with proper null checking
-      return (data || []).map(item => ({
-        id: item.id,
-        user_id: item.user_id,
-        challenge_id: item.challenge_id,
-        image_url: item.image_url,
-        progress_value: item.progress_value || 0,
-        created_at: item.created_at,
-        profiles: item.profiles as Profile | null
-      })) as ProofItem[];
+      // Then fetch profiles for each proof
+      const proofsWithProfiles = await Promise.all(
+        proofsData.map(async (proof) => {
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('id, full_name, avatar_url')
+            .eq('id', proof.user_id)
+            .single();
+            
+          return {
+            id: proof.id,
+            user_id: proof.user_id,
+            challenge_id: proof.challenge_id,
+            image_url: proof.image_url,
+            progress_value: proof.progress_value || 0,
+            created_at: proof.created_at,
+            profiles: profileData
+          } as ProofItem;
+        })
+      );
+      
+      return proofsWithProfiles;
     }
   });
   
@@ -172,8 +196,8 @@ export const ChallengeDetail = () => {
       // Create participant list from real data with safe null checking
       const mappedParticipants = challengeParticipants.map(p => ({
         id: p.user_id,
-        name: p.profiles?.full_name || 'Anonymous User',
-        avatar: p.profiles?.avatar_url || '',
+        name: p.profile?.full_name || 'Anonymous User',
+        avatar: p.profile?.avatar_url || '',
         progress: p.progress || 0
       }));
       
