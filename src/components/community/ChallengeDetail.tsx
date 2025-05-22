@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { Navigation } from "@/components/layout/Navigation";
 import { Button } from "@/components/ui/button";
@@ -56,7 +55,12 @@ type ProofItem = {
   image_url: string;
   created_at: string;
   progress_value: number;
-  profiles?: Profile | null;
+  profiles?: {
+    id?: string;
+    full_name?: string;
+    avatar_url?: string;
+    username?: string;
+  } | null;
 }
 
 type Participant = {

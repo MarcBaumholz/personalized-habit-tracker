@@ -30,9 +30,23 @@ export interface ChallengeProps {
   endDate: string;
   participants: Participant[];
   isJoined?: boolean;
+  onJoin?: (challengeId: string) => void;
+  onLeave?: (challengeId: string) => void;
 }
 
-export const ChallengeCard = ({ id, title, description, category, target, currentProgress, endDate, participants, isJoined = false }: ChallengeProps) => {
+export const ChallengeCard = ({ 
+  id, 
+  title, 
+  description, 
+  category, 
+  target, 
+  currentProgress, 
+  endDate, 
+  participants, 
+  isJoined = false,
+  onJoin,
+  onLeave
+}: ChallengeProps) => {
   const navigate = useNavigate();
   const progressPercentage = Math.min(100, Math.round((currentProgress / target.value) * 100));
   
@@ -70,7 +84,20 @@ export const ChallengeCard = ({ id, title, description, category, target, curren
 
   const handleJoinOrView = (e: React.MouseEvent) => {
     e.stopPropagation();
-    navigate(`/community-challenge/${id}`);
+    if (realIsJoined) {
+      navigate(`/community-challenge/${id}`);
+    } else if (onJoin) {
+      onJoin(id);
+    } else {
+      navigate(`/community-challenge/${id}`);
+    }
+  };
+
+  const handleLeave = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onLeave) {
+      onLeave(id);
+    }
   };
 
   return (
@@ -131,13 +158,34 @@ export const ChallengeCard = ({ id, title, description, category, target, curren
           </div>
         </div>
 
-        <Button 
-          variant={realIsJoined ? "outline" : "default"} 
-          className="mt-4 w-full"
-          onClick={handleJoinOrView}
-        >
-          {realIsJoined ? "Zur Challenge" : "Beitreten"}
-        </Button>
+        {realIsJoined ? (
+          <div className="mt-4 flex gap-2">
+            <Button 
+              variant="default" 
+              className="w-full"
+              onClick={handleJoinOrView}
+            >
+              Zur Challenge
+            </Button>
+            {onLeave && (
+              <Button 
+                variant="outline" 
+                className="text-red-600 border-red-200 hover:bg-red-50"
+                onClick={handleLeave}
+              >
+                Verlassen
+              </Button>
+            )}
+          </div>
+        ) : (
+          <Button 
+            variant="default" 
+            className="mt-4 w-full"
+            onClick={handleJoinOrView}
+          >
+            Beitreten
+          </Button>
+        )}
       </div>
     </Card>
   );

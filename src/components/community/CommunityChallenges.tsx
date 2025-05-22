@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,8 +11,9 @@ import { CreateChallengeDialog } from "./CreateChallengeDialog";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/useUser";
+import { toast } from "sonner";
 
-// Sample data for demo and fallback
+// Sample data for demo and fallback - we'll use this only if real data fails to load
 const SAMPLE_CHALLENGES: ChallengeProps[] = [
   {
     id: '1',
@@ -86,59 +88,81 @@ export const CommunityChallenges = () => {
   const { data: realChallenges, isLoading } = useQuery({
     queryKey: ['challenges'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('community_challenges')
-        .select('*');
-        
-      if (error) throw error;
+      if (!user?.id) {
+        console.warn("No user ID available for fetching challenges");
+        return [];
+      }
       
-      // Map database challenges to correct format
-      const mappedChallenges = await Promise.all((data || []).map(async (challenge) => {
-        // Get participants
-        const { data: participantsData } = await supabase
-          .from('challenge_participants')
-          .select('user_id, progress')
-          .eq('challenge_id', challenge.id);
+      try {
+        const { data, error } = await supabase
+          .from('community_challenges')
+          .select('*');
+          
+        if (error) {
+          console.error("Error fetching challenges:", error);
+          throw error;
+        }
         
-        // Get profiles for participants
-        const participants = await Promise.all((participantsData || []).map(async (participant) => {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('full_name, avatar_url')
-            .eq('id', participant.user_id)
-            .maybeSingle();
+        // Map database challenges to correct format
+        const mappedChallenges = await Promise.all((data || []).map(async (challenge) => {
+          // Get participants
+          const { data: participantsData, error: participantsError } = await supabase
+            .from('challenge_participants')
+            .select('user_id, progress')
+            .eq('challenge_id', challenge.id);
+          
+          if (participantsError) {
+            console.error("Error fetching participants:", participantsError);
+            throw participantsError;
+          }
+          
+          // Get profiles for participants
+          const participants = await Promise.all((participantsData || []).map(async (participant) => {
+            const { data: profile, error: profileError } = await supabase
+              .from('profiles')
+              .select('full_name, avatar_url')
+              .eq('id', participant.user_id)
+              .maybeSingle();
             
+            if (profileError && profileError.code !== 'PGRST116') {
+              console.error("Error fetching profile:", profileError);
+              throw profileError;
+            }
+              
+            return {
+              id: participant.user_id,
+              name: profile?.full_name || 'Anonymous User',
+              avatar: profile?.avatar_url || '',
+              progress: participant.progress || 0
+            };
+          }));
+          
+          // Calculate total progress
+          const totalProgress = participants.reduce((sum, p) => sum + p.progress, 0);
+          
+          const isJoined = !!participantsData?.some(p => p.user_id === user?.id);
+          
           return {
-            id: participant.user_id,
-            name: profile?.full_name || 'Anonymous User',
-            avatar: profile?.avatar_url || '',
-            progress: participant.progress || 0
+            id: challenge.id,
+            title: challenge.title,
+            description: challenge.description || "",
+            category: challenge.category || "Allgemein",
+            target: {
+              value: challenge.target_value,
+              unit: challenge.target_unit
+            },
+            currentProgress: totalProgress,
+            endDate: challenge.end_date,
+            participants,
+            isJoined
           };
         }));
         
-        // Calculate total progress
-        const totalProgress = participants.reduce((sum, p) => sum + p.progress, 0);
-        
-        const isJoined = !!participantsData?.some(p => p.user_id === user?.id);
-        
-        return {
-          id: challenge.id,
-          title: challenge.title,
-          description: challenge.description || "",
-          category: challenge.category || "Allgemein",
-          target: {
-            value: challenge.target_value,
-            unit: challenge.target_unit
-          },
-          currentProgress: totalProgress,
-          endDate: challenge.end_date,
-          participants,
-          isJoined,
-          legacyId: challenge.legacy_id
-        };
-      }));
-      
-      return mappedChallenges;
+        return mappedChallenges;
+      } catch (error) {
+        console.error("Error in challenges query:", error);
+        return [];
+      }
     },
     enabled: !!user?.id
   });
@@ -158,15 +182,28 @@ export const CommunityChallenges = () => {
         `)
         .eq('user_id', user!.id);
       
-      if (error) throw error;
-      return data;
+      if (error) {
+        console.error("Error fetching participations:", error);
+        throw error;
+      }
+      
+      return data || [];
     }
   });
   
   // Join challenge mutation
   const joinChallengeMutation = useMutation({
     mutationFn: async (challengeId: string) => {
-      if (!user) throw new Error("Not authenticated");
+      if (!user) {
+        toast({
+          title: "Nicht angemeldet",
+          description: "Du musst angemeldet sein, um einer Challenge beizutreten.",
+          variant: "destructive"
+        });
+        throw new Error("Not authenticated");
+      }
+      
+      console.log("Joining challenge with user ID:", user.id);
       
       const { data, error } = await supabase
         .from('challenge_participants')
@@ -177,7 +214,10 @@ export const CommunityChallenges = () => {
         })
         .select();
         
-      if (error) throw error;
+      if (error) {
+        console.error("Error joining challenge:", error);
+        throw error;
+      }
       
       return data[0];
     },
@@ -190,7 +230,7 @@ export const CommunityChallenges = () => {
       });
     },
     onError: (error) => {
-      console.error(error);
+      console.error("Join error:", error);
       toast({
         title: "Beitritt fehlgeschlagen",
         description: "Bitte versuche es später erneut.",
@@ -202,7 +242,14 @@ export const CommunityChallenges = () => {
   // Leave challenge mutation
   const leaveChallengeMutation = useMutation({
     mutationFn: async (challengeId: string) => {
-      if (!user) throw new Error("Not authenticated");
+      if (!user) {
+        toast({
+          title: "Nicht angemeldet",
+          description: "Du musst angemeldet sein, um eine Challenge zu verlassen.",
+          variant: "destructive"
+        });
+        throw new Error("Not authenticated");
+      }
       
       const { error } = await supabase
         .from('challenge_participants')
@@ -210,7 +257,10 @@ export const CommunityChallenges = () => {
         .eq('user_id', user.id)
         .eq('challenge_id', challengeId);
         
-      if (error) throw error;
+      if (error) {
+        console.error("Error leaving challenge:", error);
+        throw error;
+      }
       
       return { success: true };
     },
@@ -223,7 +273,7 @@ export const CommunityChallenges = () => {
       });
     },
     onError: (error) => {
-      console.error(error);
+      console.error("Leave error:", error);
       toast({
         title: "Aktion fehlgeschlagen",
         description: "Bitte versuche es später erneut.",

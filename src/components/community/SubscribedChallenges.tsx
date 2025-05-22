@@ -7,6 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { ChevronRight, Users, Trophy, Plus } from "lucide-react";
 import { useUser } from "@/hooks/useUser";
+import { toast } from "sonner";
 
 interface Participant {
   id: string;
@@ -47,7 +48,11 @@ export const SubscribedChallenges = () => {
         `)
         .eq('user_id', user!.id);
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching participations:", error);
+        throw error;
+      }
+      
       return data || [];
     }
   });
@@ -59,28 +64,45 @@ export const SubscribedChallenges = () => {
     queryFn: async () => {
       const challengeIds = participations.map(p => p.challenge_id);
       
+      if (challengeIds.length === 0) {
+        return [];
+      }
+      
       const { data, error } = await supabase
         .from('community_challenges')
         .select('*')
         .in('id', challengeIds);
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching challenges:", error);
+        throw error;
+      }
       
       // Map database challenges to correct format and include user progress
       const mappedChallenges = await Promise.all((data || []).map(async (challenge) => {
         // Get all participants for this challenge
-        const { data: participantsData } = await supabase
+        const { data: participantsData, error: participantsError } = await supabase
           .from('challenge_participants')
           .select('user_id, progress')
           .eq('challenge_id', challenge.id);
         
+        if (participantsError) {
+          console.error("Error fetching participants:", participantsError);
+          throw participantsError;
+        }
+        
         // Get profiles for participants
         const participants = await Promise.all((participantsData || []).map(async (participant) => {
-          const { data: profile } = await supabase
+          const { data: profile, error: profileError } = await supabase
             .from('profiles')
             .select('full_name, avatar_url')
             .eq('id', participant.user_id)
             .maybeSingle();
+          
+          if (profileError && profileError.code !== 'PGRST116') {
+            console.error("Error fetching profile:", profileError);
+            throw profileError;
+          }
             
           return {
             id: participant.user_id,
