@@ -104,7 +104,7 @@ export const ChallengeDetail = () => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isDeleteProofDialogOpen, setIsDeleteProofDialogOpen] = useState(false);
   const [proofToDelete, setProofToDelete] = useState<ProofItem | null>(null);
-  const [realChallenge, setRealChallenge] = useState<any>(null);
+  const [realChallenge, setRealChallenge] = useState<ChallengeData | null>(null);
   
   // Get current user
   const { data: session } = useQuery({
@@ -280,12 +280,14 @@ export const ChallengeDetail = () => {
           unit: challengeData.target_unit
         },
         endDate: challengeData.end_date,
-        created_by: challengeData.created_by
+        created_by: challengeData.created_by,
+        currentProgress: totalProgress,
+        participants: participants
       });
     }
-  }, [challengeData]);
+  }, [challengeData, totalProgress, participants]);
   
-  // Sample challenge data - in a real app, this would come from the database
+  // Default challenge data if none exists in database
   const challenge: ChallengeData = realChallenge || {
     id: id || '',
     title: id === '1' ? '100 km Laufen' : id === '3' ? '1000 Seiten lesen' : 'Challenge',
@@ -480,18 +482,25 @@ export const ChallengeDetail = () => {
       if (error) throw error;
       
       // 4. Update user's progress in the challenge
-      const { data: participantData, error: updateError } = await supabase
-        .from('challenge_participants')
-        .update({ progress: supabase.rpc('increment_participant_progress', { 
+      const { data: participantData, error: updateError } = await supabase.rpc(
+        'increment_participant_progress',
+        {
           p_user_id: session.user.id,
           p_challenge_id: id!,
           p_progress_value: progressValue
-        }) })
-        .eq('user_id', session.user.id)
-        .eq('challenge_id', id!)
-        .select();
+        }
+      );
         
       if (updateError) throw updateError;
+      
+      // Update the participant record with the new progress
+      const { error: participantUpdateError } = await supabase
+        .from('challenge_participants')
+        .update({ progress: participantData })
+        .eq('user_id', session.user.id)
+        .eq('challenge_id', id!);
+      
+      if (participantUpdateError) throw participantUpdateError;
       
       return data;
     },
@@ -664,6 +673,14 @@ export const ChallengeDetail = () => {
   const progressPercentage = Math.min(100, Math.round((challenge.currentProgress / challenge.target.value) * 100));
   
   const canEdit = user && (challengeData?.created_by === user.id);
+  
+  const handleChallengeUpdated = (challengeId: string) => {
+    queryClient.invalidateQueries({ queryKey: ['challenge-data', id] });
+    toast({
+      title: "Challenge aktualisiert",
+      description: "Die Challenge wurde erfolgreich aktualisiert.",
+    });
+  };
   
   if (isChallengeLoading) {
     return (
@@ -912,7 +929,7 @@ export const ChallengeDetail = () => {
           open={isEditOpen} 
           onOpenChange={setIsEditOpen} 
           challengeId={id || ''} 
-          challenge={challenge}
+          onChallengeUpdated={handleChallengeUpdated}
         />
         
         {/* Manage Participants Dialog */}
