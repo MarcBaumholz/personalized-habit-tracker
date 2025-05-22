@@ -6,73 +6,122 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { ChevronRight, Users, Trophy, Plus } from "lucide-react";
+import { useUser } from "@/hooks/useUser";
+
+interface Participant {
+  id: string;
+  name: string;
+  avatar: string;
+  progress: number;
+}
+
+interface Challenge {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  target: {
+    value: number;
+    unit: string;
+  };
+  currentProgress: number;
+  endDate: string;
+  participants: Participant[];
+}
 
 export const SubscribedChallenges = () => {
   const navigate = useNavigate();
+  const { user } = useUser();
   
-  // Get current user
-  const { data: session } = useQuery({
-    queryKey: ['session'],
-    queryFn: async () => {
-      const { data } = await supabase.auth.getSession();
-      return data.session;
-    }
-  });
-
   // Get user participations
-  const { data: participations, isLoading } = useQuery({
-    queryKey: ['user-participations', session?.user?.id],
-    enabled: !!session?.user?.id,
+  const { data: participations, isLoading: isParticipationsLoading } = useQuery({
+    queryKey: ['user-participations', user?.id],
+    enabled: !!user?.id,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('challenge_participants')
         .select(`
           id, 
           challenge_id, 
-          progress,
-          user_id
+          progress
         `)
-        .eq('user_id', session!.user.id);
+        .eq('user_id', user!.id);
       
       if (error) throw error;
       return data || [];
     }
   });
 
-  // Sample challenges data - in a real app, this would come from the database
-  const SAMPLE_CHALLENGES = [
-    {
-      id: '1',
-      title: '100 km Laufen',
-      description: 'Gemeinsam 100 km in einem Monat laufen',
-      category: 'Fitness',
-      target: { value: 100, unit: 'km' },
-      currentProgress: 63,
-      endDate: '2025-04-05',
-      participants: 6
-    },
-    {
-      id: '3',
-      title: '1000 Seiten lesen',
-      description: 'Gemeinsam 1000 Seiten in zwei Monaten lesen',
-      category: 'Bildung',
-      target: { value: 1000, unit: 'Seiten' },
-      currentProgress: 450,
-      endDate: '2025-04-05',
-      participants: 4
+  // Get all challenges the user is participating in
+  const { data: userChallenges, isLoading: isChallengesLoading } = useQuery({
+    queryKey: ['user-subscribed-challenges', participations],
+    enabled: !!participations && participations.length > 0,
+    queryFn: async () => {
+      const challengeIds = participations.map(p => p.challenge_id);
+      
+      const { data, error } = await supabase
+        .from('community_challenges')
+        .select('*')
+        .in('id', challengeIds);
+      
+      if (error) throw error;
+      
+      // Map database challenges to correct format and include user progress
+      const mappedChallenges = await Promise.all((data || []).map(async (challenge) => {
+        // Get all participants for this challenge
+        const { data: participantsData } = await supabase
+          .from('challenge_participants')
+          .select('user_id, progress')
+          .eq('challenge_id', challenge.id);
+        
+        // Get profiles for participants
+        const participants = await Promise.all((participantsData || []).map(async (participant) => {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('full_name, avatar_url')
+            .eq('id', participant.user_id)
+            .maybeSingle();
+            
+          return {
+            id: participant.user_id,
+            name: profile?.full_name || 'Anonymous User',
+            avatar: profile?.avatar_url || '',
+            progress: participant.progress || 0
+          };
+        }));
+        
+        // Calculate total progress
+        const totalProgress = participants.reduce((sum, p) => sum + p.progress, 0);
+        
+        // Find user's progress
+        const userProgress = participations.find(p => p.challenge_id === challenge.id)?.progress || 0;
+        
+        return {
+          id: challenge.id,
+          title: challenge.title,
+          description: challenge.description || "",
+          category: challenge.category || "Allgemein",
+          target: {
+            value: challenge.target_value,
+            unit: challenge.target_unit
+          },
+          currentProgress: totalProgress,
+          endDate: challenge.end_date,
+          participants
+        };
+      }));
+      
+      return mappedChallenges;
     }
-  ];
+  });
 
-  // Filter only challenges the user is participating in
-  const subscribedChallenges = SAMPLE_CHALLENGES.filter(challenge => 
-    participations?.some(p => p.challenge_id === challenge.id)
-  );
+  const isLoading = isParticipationsLoading || isChallengesLoading;
 
   if (isLoading) {
     return <div className="animate-pulse p-4">Lädt Challenges...</div>;
   }
 
-  if (subscribedChallenges.length === 0) {
+  if (!userChallenges || userChallenges.length === 0) {
     return (
       <div className="text-center py-6">
         <h3 className="text-lg font-semibold mb-2">Deine Community Challenges</h3>
@@ -96,7 +145,7 @@ export const SubscribedChallenges = () => {
       </div>
       
       <div className="space-y-4">
-        {subscribedChallenges.map(challenge => {
+        {userChallenges.map(challenge => {
           const progress = Math.round((challenge.currentProgress / challenge.target.value) * 100);
           
           return (
@@ -112,7 +161,7 @@ export const SubscribedChallenges = () => {
                 </div>
                 <div className="flex items-center text-sm text-gray-600">
                   <Users className="h-4 w-4 mr-1" />
-                  <span>{challenge.participants}</span>
+                  <span>{challenge.participants.length}</span>
                 </div>
               </div>
               
