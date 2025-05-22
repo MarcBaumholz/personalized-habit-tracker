@@ -15,37 +15,27 @@ interface EditChallengeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   challengeId: string;
-  challenge: {
-    title: string;
-    description: string;
-    category: string;
-    target: {
-      value: number;
-      unit: string;
-    };
-    endDate: string;
-  };
+  onChallengeUpdated?: (challengeId: string) => void;
 }
 
-export const EditChallengeDialog = ({ open, onOpenChange, challengeId, challenge }: EditChallengeDialogProps) => {
-  const [title, setTitle] = useState(challenge.title);
-  const [description, setDescription] = useState(challenge.description);
-  const [category, setCategory] = useState(challenge.category);
-  const [targetValue, setTargetValue] = useState(challenge.target.value.toString());
-  const [targetUnit, setTargetUnit] = useState(challenge.target.unit);
-  const [endDate, setEndDate] = useState(challenge.endDate);
+export const EditChallengeDialog = ({ open, onOpenChange, challengeId, onChallengeUpdated }: EditChallengeDialogProps) => {
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("Allgemein");
+  const [targetValue, setTargetValue] = useState("");
+  const [targetUnit, setTargetUnit] = useState("Einheiten");
+  const [endDate, setEndDate] = useState("");
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useUser();
   
   // Check if challenge exists in the database
-  const { data: existingChallenge } = useQuery({
+  const { data: challenge, isLoading } = useQuery({
     queryKey: ['edit-challenge', challengeId],
     enabled: !!challengeId && open,
     queryFn: async () => {
-      // Try to get by UUID first
-      let { data, error } = await supabase
+      const { data, error } = await supabase
         .from('community_challenges')
         .select('*')
         .eq('id', challengeId)
@@ -59,12 +49,11 @@ export const EditChallengeDialog = ({ open, onOpenChange, challengeId, challenge
           .eq('legacy_id', challengeId)
           .single();
           
-        if (!legacyError) {
-          return legacyData;
+        if (legacyError) {
+          throw legacyError;
         }
         
-        // If neither UUID nor legacy ID worked, return null
-        return null;
+        return legacyData;
       }
       
       return data;
@@ -74,19 +63,20 @@ export const EditChallengeDialog = ({ open, onOpenChange, challengeId, challenge
   // Update form when challenge data changes
   useEffect(() => {
     if (challenge) {
-      setTitle(challenge.title);
-      setDescription(challenge.description);
-      setCategory(challenge.category);
-      setTargetValue(challenge.target.value.toString());
-      setTargetUnit(challenge.target.unit);
-      setEndDate(challenge.endDate);
+      setTitle(challenge.title || "");
+      setDescription(challenge.description || "");
+      setCategory(challenge.category || "Allgemein");
+      setTargetValue(challenge.target_value?.toString() || "");
+      setTargetUnit(challenge.target_unit || "Einheiten");
+      setEndDate(challenge.end_date ? new Date(challenge.end_date).toISOString().split('T')[0] : "");
     }
   }, [challenge]);
   
-  // The update mutation handles both creating new challenges and updating existing ones
+  // The update mutation handles updating existing challenges
   const updateChallengeMutation = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error("Not authenticated");
+      if (!challenge) throw new Error("Challenge not found");
       
       const challengeData = {
         title,
@@ -94,51 +84,43 @@ export const EditChallengeDialog = ({ open, onOpenChange, challengeId, challenge
         category,
         target_value: Number(targetValue),
         target_unit: targetUnit,
-        end_date: endDate,
-        created_by: user.id
+        end_date: endDate
       };
       
-      if (existingChallenge) {
-        // Update existing challenge
-        const { data, error } = await supabase
-          .from('community_challenges')
-          .update(challengeData)
-          .eq('id', existingChallenge.id);
-          
-        if (error) throw error;
+      // Update existing challenge
+      const { data, error } = await supabase
+        .from('community_challenges')
+        .update(challengeData)
+        .eq('id', challenge.id)
+        .select();
         
-        return { success: true, action: 'updated', id: existingChallenge.id };
-      } else {
-        // Create new challenge and set legacy_id for backwards compatibility
-        const { data, error } = await supabase
-          .from('community_challenges')
-          .insert({
-            ...challengeData,
-            legacy_id: challengeId
-          })
-          .select();
-          
-        if (error) throw error;
-        
-        return { success: true, action: 'created', id: data?.[0]?.id };
-      }
+      if (error) throw error;
+      
+      return data[0];
     },
-    onSuccess: (result) => {
+    onSuccess: (data) => {
+      // Close dialog
+      onOpenChange(false);
+      
+      // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['challenge-data', challengeId] });
       queryClient.invalidateQueries({ queryKey: ['edit-challenge', challengeId] });
+      queryClient.invalidateQueries({ queryKey: ['challenges'] });
       
-      onOpenChange(false);
+      // Notify parent component
+      if (onChallengeUpdated && data?.id) {
+        onChallengeUpdated(data.id);
+      }
+      
       toast({
-        title: result.action === 'updated' ? "Challenge aktualisiert" : "Challenge erstellt",
-        description: result.action === 'updated' 
-          ? "Die Challenge wurde erfolgreich aktualisiert." 
-          : "Die Challenge wurde erfolgreich erstellt.",
+        title: "Challenge aktualisiert",
+        description: "Die Challenge wurde erfolgreich aktualisiert.",
       });
     },
     onError: (error) => {
       console.error("Update error:", error);
       toast({
-        title: "Speichern fehlgeschlagen",
+        title: "Aktualisierung fehlgeschlagen",
         description: "Bitte versuche es später erneut.",
         variant: "destructive"
       });
@@ -147,6 +129,35 @@ export const EditChallengeDialog = ({ open, onOpenChange, challengeId, challenge
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Basic validation
+    if (!title.trim()) {
+      toast({
+        title: "Titel fehlt",
+        description: "Bitte gib einen Titel für deine Challenge ein.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (!targetValue || Number(targetValue) <= 0) {
+      toast({
+        title: "Ungültiger Zielwert",
+        description: "Bitte gib einen positiven Zielwert ein.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (!endDate) {
+      toast({
+        title: "Enddatum fehlt",
+        description: "Bitte gib ein Enddatum für deine Challenge ein.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     updateChallengeMutation.mutate();
   };
   
@@ -160,104 +171,109 @@ export const EditChallengeDialog = ({ open, onOpenChange, challengeId, challenge
           </DialogDescription>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="title">Titel</Label>
-            <Input 
-              id="title" 
-              value={title} 
-              onChange={(e) => setTitle(e.target.value)} 
-              placeholder="z.B. '100 km Laufen'" 
-            />
+        {isLoading ? (
+          <div className="flex justify-center p-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
           </div>
-          
-          <div>
-            <Label htmlFor="category">Kategorie</Label>
-            <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger>
-                <SelectValue placeholder="Wähle eine Kategorie" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Fitness">Fitness</SelectItem>
-                <SelectItem value="Bildung">Bildung</SelectItem>
-                <SelectItem value="Ernährung">Ernährung</SelectItem>
-                <SelectItem value="Finanzen">Finanzen</SelectItem>
-                <SelectItem value="Mindfulness">Mindfulness</SelectItem>
-                <SelectItem value="Allgemein">Allgemein</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div>
-            <Label htmlFor="description">Beschreibung</Label>
-            <Textarea 
-              id="description" 
-              value={description} 
-              onChange={(e) => setDescription(e.target.value)} 
-              placeholder="Worum geht es in dieser Challenge?" 
-            />
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4">
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label htmlFor="target-value">Zielwert</Label>
+              <Label htmlFor="title">Titel</Label>
               <Input 
-                id="target-value" 
-                type="number" 
-                min="1" 
-                value={targetValue} 
-                onChange={(e) => setTargetValue(e.target.value)} 
-                placeholder="z.B. 100" 
+                id="title" 
+                value={title} 
+                onChange={(e) => setTitle(e.target.value)} 
+                placeholder="z.B. '100 km Laufen'" 
               />
             </div>
+            
             <div>
-              <Label htmlFor="target-unit">Einheit</Label>
-              <Select value={targetUnit} onValueChange={setTargetUnit}>
-                <SelectTrigger id="target-unit">
-                  <SelectValue placeholder="Wähle eine Einheit" />
+              <Label htmlFor="category">Kategorie</Label>
+              <Select value={category} onValueChange={setCategory}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Wähle eine Kategorie" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="km">Kilometer (km)</SelectItem>
-                  <SelectItem value="Seiten">Seiten</SelectItem>
-                  <SelectItem value="Minuten">Minuten</SelectItem>
-                  <SelectItem value="Stunden">Stunden</SelectItem>
-                  <SelectItem value="Tage">Tage</SelectItem>
-                  <SelectItem value="Mal">Wiederholungen</SelectItem>
-                  <SelectItem value="Einheiten">Einheiten</SelectItem>
+                  <SelectItem value="Fitness">Fitness</SelectItem>
+                  <SelectItem value="Bildung">Bildung</SelectItem>
+                  <SelectItem value="Ernährung">Ernährung</SelectItem>
+                  <SelectItem value="Finanzen">Finanzen</SelectItem>
+                  <SelectItem value="Mindfulness">Mindfulness</SelectItem>
+                  <SelectItem value="Allgemein">Allgemein</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-          </div>
-          
-          <div>
-            <Label htmlFor="end-date">Enddatum</Label>
-            <Input 
-              id="end-date" 
-              type="date" 
-              value={endDate} 
-              onChange={(e) => setEndDate(e.target.value)} 
-            />
-          </div>
-          
-          <DialogFooter>
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => onOpenChange(false)}
-            >
-              Abbrechen
-            </Button>
-            <Button 
-              type="submit" 
-              className="bg-blue-600"
-              disabled={updateChallengeMutation.isPending}
-            >
-              {updateChallengeMutation.isPending ? 
-                (existingChallenge ? "Wird aktualisiert..." : "Wird erstellt...") : 
-                (existingChallenge ? "Speichern" : "Challenge erstellen")}
-            </Button>
-          </DialogFooter>
-        </form>
+            
+            <div>
+              <Label htmlFor="description">Beschreibung</Label>
+              <Textarea 
+                id="description" 
+                value={description} 
+                onChange={(e) => setDescription(e.target.value)} 
+                placeholder="Worum geht es in dieser Challenge?" 
+              />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="target-value">Zielwert</Label>
+                <Input 
+                  id="target-value" 
+                  type="number" 
+                  min="1" 
+                  value={targetValue} 
+                  onChange={(e) => setTargetValue(e.target.value)} 
+                  placeholder="z.B. 100" 
+                />
+              </div>
+              <div>
+                <Label htmlFor="target-unit">Einheit</Label>
+                <Select value={targetUnit} onValueChange={setTargetUnit}>
+                  <SelectTrigger id="target-unit">
+                    <SelectValue placeholder="Wähle eine Einheit" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="km">Kilometer (km)</SelectItem>
+                    <SelectItem value="Seiten">Seiten</SelectItem>
+                    <SelectItem value="Minuten">Minuten</SelectItem>
+                    <SelectItem value="Stunden">Stunden</SelectItem>
+                    <SelectItem value="Tage">Tage</SelectItem>
+                    <SelectItem value="Mal">Wiederholungen</SelectItem>
+                    <SelectItem value="Einheiten">Einheiten</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            <div>
+              <Label htmlFor="end-date">Enddatum</Label>
+              <Input 
+                id="end-date" 
+                type="date" 
+                value={endDate} 
+                onChange={(e) => setEndDate(e.target.value)} 
+                min={new Date().toISOString().split('T')[0]}
+              />
+            </div>
+            
+            <DialogFooter>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => onOpenChange(false)}
+              >
+                Abbrechen
+              </Button>
+              <Button 
+                type="submit" 
+                className="bg-blue-600"
+                disabled={updateChallengeMutation.isPending}
+              >
+                {updateChallengeMutation.isPending ? "Wird aktualisiert..." : "Speichern"}
+              </Button>
+            </DialogFooter>
+          </form>
+        )}
       </DialogContent>
     </Dialog>
   );

@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/useUser";
@@ -27,6 +27,7 @@ export const CreateChallengeDialog = ({ open, onOpenChange, onChallengeCreated }
   
   const { toast } = useToast();
   const { user } = useUser();
+  const queryClient = useQueryClient();
   
   const createChallengeMutation = useMutation({
     mutationFn: async () => {
@@ -65,6 +66,9 @@ export const CreateChallengeDialog = ({ open, onOpenChange, onChallengeCreated }
       if (onChallengeCreated && data.id) {
         onChallengeCreated(data.id);
       }
+      
+      // Invalidate challenges query to refresh list
+      queryClient.invalidateQueries({ queryKey: ['challenges'] });
       
       toast({
         title: "Challenge erstellt",

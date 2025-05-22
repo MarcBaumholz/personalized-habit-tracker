@@ -1,17 +1,17 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ChallengeCard, ChallengeProps } from "./ChallengeCard";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Users, Search, Filter, Plus } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CreateChallengeDialog } from "./CreateChallengeDialog";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
+import { useUser } from "@/hooks/useUser";
 
-// Sample data for demo
+// Sample data for demo and fallback
 const SAMPLE_CHALLENGES: ChallengeProps[] = [
   {
     id: '1',
@@ -75,21 +75,15 @@ const SAMPLE_CHALLENGES: ChallengeProps[] = [
 
 export const CommunityChallenges = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [challenges, setChallenges] = useState<ChallengeProps[]>(SAMPLE_CHALLENGES);
+  const [challenges, setChallenges] = useState<ChallengeProps[]>([]);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const navigate = useNavigate();
-  
-  // Get current user
-  const { data: session } = useQuery({
-    queryKey: ['session'],
-    queryFn: async () => {
-      const { data } = await supabase.auth.getSession();
-      return data.session;
-    }
-  });
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const { user } = useUser();
   
   // Get real challenges from the database
-  const { data: realChallenges, refetch: refetchChallenges } = useQuery({
+  const { data: realChallenges, isLoading } = useQuery({
     queryKey: ['challenges'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -99,7 +93,7 @@ export const CommunityChallenges = () => {
       if (error) throw error;
       
       // Map database challenges to correct format
-      const mappedChallenges = await Promise.all(data.map(async (challenge) => {
+      const mappedChallenges = await Promise.all((data || []).map(async (challenge) => {
         // Get participants
         const { data: participantsData } = await supabase
           .from('challenge_participants')
@@ -112,7 +106,7 @@ export const CommunityChallenges = () => {
             .from('profiles')
             .select('full_name, avatar_url')
             .eq('id', participant.user_id)
-            .single();
+            .maybeSingle();
             
           return {
             id: participant.user_id,
@@ -125,11 +119,13 @@ export const CommunityChallenges = () => {
         // Calculate total progress
         const totalProgress = participants.reduce((sum, p) => sum + p.progress, 0);
         
+        const isJoined = !!participantsData?.some(p => p.user_id === user?.id);
+        
         return {
           id: challenge.id,
           title: challenge.title,
-          description: challenge.description,
-          category: challenge.category,
+          description: challenge.description || "",
+          category: challenge.category || "Allgemein",
           target: {
             value: challenge.target_value,
             unit: challenge.target_unit
@@ -137,20 +133,20 @@ export const CommunityChallenges = () => {
           currentProgress: totalProgress,
           endDate: challenge.end_date,
           participants,
-          isJoined: !!participantsData?.some(p => p.user_id === session?.user?.id),
+          isJoined,
           legacyId: challenge.legacy_id
         };
       }));
       
       return mappedChallenges;
     },
-    enabled: !!session?.user?.id
+    enabled: !!user?.id
   });
 
-  // Get challenge participants
+  // Get challenge participations
   const { data: participations } = useQuery({
-    queryKey: ['user-participations', session?.user?.id],
-    enabled: !!session?.user?.id,
+    queryKey: ['user-participations', user?.id],
+    enabled: !!user?.id,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('challenge_participants')
@@ -160,32 +156,91 @@ export const CommunityChallenges = () => {
           user_id, 
           progress
         `)
-        .eq('user_id', session!.user.id);
+        .eq('user_id', user!.id);
       
       if (error) throw error;
       return data;
+    }
+  });
+  
+  // Join challenge mutation
+  const joinChallengeMutation = useMutation({
+    mutationFn: async (challengeId: string) => {
+      if (!user) throw new Error("Not authenticated");
+      
+      const { data, error } = await supabase
+        .from('challenge_participants')
+        .insert({
+          user_id: user.id,
+          challenge_id: challengeId,
+          progress: 0
+        })
+        .select();
+        
+      if (error) throw error;
+      
+      return data[0];
     },
-    initialData: []
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['challenges'] });
+      queryClient.invalidateQueries({ queryKey: ['user-participations', user?.id] });
+      toast({
+        title: "Challenge beigetreten",
+        description: "Du bist der Challenge erfolgreich beigetreten."
+      });
+    },
+    onError: (error) => {
+      console.error(error);
+      toast({
+        title: "Beitritt fehlgeschlagen",
+        description: "Bitte versuche es später erneut.",
+        variant: "destructive"
+      });
+    }
+  });
+  
+  // Leave challenge mutation
+  const leaveChallengeMutation = useMutation({
+    mutationFn: async (challengeId: string) => {
+      if (!user) throw new Error("Not authenticated");
+      
+      const { error } = await supabase
+        .from('challenge_participants')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('challenge_id', challengeId);
+        
+      if (error) throw error;
+      
+      return { success: true };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['challenges'] });
+      queryClient.invalidateQueries({ queryKey: ['user-participations', user?.id] });
+      toast({
+        title: "Challenge verlassen",
+        description: "Du hast die Challenge erfolgreich verlassen."
+      });
+    },
+    onError: (error) => {
+      console.error(error);
+      toast({
+        title: "Aktion fehlgeschlagen",
+        description: "Bitte versuche es später erneut.",
+        variant: "destructive"
+      });
+    }
   });
 
   // Update challenges with real data and user participation
   useEffect(() => {
     if (realChallenges && realChallenges.length > 0) {
-      setChallenges([...realChallenges, ...SAMPLE_CHALLENGES.filter(c => 
-        !realChallenges.some(rc => rc.id === c.id || rc.legacyId === c.id))]);
-    } else if (participations && participations.length > 0) {
-      const updatedChallenges = SAMPLE_CHALLENGES.map(challenge => {
-        const participation = participations.find(p => p.challenge_id === challenge.id);
-        return {
-          ...challenge,
-          isJoined: !!participation
-        };
-      });
-      setChallenges(updatedChallenges);
-    } else {
+      setChallenges(realChallenges);
+    } else if (!isLoading) {
+      // If no real challenges or still loading, use sample data
       setChallenges(SAMPLE_CHALLENGES);
     }
-  }, [realChallenges, participations]);
+  }, [realChallenges, isLoading]);
   
   const filteredChallenges = challenges.filter(challenge => 
     challenge.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -193,16 +248,24 @@ export const CommunityChallenges = () => {
     challenge.category.toLowerCase().includes(searchQuery.toLowerCase())
   );
   
-  const joinedChallenges = filteredChallenges.filter(challenge => 
-    challenge.isJoined || participations?.some(p => p.challenge_id === challenge.id)
-  );
-  
-  const availableChallenges = filteredChallenges.filter(challenge => 
-    !challenge.isJoined && !participations?.some(p => p.challenge_id === challenge.id)
-  );
-  
+  const joinedChallenges = filteredChallenges.filter(challenge => challenge.isJoined);
+  const availableChallenges = filteredChallenges.filter(challenge => !challenge.isJoined);
+
   const handleCreateChallenge = () => {
     setIsCreateDialogOpen(true);
+  };
+  
+  const handleChallengeCreated = (challengeId: string) => {
+    queryClient.invalidateQueries({ queryKey: ['challenges'] });
+    navigate(`/community-challenge/${challengeId}`);
+  };
+  
+  const handleJoinChallenge = (challengeId: string) => {
+    joinChallengeMutation.mutate(challengeId);
+  };
+  
+  const handleLeaveChallenge = (challengeId: string) => {
+    leaveChallengeMutation.mutate(challengeId);
   };
 
   return (
@@ -229,53 +292,64 @@ export const CommunityChallenges = () => {
         </div>
       </div>
       
-      {joinedChallenges.length > 0 && (
+      {isLoading ? (
         <Card>
-          <CardContent className="p-6">
-            <h3 className="font-bold text-xl mb-6 flex items-center">
-              <Users className="mr-2 h-5 w-5 text-blue-600" />
-              Deine Challenges
-            </h3>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {joinedChallenges.map(challenge => (
-                <ChallengeCard 
-                  key={challenge.id}
-                  {...challenge}
-                />
-              ))}
-            </div>
+          <CardContent className="p-6 flex justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
           </CardContent>
         </Card>
-      )}
-      
-      <Card>
-        <CardContent className="p-6">
-          <h3 className="font-bold text-xl mb-6">Verfügbare Challenges</h3>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {availableChallenges.length > 0 ? (
-              availableChallenges.map(challenge => (
-                <ChallengeCard 
-                  key={challenge.id}
-                  {...challenge}
-                />
-              ))
-            ) : (
-              <div className="col-span-full text-center py-8">
-                <p className="text-gray-500">Keine Challenges gefunden.</p>
+      ) : (
+        <>
+          {joinedChallenges.length > 0 && (
+            <Card>
+              <CardContent className="p-6">
+                <h3 className="font-bold text-xl mb-6 flex items-center">
+                  <Users className="mr-2 h-5 w-5 text-blue-600" />
+                  Deine Challenges
+                </h3>
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {joinedChallenges.map(challenge => (
+                    <ChallengeCard 
+                      key={challenge.id}
+                      {...challenge}
+                      onJoin={handleJoinChallenge}
+                      onLeave={handleLeaveChallenge}
+                    />
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          
+          <Card>
+            <CardContent className="p-6">
+              <h3 className="font-bold text-xl mb-6">Verfügbare Challenges</h3>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {availableChallenges.length > 0 ? (
+                  availableChallenges.map(challenge => (
+                    <ChallengeCard 
+                      key={challenge.id}
+                      {...challenge}
+                      onJoin={handleJoinChallenge}
+                      onLeave={handleLeaveChallenge}
+                    />
+                  ))
+                ) : (
+                  <div className="col-span-full text-center py-8">
+                    <p className="text-gray-500">Keine Challenges gefunden.</p>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </>
+      )}
       
       {/* Create Challenge Dialog */}
       <CreateChallengeDialog 
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
-        onChallengeCreated={(challengeId) => {
-          refetchChallenges();
-          navigate(`/community-challenge/${challengeId}`);
-        }}
+        onChallengeCreated={handleChallengeCreated}
       />
     </div>
   );

@@ -338,6 +338,45 @@ export type Database = {
         }
         Relationships: []
       }
+      community_challenges: {
+        Row: {
+          category: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          end_date: string
+          id: string
+          legacy_id: string | null
+          target_unit: string
+          target_value: number
+          title: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          end_date: string
+          id?: string
+          legacy_id?: string | null
+          target_unit: string
+          target_value: number
+          title: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          end_date?: string
+          id?: string
+          legacy_id?: string | null
+          target_unit?: string
+          target_value?: number
+          title?: string
+        }
+        Relationships: []
+      }
       habit_completions: {
         Row: {
           completed_date: string
@@ -1117,6 +1156,14 @@ export type Database = {
       get_last_24h_todo_stats: {
         Args: { p_user_id: string }
         Returns: Json
+      }
+      increment_participant_progress: {
+        Args: {
+          p_user_id: string
+          p_challenge_id: string
+          p_progress_value: number
+        }
+        Returns: number
       }
       reset_daily_todos: {
         Args: Record<PropertyKey, never>
