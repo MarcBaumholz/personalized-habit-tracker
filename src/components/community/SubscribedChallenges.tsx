@@ -70,70 +70,132 @@ export const SubscribedChallenges = () => {
         return [];
       }
       
-      const { data, error } = await supabase
-        .from('community_challenges')
-        .select('*')
-        .in('id', challengeIds);
-      
-      if (error) {
-        console.error("Error fetching challenges:", error);
-        throw error;
-      }
-      
-      // Map database challenges to correct format and include user progress
-      return Promise.all((data || []).map(async (challenge) => {
-        // Get all participants for this challenge
-        const { data: participantsData, error: participantsError } = await supabase
-          .from('challenge_participants')
-          .select('user_id, progress')
-          .eq('challenge_id', challenge.id);
+      try {
+        const { data, error } = await supabase
+          .from('community_challenges')
+          .select('*')
+          .in('id', challengeIds);
         
-        if (participantsError) {
-          console.error("Error fetching participants:", participantsError);
-          throw participantsError;
+        if (error) {
+          console.error("Error fetching challenges:", error);
+          throw error;
         }
         
-        // Get profiles for participants
-        const participants = await Promise.all((participantsData || []).map(async (participant) => {
-          const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('full_name, avatar_url')
-            .eq('id', participant.user_id)
-            .maybeSingle();
+        // Map database challenges to correct format and include user progress
+        return Promise.all((data || []).map(async (challenge) => {
+          // Get all participants for this challenge
+          const { data: participantsData, error: participantsError } = await supabase
+            .from('challenge_participants')
+            .select('user_id, progress')
+            .eq('challenge_id', challenge.id);
           
-          if (profileError && profileError.code !== 'PGRST116') {
-            console.error("Error fetching profile:", profileError);
-            throw profileError;
+          if (participantsError) {
+            console.error("Error fetching participants:", participantsError);
+            throw participantsError;
           }
+          
+          // Get profiles for participants
+          const participants = await Promise.all((participantsData || []).map(async (participant) => {
+            const { data: profile, error: profileError } = await supabase
+              .from('profiles')
+              .select('full_name, avatar_url')
+              .eq('id', participant.user_id)
+              .maybeSingle();
             
+            if (profileError && profileError.code !== 'PGRST116') {
+              console.error("Error fetching profile:", profileError);
+              throw profileError;
+            }
+              
+            return {
+              id: participant.user_id,
+              name: profile?.full_name || 'Anonymous User',
+              avatar: profile?.avatar_url || '',
+              progress: participant.progress || 0
+            };
+          }));
+          
+          // Calculate total progress
+          const totalProgress = participants.reduce((sum, p) => sum + p.progress, 0);
+          
+          // Find user's progress
+          const userProgress = participations.find(p => p.challenge_id === challenge.id)?.progress || 0;
+          
           return {
-            id: participant.user_id,
-            name: profile?.full_name || 'Anonymous User',
-            avatar: profile?.avatar_url || '',
-            progress: participant.progress || 0
+            id: challenge.id,
+            title: challenge.title,
+            description: challenge.description || "",
+            category: challenge.category || "Allgemein",
+            target: {
+              value: challenge.target_value,
+              unit: challenge.target_unit
+            },
+            currentProgress: totalProgress,
+            endDate: challenge.end_date,
+            participants
           };
         }));
+      } catch (err) {
+        // If there's an error with UUID parsing (common with legacy string IDs),
+        // try an alternative approach with string comparison
+        console.error("Initial fetch failed, trying alternative approach:", err);
         
-        // Calculate total progress
-        const totalProgress = participants.reduce((sum, p) => sum + p.progress, 0);
+        // Get all challenges and filter manually
+        const { data: allChallenges, error: allError } = await supabase
+          .from('community_challenges')
+          .select('*');
         
-        // Find user's progress
-        const userProgress = participations.find(p => p.challenge_id === challenge.id)?.progress || 0;
+        if (allError) {
+          console.error("Error fetching all challenges:", allError);
+          throw allError;
+        }
         
-        return {
-          id: challenge.id,
-          title: challenge.title,
-          description: challenge.description || "",
-          category: challenge.category || "Allgemein",
-          target: {
-            value: challenge.target_value,
-            unit: challenge.target_unit
-          },
-          currentProgress: totalProgress,
-          endDate: challenge.end_date,
-          participants
-        };
-      }));
+        // Filter challenges that match our challenge IDs
+        const matchedChallenges = allChallenges.filter(c => 
+          challengeIds.includes(c.id) || (c.legacy_id && challengeIds.includes(c.legacy_id))
+        );
+        
+        // Map to the correct format
+        return Promise.all(matchedChallenges.map(async (challenge) => {
+          // Get all participants for this challenge
+          const { data: participantsData } = await supabase
+            .from('challenge_participants')
+            .select('user_id, progress')
+            .eq('challenge_id', challenge.id);
+          
+          const participants = await Promise.all((participantsData || []).map(async (participant) => {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('full_name, avatar_url')
+              .eq('id', participant.user_id)
+              .maybeSingle();
+              
+            return {
+              id: participant.user_id,
+              name: profile?.full_name || 'Anonymous User',
+              avatar: profile?.avatar_url || '',
+              progress: participant.progress || 0
+            };
+          }));
+          
+          // Calculate total progress
+          const totalProgress = participants.reduce((sum, p) => sum + p.progress, 0);
+          
+          return {
+            id: challenge.id,
+            title: challenge.title,
+            description: challenge.description || "",
+            category: challenge.category || "Allgemein",
+            target: {
+              value: challenge.target_value,
+              unit: challenge.target_unit
+            },
+            currentProgress: totalProgress,
+            endDate: challenge.end_date,
+            participants
+          };
+        }));
+      }
     }
   });
 
