@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { Navigation } from "@/components/layout/Navigation";
 import { Button } from "@/components/ui/button";
@@ -31,12 +30,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Camera, Plus } from "lucide-react";
+import { Camera, Plus, Trash2 } from "lucide-react";
 import { ChallengeHeader } from "./challenge-detail/ChallengeHeader";
 import { ChallengeProgressSection } from "./challenge-detail/ChallengeProgressSection";
 import { ParticipantsList } from "./challenge-detail/ParticipantsList";
 import { ChallengeProofs } from "./challenge-detail/ChallengeProofs";
 import { ChallengeActionButtons } from "./challenge-detail/ChallengeActionButtons";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 // Define proper types for user profile and proof data
 type Profile = {
