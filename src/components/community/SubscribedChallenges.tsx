@@ -39,6 +39,8 @@ export const SubscribedChallenges = () => {
     queryKey: ['user-participations', user?.id],
     enabled: !!user?.id,
     queryFn: async () => {
+      if (!user?.id) return [];
+      
       const { data, error } = await supabase
         .from('challenge_participants')
         .select(`
@@ -46,7 +48,7 @@ export const SubscribedChallenges = () => {
           challenge_id, 
           progress
         `)
-        .eq('user_id', user!.id);
+        .eq('user_id', user.id);
       
       if (error) {
         console.error("Error fetching participations:", error);
@@ -62,7 +64,7 @@ export const SubscribedChallenges = () => {
     queryKey: ['user-subscribed-challenges', participations],
     enabled: !!participations && participations.length > 0,
     queryFn: async () => {
-      const challengeIds = participations.map(p => p.challenge_id);
+      const challengeIds = participations?.map(p => p.challenge_id) || [];
       
       if (challengeIds.length === 0) {
         return [];
@@ -79,7 +81,7 @@ export const SubscribedChallenges = () => {
       }
       
       // Map database challenges to correct format and include user progress
-      const mappedChallenges = await Promise.all((data || []).map(async (challenge) => {
+      return Promise.all((data || []).map(async (challenge) => {
         // Get all participants for this challenge
         const { data: participantsData, error: participantsError } = await supabase
           .from('challenge_participants')
@@ -132,8 +134,6 @@ export const SubscribedChallenges = () => {
           participants
         };
       }));
-      
-      return mappedChallenges;
     }
   });
 

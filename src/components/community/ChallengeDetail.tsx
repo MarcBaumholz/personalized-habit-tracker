@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from "react-router-dom";
 import { Navigation } from "@/components/layout/Navigation";
 import { Button } from "@/components/ui/button";
@@ -39,6 +40,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 // Define proper types for user profile and proof data
 type Profile = {
@@ -55,12 +57,7 @@ type ProofItem = {
   image_url: string;
   created_at: string;
   progress_value: number;
-  profiles?: {
-    id?: string;
-    full_name?: string;
-    avatar_url?: string;
-    username?: string;
-  } | null;
+  profiles?: Profile | null;
 }
 
 type Participant = {
@@ -226,7 +223,7 @@ export const ChallengeDetail = () => {
             image_url: proof.image_url,
             progress_value: proof.progress_value || 0,
             created_at: proof.created_at,
-            profiles: profileData
+            profiles: profileData || null
           } as ProofItem;
         })
       );
@@ -699,6 +696,20 @@ export const ChallengeDetail = () => {
     );
   }
   
+  if (!challenge) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <main className="container max-w-7xl mx-auto py-6 px-4">
+          <div className="text-center py-12">
+            <h2 className="text-xl font-bold mb-2">Challenge nicht gefunden</h2>
+            <p className="text-gray-600">Die angeforderte Challenge existiert nicht oder du hast keinen Zugriff.</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Navigation />

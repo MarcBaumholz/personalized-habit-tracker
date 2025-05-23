@@ -1,6 +1,6 @@
 
-import { useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useNavigate, useParams } from "react-router-dom";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Navigation } from "@/components/layout/Navigation";
 import { HabitDetailHeader } from "@/components/habits/detail/HabitDetailHeader";
@@ -12,11 +12,28 @@ import { HabitToolbox } from "@/components/habits/HabitToolbox";
 import { HabitToolboxes } from "@/components/habits/detail/HabitToolboxes";
 import { useState } from "react";
 import { PastReflections } from "@/components/habits/detail/PastReflections";
+import { Button } from "@/components/ui/button";
+import { Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const HabitDetail = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const queryClient = useQueryClient();
   const [activeToolboxType, setActiveToolboxType] = useState("intentions");
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   
   const { data: habit, isLoading, refetch: refetchHabit } = useQuery({
     queryKey: ["habit", id],
@@ -74,6 +91,31 @@ const HabitDetail = () => {
     },
   });
 
+  // Delete habit mutation
+  const deleteHabitMutation = useMutation({
+    mutationFn: async () => {
+      if (!id) throw new Error("No habit ID");
+      
+      const { error } = await supabase
+        .from("habits")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+      
+      return { success: true };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["habits"] });
+      toast.success("Gewohnheit erfolgreich gelöscht");
+      navigate("/");
+    },
+    onError: (error) => {
+      console.error("Delete error:", error);
+      toast.error("Fehler beim Löschen der Gewohnheit");
+    }
+  });
+
   const handleToolboxUpdate = () => {
     refetchToolboxes();
   };
@@ -85,6 +127,10 @@ const HabitDetail = () => {
   const calculateProgress = (habit: any) => {
     const completions = habit?.habit_completions?.length || 0;
     return Math.round((completions / 66) * 100);
+  };
+
+  const handleDeleteHabit = () => {
+    deleteHabitMutation.mutate();
   };
 
   if (isLoading) {
@@ -113,12 +159,34 @@ const HabitDetail = () => {
     <div className="min-h-screen bg-white">
       <Navigation />
       <main className="container max-w-7xl mx-auto py-6 px-4">
-        <HabitDetailHeader 
-          habitName={habit.name} 
-          progress={calculateProgress(habit)}
-          streak={habit.streak_count || 0}
-          habitId={id}
-        />
+        <div className="flex justify-between items-center mb-4">
+          <HabitDetailHeader 
+            habitName={habit.name} 
+            progress={calculateProgress(habit)}
+            streak={habit.streak_count || 0}
+            habitId={id}
+          />
+          <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" className="flex items-center gap-2">
+                <Trash2 className="h-4 w-4" />
+                Gewohnheit löschen
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Gewohnheit löschen</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Bist du sicher, dass du diese Gewohnheit löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDeleteHabit}>Löschen</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
 
         {isMobile ? (
           <Tabs defaultValue="details" className="mb-12">

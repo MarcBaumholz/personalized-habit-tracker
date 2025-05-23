@@ -84,6 +84,25 @@ export const CommunityChallenges = () => {
   const { toast } = useToast();
   const { user } = useUser();
   
+  // Get user profile information to display in participants list
+  const { data: userProfile } = useQuery({
+    queryKey: ['user-profile', user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user!.id)
+        .single();
+        
+      if (error) {
+        console.error("Error fetching user profile:", error);
+        throw error;
+      }
+      return data;
+    }
+  });
+  
   // Get real challenges from the database
   const { data: realChallenges, isLoading } = useQuery({
     queryKey: ['challenges'],
@@ -302,6 +321,14 @@ export const CommunityChallenges = () => {
   const availableChallenges = filteredChallenges.filter(challenge => !challenge.isJoined);
 
   const handleCreateChallenge = () => {
+    if (!user) {
+      toast({
+        title: "Nicht angemeldet",
+        description: "Du musst angemeldet sein, um eine Challenge zu erstellen.",
+        variant: "destructive"
+      });
+      return;
+    }
     setIsCreateDialogOpen(true);
   };
   
@@ -311,10 +338,26 @@ export const CommunityChallenges = () => {
   };
   
   const handleJoinChallenge = (challengeId: string) => {
+    if (!user) {
+      toast({
+        title: "Nicht angemeldet",
+        description: "Du musst angemeldet sein, um einer Challenge beizutreten.",
+        variant: "destructive"
+      });
+      return;
+    }
     joinChallengeMutation.mutate(challengeId);
   };
   
   const handleLeaveChallenge = (challengeId: string) => {
+    if (!user) {
+      toast({
+        title: "Nicht angemeldet",
+        description: "Du musst angemeldet sein, um eine Challenge zu verlassen.",
+        variant: "destructive"
+      });
+      return;
+    }
     leaveChallengeMutation.mutate(challengeId);
   };
 

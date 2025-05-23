@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface Participant {
   id: string;
@@ -62,6 +63,25 @@ export const ChallengeCard = ({
     }
   });
 
+  // Get user profile information to display in participants list
+  const { data: userProfile } = useQuery({
+    queryKey: ['user-profile', session?.user?.id],
+    enabled: !!session?.user?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', session!.user.id)
+        .single();
+        
+      if (error) {
+        console.error("Error fetching user profile:", error);
+        throw error;
+      }
+      return data;
+    }
+  });
+
   // Check if user is participating
   const { data: userParticipation } = useQuery({
     queryKey: ['user-participation', id, session?.user?.id],
@@ -84,6 +104,12 @@ export const ChallengeCard = ({
 
   const handleJoinOrView = (e: React.MouseEvent) => {
     e.stopPropagation();
+    
+    if (!session?.user) {
+      toast.error("Du musst angemeldet sein, um einer Challenge beizutreten.");
+      return;
+    }
+    
     if (realIsJoined) {
       navigate(`/community-challenge/${id}`);
     } else if (onJoin) {
@@ -95,6 +121,12 @@ export const ChallengeCard = ({
 
   const handleLeave = (e: React.MouseEvent) => {
     e.stopPropagation();
+    
+    if (!session?.user) {
+      toast.error("Du musst angemeldet sein, um eine Challenge zu verlassen.");
+      return;
+    }
+    
     if (onLeave) {
       onLeave(id);
     }
