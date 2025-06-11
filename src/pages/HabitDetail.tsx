@@ -1,4 +1,3 @@
-
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,7 +5,6 @@ import { Navigation } from "@/components/layout/Navigation";
 import { HabitDetailHeader } from "@/components/habits/detail/HabitDetailHeader";
 import { HabitDetailForm } from "@/components/habits/detail/HabitDetailForm";
 import { HabitReflection } from "@/components/habits/detail/HabitReflection";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { HabitToolbox } from "@/components/habits/HabitToolbox";
 import { HabitToolboxes } from "@/components/habits/detail/HabitToolboxes";
@@ -30,7 +28,6 @@ import {
 const HabitDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const isMobile = useIsMobile();
   const queryClient = useQueryClient();
   const [activeToolboxType, setActiveToolboxType] = useState("intentions");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -159,91 +156,74 @@ const HabitDetail = () => {
     <div className="min-h-screen bg-white">
       <Navigation />
       <main className="container max-w-7xl mx-auto py-6 px-4">
-        <div className="flex justify-between items-center mb-4">
+        {/* Header with full-width 66-day progress and compact action buttons */}
+        <div className="mb-6">
           <HabitDetailHeader 
             habitName={habit.name} 
             progress={calculateProgress(habit)}
             streak={habit.streak_count || 0}
             habitId={id}
           />
-          <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-            <AlertDialogTrigger asChild>
-              <Button variant="destructive" className="flex items-center gap-2">
-                <Trash2 className="h-4 w-4" />
-                Gewohnheit löschen
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Gewohnheit löschen</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Bist du sicher, dass du diese Gewohnheit löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDeleteHabit}>Löschen</AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          
+          {/* Compact action buttons row */}
+          <div className="flex justify-end items-center gap-2 mt-4">
+            <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+              <AlertDialogTrigger asChild>
+                <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700 hover:bg-red-50">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Gewohnheit löschen</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Bist du sicher, dass du diese Gewohnheit löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDeleteHabit}>Löschen</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
         </div>
 
-        {isMobile ? (
-          <Tabs defaultValue="details" className="mb-12">
-            <TabsList className="grid grid-cols-3 mb-4">
-              <TabsTrigger value="details">Details</TabsTrigger>
-              <TabsTrigger value="tracking">Tracking</TabsTrigger>
-              <TabsTrigger value="tools">Werkzeuge</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="details" className="space-y-6">
-              <HabitDetailForm habit={habit} id={id} onUpdate={refetchHabit} />
-            </TabsContent>
-            
-            <TabsContent value="tracking" className="space-y-6">
-              <HabitReflection habitId={id || ""} />
-              <PastReflections reflections={reflections || []} habitId={id || ""} />
-            </TabsContent>
-            
-            <TabsContent value="tools" className="space-y-6">
-              <HabitToolbox 
-                habitId={id || ""} 
-                onUpdate={handleToolboxUpdate}
-                activeTab={activeToolboxType}
-                onTabChange={handleToolboxTabChange}
-              />
-              <HabitToolboxes 
-                toolboxes={toolboxes || []} 
-                habitId={id || ""} 
-                onToolboxUpdate={handleToolboxUpdate}
-              />
-            </TabsContent>
-          </Tabs>
-        ) : (
-          <div className="grid md:grid-cols-2 gap-6">
-            {/* Left Column - Habit Details and Daily Check-in */}
-            <div className="space-y-6">
-              <HabitDetailForm habit={habit} id={id} onUpdate={refetchHabit} />
-              <HabitReflection habitId={id || ""} />
-              <PastReflections reflections={reflections || []} habitId={id || ""} />
-            </div>
-
-            {/* Right Column - Tools */}
-            <div className="space-y-6">
-              <HabitToolbox 
-                habitId={id || ""} 
-                onUpdate={handleToolboxUpdate}
-                activeTab={activeToolboxType}
-                onTabChange={handleToolboxTabChange}
-              />
-              <HabitToolboxes 
-                toolboxes={toolboxes || []} 
-                habitId={id || ""} 
-                onToolboxUpdate={handleToolboxUpdate}
-              />
-            </div>
-          </div>
-        )}
+        {/* Main content with tabs navigation */}
+        <Tabs defaultValue="edit" className="w-full">
+          <TabsList className="grid grid-cols-4 w-full mb-6">
+            <TabsTrigger value="edit">Bearbeiten</TabsTrigger>
+            <TabsTrigger value="tools">Werkzeuge</TabsTrigger>
+            <TabsTrigger value="checkin">Check-in</TabsTrigger>
+            <TabsTrigger value="reflections">Reflexionen</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="edit" className="space-y-6">
+            <HabitDetailForm habit={habit} id={id} onUpdate={refetchHabit} />
+          </TabsContent>
+          
+          <TabsContent value="tools" className="space-y-6">
+            <HabitToolbox 
+              habitId={id || ""} 
+              onUpdate={handleToolboxUpdate}
+              activeTab={activeToolboxType}
+              onTabChange={handleToolboxTabChange}
+            />
+            <HabitToolboxes 
+              toolboxes={toolboxes || []} 
+              habitId={id || ""} 
+              onToolboxUpdate={handleToolboxUpdate}
+            />
+          </TabsContent>
+          
+          <TabsContent value="checkin" className="space-y-6">
+            <HabitReflection habitId={id || ""} />
+          </TabsContent>
+          
+          <TabsContent value="reflections" className="space-y-6">
+            <PastReflections reflections={reflections || []} habitId={id || ""} />
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );
