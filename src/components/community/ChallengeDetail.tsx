@@ -38,32 +38,32 @@ import { ChallengeProofs } from "./challenge-detail/ChallengeProofs";
 import { ChallengeActionButtons } from "./challenge-detail/ChallengeActionButtons";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-// Define proper types for user profile and proof data
-type Profile = {
+// Simplified types to avoid circular dependencies
+interface SimpleProfile {
   id?: string;
   full_name?: string;
   avatar_url?: string;
   username?: string;
 }
 
-type ProofItem = {
+interface SimpleProofItem {
   id: string;
   user_id: string;
   challenge_id: string;
   image_url: string;
   created_at: string;
   progress_value: number;
-  profiles?: Profile | null;
+  profiles?: SimpleProfile | null;
 }
 
-type Participant = {
+interface SimpleParticipant {
   id: string;
   name: string;
   avatar: string;
   progress: number;
 }
 
-type ChallengeData = {
+interface SimpleChallengeData {
   id: string;
   title: string;
   description: string;
@@ -74,13 +74,13 @@ type ChallengeData = {
   };
   currentProgress: number;
   endDate: string;
-  participants: Participant[];
+  participants: SimpleParticipant[];
   created_by?: string;
 }
 
 // Group proofs by date for the carousel
-type GroupedProofs = {
-  [date: string]: ProofItem[];
+interface SimpleGroupedProofs {
+  [date: string]: SimpleProofItem[];
 }
 
 export const ChallengeDetail = () => {
@@ -93,15 +93,15 @@ export const ChallengeDetail = () => {
   const [isManageParticipantsOpen, setIsManageParticipantsOpen] = useState(false);
   const [isAddProofOpen, setIsAddProofOpen] = useState(false);
   const [newParticipantEmail, setNewParticipantEmail] = useState("");
-  const [participants, setParticipants] = useState<Participant[]>([]);
-  const [groupedProofs, setGroupedProofs] = useState<GroupedProofs>({});
+  const [participants, setParticipants] = useState<SimpleParticipant[]>([]);
+  const [groupedProofs, setGroupedProofs] = useState<SimpleGroupedProofs>({});
   const [totalProgress, setTotalProgress] = useState(0);
   const [progressValue, setProgressValue] = useState(0);
   const [proofImage, setProofImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isDeleteProofDialogOpen, setIsDeleteProofDialogOpen] = useState(false);
-  const [proofToDelete, setProofToDelete] = useState<ProofItem | null>(null);
-  const [realChallenge, setRealChallenge] = useState<ChallengeData | null>(null);
+  const [proofToDelete, setProofToDelete] = useState<SimpleProofItem | null>(null);
+  const [realChallenge, setRealChallenge] = useState<SimpleChallengeData | null>(null);
   
   // Get current user
   const { data: session } = useQuery({
@@ -218,7 +218,7 @@ export const ChallengeDetail = () => {
             progress_value: proof.progress_value || 0,
             created_at: proof.created_at,
             profiles: profileData || null
-          } as ProofItem;
+          } as SimpleProofItem;
         })
       );
     }
@@ -254,7 +254,7 @@ export const ChallengeDetail = () => {
         }
         acc[date].push(proof);
         return acc;
-      }, {} as GroupedProofs);
+      }, {} as SimpleGroupedProofs);
       
       setGroupedProofs(grouped);
     }
@@ -281,7 +281,7 @@ export const ChallengeDetail = () => {
   }, [challengeData, totalProgress, participants]);
   
   // Default challenge data if none exists in database
-  const challenge: ChallengeData = realChallenge || {
+  const challenge: SimpleChallengeData = realChallenge || {
     id: id || '',
     title: id === '1' ? '100 km Laufen' : id === '3' ? '1000 Seiten lesen' : 'Challenge',
     description: id === '1' ? 
@@ -647,7 +647,7 @@ export const ChallengeDetail = () => {
     }
   };
   
-  const handleDeleteProof = (proof: ProofItem) => {
+  const handleDeleteProof = (proof: SimpleProofItem) => {
     if (user?.id !== proof.user_id) {
       toast({
         title: "Nicht erlaubt",
