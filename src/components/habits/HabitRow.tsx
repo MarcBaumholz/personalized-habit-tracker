@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -72,15 +71,8 @@ export const HabitRow = ({
   });
 
   const handleDayToggle = (date: Date, currentStatus: DayStatus) => {
-    let newStatus: DayStatus = null;
-    if (currentStatus === null) {
-      newStatus = 'completed';
-    } else if (currentStatus === 'completed') {
-      newStatus = 'partial';
-    } else if (currentStatus === 'partial') {
-      newStatus = null; 
-    }
-    onUpdateWeeklyCompletion(habit.id, date, newStatus);
+    console.log(`HabitRow: Day toggle called with date ${formatDateFns(date, 'yyyy-MM-dd')} and current status: ${currentStatus}`);
+    onUpdateWeeklyCompletion(habit.id, date, currentStatus);
   };
 
   return (

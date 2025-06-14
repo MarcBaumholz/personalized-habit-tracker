@@ -1,4 +1,3 @@
-
 import { Card } from "@/components/ui/card";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -219,15 +218,22 @@ export const HabitJourney = () => {
   const handleUpdateWeeklyCompletion = (habitId: string, date: Date, currentStatus: DayStatus) => {
     // Cycle through statuses: null -> completed -> partial -> null
     let newStatus: DayStatus;
-    if (currentStatus === null) {
+    
+    console.log(`Current status for habit ${habitId} on ${formatDateFns(date, 'yyyy-MM-dd')}: ${currentStatus}`);
+    
+    if (currentStatus === null || currentStatus === undefined) {
       newStatus = 'completed';
       console.log(`Day clicked: Setting to completed (green)`);
     } else if (currentStatus === 'completed') {
       newStatus = 'partial';
       console.log(`Day clicked: Setting to partial/minimal dose (yellow)`);
-    } else {
+    } else if (currentStatus === 'partial') {
       newStatus = null;
       console.log(`Day clicked: Setting to null (unmarked)`);
+    } else {
+      // Fallback case - if status is somehow something else, start fresh
+      newStatus = 'completed';
+      console.log(`Day clicked: Unknown status ${currentStatus}, setting to completed (green)`);
     }
     
     console.log(`Habit ${habitId} on ${formatDateFns(date, 'yyyy-MM-dd')}: ${currentStatus} -> ${newStatus}`);
