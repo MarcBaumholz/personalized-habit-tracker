@@ -1,10 +1,8 @@
-
 import { Settings2, Trash2, Users, MinusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
@@ -32,71 +30,65 @@ export const ToolkitCardActions = ({
     <div className="absolute top-6 right-6 flex items-center gap-3">
       {id && (
         <div className="flex items-center gap-3">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onRemove?.(id);
-                  }}
-                  variant="ghost"
-                  size="sm"
-                  className="h-10 w-10 p-0 hover:bg-red-50 bg-white"
-                >
-                  <Trash2 className="h-5 w-5 text-gray-600 hover:text-red-600" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Routine löschen</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRemove?.(id);
+                }}
+                variant="ghost"
+                size="sm"
+                className="h-10 w-10 p-0 hover:bg-red-50 bg-white"
+              >
+                <Trash2 className="h-5 w-5 text-gray-600 hover:text-red-600" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Routine löschen</p>
+            </TooltipContent>
+          </Tooltip>
           
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onSelect?.(toolkit);
-                  }}
-                  variant="ghost"
-                  size="sm"
-                  className="h-10 w-10 p-0 hover:bg-blue-50 bg-white"
-                >
-                  <Settings2 className="h-5 w-5 text-gray-600 hover:text-blue-600" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Einstellungen anpassen</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSelect?.(toolkit);
+                }}
+                variant="ghost"
+                size="sm"
+                className="h-10 w-10 p-0 hover:bg-blue-50 bg-white"
+              >
+                <Settings2 className="h-5 w-5 text-gray-600 hover:text-blue-600" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Einstellungen anpassen</p>
+            </TooltipContent>
+          </Tooltip>
           
           {onToggleFavorite && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onToggleFavorite(toolkit);
-                    }}
-                    variant="ghost"
-                    size="sm"
-                    className="h-10 w-10 p-0 hover:bg-yellow-50 bg-white"
-                  >
-                    <MinusCircle 
-                      className={`h-5 w-5 ${isFavorite ? 'text-yellow-600 fill-yellow-100' : 'text-gray-600'} hover:text-yellow-600`} 
-                    />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{isFavorite ? 'Aus Favoriten entfernen' : 'Zu Favoriten hinzufügen'}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onToggleFavorite(toolkit);
+                  }}
+                  variant="ghost"
+                  size="sm"
+                  className="h-10 w-10 p-0 hover:bg-yellow-50 bg-white"
+                >
+                  <MinusCircle 
+                    className={`h-5 w-5 ${isFavorite ? 'text-yellow-600 fill-yellow-100' : 'text-gray-600'} hover:text-yellow-600`} 
+                  />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{isFavorite ? 'Aus Favoriten entfernen' : 'Zu Favoriten hinzufügen'}</p>
+              </TooltipContent>
+            </Tooltip>
           )}
         </div>
       )}
