@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -6,31 +7,25 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Calendar, Users, Trophy, Upload, Edit, Plus, UserPlus, Trash2, AlertTriangle } from "lucide-react";
-import { format } from "date-fns";
-import { de } from "date-fns/locale";
+import { UserPlus, AlertTriangle } from "lucide-react";
 import { ChallengeHeader } from "./challenge-detail/ChallengeHeader";
 import { ChallengeProgressSection } from "./challenge-detail/ChallengeProgressSection";
 import { ChallengeProofs } from "./challenge-detail/ChallengeProofs";
 import { ParticipantsList } from "./challenge-detail/ParticipantsList";
-import { ChallengeActionButtons } from "./challenge-detail/ChallengeActionButtons";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 // Simple type definitions
-type UserProfile = {
+interface UserProfile {
   id?: string;
   full_name?: string;
   avatar_url?: string;
   username?: string;
-};
+}
 
-type ProofItem = {
+interface ProofItem {
   id: string;
   user_id: string;
   challenge_id: string;
@@ -38,16 +33,16 @@ type ProofItem = {
   created_at: string;
   progress_value: number;
   profiles?: UserProfile | null;
-};
+}
 
-type ParticipantItem = {
+interface ParticipantItem {
   id: string;
   name: string;
   avatar: string;
   progress: number;
-};
+}
 
-type ChallengeInfo = {
+interface ChallengeInfo {
   id: string;
   title: string;
   description: string;
@@ -58,7 +53,7 @@ type ChallengeInfo = {
   currentProgress: number;
   participants: ParticipantItem[];
   created_by?: string;
-};
+}
 
 export const ChallengeDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -192,7 +187,7 @@ export const ChallengeDetail = () => {
     if (proofsData) {
       // Group proofs by date
       const grouped = proofsData.reduce((acc: Record<string, ProofItem[]>, proof: any) => {
-        const date = format(new Date(proof.created_at), "yyyy-MM-dd");
+        const date = new Date(proof.created_at).toISOString().split('T')[0];
         if (!acc[date]) {
           acc[date] = [];
         }
@@ -457,14 +452,20 @@ export const ChallengeDetail = () => {
   return (
     <div className="container mx-auto p-4 space-y-6">
       <ChallengeHeader 
-        challenge={challenge}
-        isCreator={user?.id === challenge.created_by}
-        onEdit={() => setIsEditDialogOpen(true)}
+        title={challenge.title}
+        category={challenge.category}
+        description={challenge.description}
+        target={{ value: challenge.targetValue, unit: challenge.targetUnit }}
+        endDate={challenge.endDate}
+        participantsCount={challenge.participants.length}
+        canEdit={user?.id === challenge.created_by}
+        onEditClick={() => setIsEditDialogOpen(true)}
       />
       
       <ChallengeProgressSection 
-        challenge={challenge}
-        onAddProof={() => setIsAddProofOpen(true)}
+        currentProgress={challenge.currentProgress}
+        targetValue={challenge.targetValue}
+        targetUnit={challenge.targetUnit}
       />
 
       <Tabs defaultValue="proofs" className="w-full">
@@ -476,17 +477,31 @@ export const ChallengeDetail = () => {
         <TabsContent value="proofs" className="space-y-4">
           <ChallengeProofs 
             groupedProofs={groupedProofs}
+            targetUnit={challenge.targetUnit}
             currentUserId={user?.id}
+            isParticipating={isParticipant}
+            onAddProofClick={() => setIsAddProofOpen(true)}
             onDeleteProof={handleDeleteProof}
           />
         </TabsContent>
         
         <TabsContent value="participants" className="space-y-4">
-          <ParticipantsList 
-            participants={challenge.participants}
-            isCreator={user?.id === challenge.created_by}
-            onManageParticipants={() => setIsManageParticipantsOpen(true)}
-          />
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h3 className="font-semibold text-lg">Teilnehmer</h3>
+              {user?.id === challenge.created_by && (
+                <Button onClick={() => setIsManageParticipantsOpen(true)} variant="outline">
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Teilnehmer verwalten
+                </Button>
+              )}
+            </div>
+            <ParticipantsList 
+              participants={challenge.participants}
+              targetValue={challenge.targetValue}
+              targetUnit={challenge.targetUnit}
+            />
+          </div>
         </TabsContent>
       </Tabs>
 
