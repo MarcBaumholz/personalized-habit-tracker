@@ -2,6 +2,7 @@
 import React from 'react';
 import { Check, Minus } from 'lucide-react';
 import { format, isToday } from 'date-fns';
+import { de } from 'date-fns/locale'; // Import the German locale
 import { cn } from '@/lib/utils';
 
 export type DayStatus = 'completed' | 'partial' | null;
@@ -47,7 +48,7 @@ export const WeeklyDayTracker: React.FC<WeeklyDayTrackerProps> = ({
                 bgColor,
                 isToday(date) && 'ring-2 ring-blue-500 ring-offset-1'
               )}
-              aria-label={`Status für ${format(date, 'EEEE, d. MMMM', { locale: require('date-fns/locale/de') })}`}
+              aria-label={`Status für ${format(date, 'EEEE, d. MMMM', { locale: de })}`} {/* Use the imported 'de' locale */}
             >
               {iconOrDayNumber}
             </button>
@@ -58,3 +59,4 @@ export const WeeklyDayTracker: React.FC<WeeklyDayTrackerProps> = ({
     </div>
   );
 };
+
