@@ -1,17 +1,19 @@
 
 import React, { useEffect, useState } from "react";
-import { DndContext, closestCenter, useDroppable, useDraggable, SortableContext, arrayMove, rectSortingStrategy } from "@dnd-kit/core";
+import { DndContext, closestCenter } from "@dnd-kit/core";
+import { SortableContext, arrayMove, rectSortingStrategy, useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Trash2, Plus, Edit } from "lucide-react";
+import { Trash2, Plus, Edit, icons as lucideIcons } from "lucide-react"; // Import Edit and icons
 import { useToast } from "@/hooks/use-toast";
 
 export type Block = {
   id: string;
   label: string;
   url: string;
-  icon: string;
+  icon: string; // Should be a PascalCase Lucide icon name string
   archived?: boolean;
 };
 
@@ -37,11 +39,72 @@ function saveBlocksToStorage(blocks: Block[]) {
   } catch {}
 }
 
-function getLucideIcon(iconName: string) {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { [iconName]: LucideIcon } = require("lucide-react");
-  return LucideIcon ?? require("lucide-react").Edit;
+function getLucideIconComponent(iconName: string): React.ElementType {
+  const IconComponent = lucideIcons[iconName as keyof typeof lucideIcons];
+  return IconComponent || Edit; // Fallback to Edit icon
 }
+
+// Sortable Item Component
+const SortableBlockItem = ({ 
+  block, 
+  onArchive, 
+  onUnarchive, 
+  onRemove 
+}: { 
+  block: Block; 
+  onArchive: (id: string) => void;
+  onUnarchive: (id: string) => void;
+  onRemove: (id: string) => void;
+}) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: block.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    cursor: "grab",
+  };
+
+  const LucideIcon = getLucideIconComponent(block.icon);
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className={`flex items-center justify-between bg-white rounded px-2 py-1 border shadow-sm transition-opacity ${block.archived ? "opacity-50" : ""}`}
+    >
+      <div className="flex gap-2 items-center">
+        <LucideIcon className="h-4 w-4" />
+        <span>{block.label}</span>
+        <span className="font-mono text-xs text-gray-400">{block.url}</span>
+      </div>
+      <div className="flex gap-1">
+        {!block.archived ? (
+          <Button variant="ghost" size="sm" onClick={() => onArchive(block.id)}>
+            Archivieren
+          </Button>
+        ) : (
+          <Button variant="outline" size="sm" onClick={() => onUnarchive(block.id)}>
+            Reaktivieren
+          </Button>
+        )}
+        <Button variant="destructive" size="sm" onClick={() => onRemove(block.id)}>
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+};
+
 
 export const BlocksEditDialog = ({
   open,
@@ -57,18 +120,29 @@ export const BlocksEditDialog = ({
   const [editBlocks, setEditBlocks] = useState<Block[]>(blocks);
   const [newBlockLabel, setNewBlockLabel] = useState("");
   const [newBlockUrl, setNewBlockUrl] = useState("");
-  const [newBlockIcon, setNewBlockIcon] = useState("Edit");
+  const [newBlockIcon, setNewBlockIcon] = useState("Edit"); // Default to "Edit" (PascalCase)
   const { toast } = useToast();
 
   useEffect(() => {
-    setEditBlocks(blocks);
+    // Ensure editBlocks is initialized with a deep copy or re-fetched blocks
+    // to avoid issues if `blocks` prop is from an old state.
+    // The current `blocks` prop comes from Navigation's state, which is initialized from localStorage.
+    // This effect syncs `editBlocks` when the dialog is opened or `blocks` prop changes.
+    setEditBlocks(JSON.parse(JSON.stringify(blocks))); 
   }, [blocks, open]);
 
   const handleAddBlock = () => {
     if (!newBlockLabel.trim() || !newBlockUrl.trim()) return;
+    // Ensure icon name is PascalCase if that's the convention for lucideIcons keys
+    const formattedIcon = newBlockIcon.trim() || "Edit"; 
     setEditBlocks([
       ...editBlocks,
-      { id: Math.random().toString(36).slice(2), label: newBlockLabel.trim(), url: newBlockUrl.trim(), icon: newBlockIcon }
+      { 
+        id: Math.random().toString(36).slice(2), 
+        label: newBlockLabel.trim(), 
+        url: newBlockUrl.trim(), 
+        icon: formattedIcon 
+      }
     ]);
     setNewBlockLabel("");
     setNewBlockUrl("");
@@ -89,16 +163,18 @@ export const BlocksEditDialog = ({
 
   const handleDragEnd = (event: any) => {
     const { active, over } = event;
-    if (active.id !== over.id) {
+    if (active && over && active.id !== over.id) {
       const oldIndex = editBlocks.findIndex(b => b.id === active.id);
       const newIndex = editBlocks.findIndex(b => b.id === over.id);
-      setEditBlocks(arrayMove(editBlocks, oldIndex, newIndex));
+      if (oldIndex !== -1 && newIndex !== -1) {
+        setEditBlocks(arrayMove(editBlocks, oldIndex, newIndex));
+      }
     }
   };
 
   const handleSave = () => {
-    setBlocks(editBlocks);
-    saveBlocksToStorage(editBlocks);
+    setBlocks(editBlocks); // Update parent state
+    saveBlocksToStorage(editBlocks); // Persist to localStorage
     onOpenChange(false);
     toast({
       title: "Menü aktualisiert",
@@ -133,51 +209,28 @@ export const BlocksEditDialog = ({
               placeholder="Icon (z. B. Edit)"
               value={newBlockIcon}
               onChange={e => setNewBlockIcon(e.target.value)}
-              className="w-20"
+              className="w-28" // Adjusted width
             />
-            <Button onClick={handleAddBlock} variant="outline" size="sm">
+            <Button onClick={handleAddBlock} variant="outline" size="icon"> {/* Changed to icon button */}
               <Plus className="h-4 w-4" />
             </Button>
           </div>
         </div>
 
         {/* Editable blocks list */}
-        <div className="border rounded p-2 bg-muted/30">
+        <div className="border rounded p-2 bg-muted/30 max-h-80 overflow-y-auto">
           <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext items={editBlocks.map(b => b.id)} strategy={rectSortingStrategy}>
               <div className="flex flex-col gap-2">
-                {editBlocks.map((block, i) => {
-                  const LucideIcon = getLucideIcon(block.icon);
-                  return (
-                    <div
-                      key={block.id}
-                      className={`flex items-center justify-between bg-white rounded px-2 py-1 border shadow-sm transition-opacity ${block.archived ? "opacity-50" : ""}`}
-                      data-id={block.id}
-                      draggable
-                      style={{ cursor: "grab" }}
-                    >
-                      <div className="flex gap-2 items-center">
-                        <LucideIcon className="h-4 w-4" />
-                        <span>{block.label}</span>
-                        <span className="font-mono text-xs text-gray-400">{block.url}</span>
-                      </div>
-                      <div className="flex gap-1">
-                        {!block.archived ? (
-                          <Button variant="ghost" size="sm" onClick={() => handleArchive(block.id)}>
-                            Archivieren
-                          </Button>
-                        ) : (
-                          <Button variant="outline" size="sm" onClick={() => handleUnarchive(block.id)}>
-                            Reaktivieren
-                          </Button>
-                        )}
-                        <Button variant="destructive" size="sm" onClick={() => handleRemove(block.id)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })}
+                {editBlocks.map((block) => (
+                  <SortableBlockItem
+                    key={block.id}
+                    block={block}
+                    onArchive={handleArchive}
+                    onUnarchive={handleUnarchive}
+                    onRemove={handleRemove}
+                  />
+                ))}
               </div>
             </SortableContext>
           </DndContext>
@@ -195,3 +248,4 @@ export const BlocksEditDialog = ({
     </Dialog>
   );
 };
+
