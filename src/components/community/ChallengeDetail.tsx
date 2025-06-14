@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { Navigation } from "@/components/layout/Navigation";
 import { Button } from "@/components/ui/button";
@@ -47,7 +46,7 @@ interface SimpleProfile {
   username?: string;
 }
 
-interface SimpleProof {
+type Proof = {
   id: string;
   user_id: string;
   challenge_id: string;
@@ -55,7 +54,7 @@ interface SimpleProof {
   created_at: string;
   progress_value: number;
   profiles?: SimpleProfile | null;
-}
+};
 
 interface SimpleParticipant {
   id: string;
@@ -80,7 +79,7 @@ interface SimpleChallengeInfo {
 }
 
 interface SimpleProofsByDate {
-  [date: string]: SimpleProof[];
+  [date: string]: Proof[];
 }
 
 export const ChallengeDetail = () => {
@@ -100,7 +99,7 @@ export const ChallengeDetail = () => {
   const [proofImage, setProofImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isDeleteProofDialogOpen, setIsDeleteProofDialogOpen] = useState(false);
-  const [proofToDelete, setProofToDelete] = useState<SimpleProof | null>(null);
+  const [proofToDelete, setProofToDelete] = useState<Proof | null>(null);
   const [realChallenge, setRealChallenge] = useState<SimpleChallengeInfo | null>(null);
   
   // Get current user
@@ -218,7 +217,7 @@ export const ChallengeDetail = () => {
             progress_value: proof.progress_value || 0,
             created_at: proof.created_at,
             profiles: profileData || null
-          } as SimpleProof;
+          } as Proof;
         })
       );
     }
@@ -653,7 +652,7 @@ export const ChallengeDetail = () => {
     }
   };
   
-  const handleDeleteProof = (proof: SimpleProof) => {
+  const handleDeleteProof = (proof: Proof) => {
     if (user?.id !== proof.user_id) {
       toast({
         title: "Nicht erlaubt",

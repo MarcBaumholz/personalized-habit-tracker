@@ -1,4 +1,3 @@
-
 import { Card } from "@/components/ui/card";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -185,7 +184,15 @@ export const HabitJourney = () => {
     }
   });
 
-  const handleUpdateWeeklyCompletion = (habitId: string, date: Date, newStatus: DayStatus) => {
+  const handleUpdateWeeklyCompletion = (habitId: string, date: Date, currentStatus: DayStatus) => {
+    let newStatus: DayStatus;
+    if (currentStatus === null) {
+      newStatus = 'completed';
+    } else if (currentStatus === 'completed') {
+      newStatus = 'partial';
+    } else {
+      newStatus = null;
+    }
     upsertHabitCompletionMutation.mutate({ habitId, date, status: newStatus });
   };
 
