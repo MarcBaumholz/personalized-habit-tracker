@@ -740,9 +740,9 @@ export const ChallengeDetail = () => {
               </div>
               
               {/* Participants */}
-              {/* The following change works around deep type instantiation issue */}
+              {/* Pass as ParticipantData[] (no recursive/circular) */}
               <ParticipantsList
-                participants={challenge.participants as any[]}
+                participants={challenge.participants as Array<{ id: string; name: string; avatar: string; progress: number }>}
                 targetValue={challenge.target.value}
                 targetUnit={challenge.target.unit}
               />

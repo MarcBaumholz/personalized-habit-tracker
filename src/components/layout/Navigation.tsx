@@ -1,18 +1,59 @@
 
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Calendar, LayoutDashboard, Package, LogOut, User } from "lucide-react";
+import { Calendar, LayoutDashboard, Package, LogOut, User, Edit } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+import { useEffect, useState } from "react";
+import { BlocksEditDialog, Block } from "./BlocksEditDialog";
+
+const ICON_MAP = {
+  Dashboard: LayoutDashboard,
+  Kalender: Calendar,
+  Toolbox: Package,
+  Archiv: Package,
+  Profil: User,
+  Edit: Edit,
+  // Add others as needed
+};
+
+function getLucideIcon(name: string) {
+  // Try shorthand, fallback to Edit
+  return ICON_MAP[name] || ICON_MAP["Edit"];
+}
+
+function getBlocksFromStorage(): Block[] {
+  try {
+    const stored = localStorage.getItem("nav_blocks");
+    if (stored) return JSON.parse(stored);
+  } catch {}
+  // Default (duplicate from dialog for hydration)
+  return [
+    { id: "dashboard", label: "Dashboard", url: "/dashboard", icon: "LayoutDashboard" },
+    { id: "calendar", label: "Kalender", url: "/calendar", icon: "Calendar" },
+    { id: "toolbox", label: "Toolbox", url: "/toolbox", icon: "Package" },
+    { id: "archive", label: "Archiv", url: "/archive", icon: "Package" },
+    { id: "profile", label: "Profil", url: "/profile", icon: "User" }
+  ];
+}
 
 export const Navigation = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
   const isMobile = useIsMobile();
+
+  const [editOpen, setEditOpen] = useState(false);
+  const [blocks, setBlocks] = useState<Block[]>(getBlocksFromStorage());
+  // Simulate "author" (real-world: check user roles or id)
+  const isAuthor = true;
+
+  useEffect(() => {
+    setBlocks(getBlocksFromStorage());
+  }, []);
 
   const handleSignOut = async () => {
     try {
@@ -35,53 +76,28 @@ export const Navigation = () => {
 
   const NavItems = () => (
     <div className={cn("flex", isMobile ? "flex-col space-y-2" : "items-center space-x-2")}>
-      <Link to="/dashboard">
-        <Button
-          variant="ghost"
-          size={isMobile ? "lg" : "sm"}
-          className={cn(
-            "font-medium",
-            isActive("/dashboard") 
-              ? "bg-blue-50 text-blue-700" 
-              : "text-gray-700 hover:text-blue-700 hover:bg-blue-50"
-          )}
-        >
-          <LayoutDashboard className={cn("h-5 w-5", isMobile ? "mr-3" : "mr-2")} />
-          {isMobile ? "Dashboard" : "Dashboard"}
-        </Button>
-      </Link>
-      
-      <Link to="/calendar">
-        <Button
-          variant="ghost"
-          size={isMobile ? "lg" : "sm"}
-          className={cn(
-            "font-medium",
-            isActive("/calendar") 
-              ? "bg-blue-50 text-blue-700" 
-              : "text-gray-700 hover:text-blue-700 hover:bg-blue-50"
-          )}
-        >
-          <Calendar className={cn("h-5 w-5", isMobile ? "mr-3" : "mr-2")} />
-          {isMobile ? "Kalender" : "Kalender"}
-        </Button>
-      </Link>
-      
-      <Link to="/toolbox">
-        <Button
-          variant="ghost"
-          size={isMobile ? "lg" : "sm"}
-          className={cn(
-            "font-medium",
-            isActive("/toolbox") 
-              ? "bg-blue-50 text-blue-700" 
-              : "text-gray-700 hover:text-blue-700 hover:bg-blue-50"
-          )}
-        >
-          <Package className={cn("h-5 w-5", isMobile ? "mr-3" : "mr-2")} />
-          {isMobile ? "Toolbox" : "Toolbox"}
-        </Button>
-      </Link>
+      {blocks
+        .filter(b => !b.archived)
+        .map(block => {
+          const LucideIcon = getLucideIcon(block.label) || Edit;
+          return (
+            <Link to={block.url} key={block.id}>
+              <Button
+                variant="ghost"
+                size={isMobile ? "lg" : "sm"}
+                className={cn(
+                  "font-medium",
+                  isActive(block.url)
+                    ? "bg-blue-50 text-blue-700"
+                    : "text-gray-700 hover:text-blue-700 hover:bg-blue-50"
+                )}
+              >
+                <LucideIcon className={cn("h-5 w-5", isMobile ? "mr-3" : "mr-2")} />
+                {isMobile ? block.label : block.label}
+              </Button>
+            </Link>
+          );
+        })}
     </div>
   );
 
@@ -95,20 +111,30 @@ export const Navigation = () => {
                 HabitJourney
               </span>
             </Link>
-            
             {!isMobile && <NavItems />}
           </div>
-          
           <div className="flex items-center space-x-2">
+            {/* Author’s edit button */}
+            {isAuthor && (
+              <Button
+                variant="outline"
+                size="icon"
+                className="text-gray-600 hover:text-blue-700 hover:bg-blue-50"
+                onClick={() => setEditOpen(true)}
+                aria-label="Bausteine bearbeiten"
+              >
+                <Edit className="h-5 w-5" />
+              </Button>
+            )}
             <Link to="/profile">
               <Button variant="ghost" size="icon" className="text-gray-700 hover:text-blue-700 hover:bg-blue-50">
                 <User className="h-5 w-5" />
               </Button>
             </Link>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={handleSignOut} 
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleSignOut}
               className="text-red-600 hover:text-red-700 hover:bg-red-50"
             >
               <LogOut className="h-5 w-5" />
@@ -131,6 +157,10 @@ export const Navigation = () => {
           </div>
         </div>
       </div>
+      {/* Edit Dialog */}
+      {isAuthor && (
+        <BlocksEditDialog open={editOpen} onOpenChange={setEditOpen} blocks={blocks} setBlocks={setBlocks} />
+      )}
     </nav>
   );
 };
