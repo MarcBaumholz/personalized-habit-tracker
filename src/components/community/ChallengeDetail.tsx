@@ -38,32 +38,32 @@ import { ChallengeProofs } from "./challenge-detail/ChallengeProofs";
 import { ChallengeActionButtons } from "./challenge-detail/ChallengeActionButtons";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-// Simplified types to avoid circular dependencies
-interface SimpleProfile {
+// Simple interfaces without circular dependencies
+interface ProfileData {
   id?: string;
   full_name?: string;
   avatar_url?: string;
   username?: string;
 }
 
-interface SimpleProofItem {
+interface ProofData {
   id: string;
   user_id: string;
   challenge_id: string;
   image_url: string;
   created_at: string;
   progress_value: number;
-  profiles?: SimpleProfile | null;
+  profiles?: ProfileData | null;
 }
 
-interface SimpleParticipant {
+interface ParticipantData {
   id: string;
   name: string;
   avatar: string;
   progress: number;
 }
 
-interface SimpleChallengeData {
+interface ChallengeInfo {
   id: string;
   title: string;
   description: string;
@@ -74,13 +74,12 @@ interface SimpleChallengeData {
   };
   currentProgress: number;
   endDate: string;
-  participants: SimpleParticipant[];
+  participants: ParticipantData[];
   created_by?: string;
 }
 
-// Group proofs by date for the carousel
-interface SimpleGroupedProofs {
-  [date: string]: SimpleProofItem[];
+interface ProofsByDate {
+  [date: string]: ProofData[];
 }
 
 export const ChallengeDetail = () => {
@@ -93,15 +92,15 @@ export const ChallengeDetail = () => {
   const [isManageParticipantsOpen, setIsManageParticipantsOpen] = useState(false);
   const [isAddProofOpen, setIsAddProofOpen] = useState(false);
   const [newParticipantEmail, setNewParticipantEmail] = useState("");
-  const [participants, setParticipants] = useState<SimpleParticipant[]>([]);
-  const [groupedProofs, setGroupedProofs] = useState<SimpleGroupedProofs>({});
+  const [participants, setParticipants] = useState<ParticipantData[]>([]);
+  const [groupedProofs, setGroupedProofs] = useState<ProofsByDate>({});
   const [totalProgress, setTotalProgress] = useState(0);
   const [progressValue, setProgressValue] = useState(0);
   const [proofImage, setProofImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isDeleteProofDialogOpen, setIsDeleteProofDialogOpen] = useState(false);
-  const [proofToDelete, setProofToDelete] = useState<SimpleProofItem | null>(null);
-  const [realChallenge, setRealChallenge] = useState<SimpleChallengeData | null>(null);
+  const [proofToDelete, setProofToDelete] = useState<ProofData | null>(null);
+  const [realChallenge, setRealChallenge] = useState<ChallengeInfo | null>(null);
   
   // Get current user
   const { data: session } = useQuery({
@@ -218,7 +217,7 @@ export const ChallengeDetail = () => {
             progress_value: proof.progress_value || 0,
             created_at: proof.created_at,
             profiles: profileData || null
-          } as SimpleProofItem;
+          } as ProofData;
         })
       );
     }
@@ -254,7 +253,7 @@ export const ChallengeDetail = () => {
         }
         acc[date].push(proof);
         return acc;
-      }, {} as SimpleGroupedProofs);
+      }, {} as ProofsByDate);
       
       setGroupedProofs(grouped);
     }
@@ -281,7 +280,7 @@ export const ChallengeDetail = () => {
   }, [challengeData, totalProgress, participants]);
   
   // Default challenge data if none exists in database
-  const challenge: SimpleChallengeData = realChallenge || {
+  const challenge: ChallengeInfo = realChallenge || {
     id: id || '',
     title: id === '1' ? '100 km Laufen' : id === '3' ? '1000 Seiten lesen' : 'Challenge',
     description: id === '1' ? 
@@ -647,7 +646,7 @@ export const ChallengeDetail = () => {
     }
   };
   
-  const handleDeleteProof = (proof: SimpleProofItem) => {
+  const handleDeleteProof = (proof: ProofData) => {
     if (user?.id !== proof.user_id) {
       toast({
         title: "Nicht erlaubt",
@@ -810,7 +809,7 @@ export const ChallengeDetail = () => {
                     <div key={participant.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
                       <div className="flex items-center gap-2">
                         <Avatar className="h-6 w-6">
-                          <AvatarImage src={participant.avatar} />
+                          <AvatarImage src={participant.avatar} alt="" />
                           <AvatarFallback>{participant.name.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <span className="text-sm">{participant.name}</span>
