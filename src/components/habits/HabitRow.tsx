@@ -1,12 +1,14 @@
-
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, BellDot, Star, Flame } from "lucide-react";
-import { differenceInDays } from "date-fns";
+import { CheckCircle, BellDot, Star, Flame, Check, Minus } from "lucide-react";
+import { differenceInDays, startOfWeek, endOfWeek, eachDayOfInterval, format as formatDateFns, parseISO, isToday } from 'date-fns';
+import { de } from 'date-fns/locale';
 import { EditHabitDialog } from "./EditHabitDialog";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { WeeklyDayTracker, DayStatus } from './WeeklyDayTracker';
+import { cn } from "@/lib/utils";
 
 interface HabitRowProps {
   habit: any;
@@ -14,6 +16,7 @@ interface HabitRowProps {
   onCompletionClick: (habit: any) => void;
   onSatisfactionClick: (habit: any) => void;
   isCompletedToday: (habit: any) => boolean;
+  onUpdateWeeklyCompletion: (habitId: string, date: Date, newStatus: DayStatus) => void;
 }
 
 export const HabitRow = ({
@@ -22,6 +25,7 @@ export const HabitRow = ({
   onCompletionClick,
   onSatisfactionClick,
   isCompletedToday,
+  onUpdateWeeklyCompletion,
 }: HabitRowProps) => {
   const isMobile = useIsMobile();
 
@@ -31,12 +35,12 @@ export const HabitRow = ({
   };
 
   const getStreakCount = (habit: any) => {
-    return habit.habit_completions?.length || 0;
+    return habit.habit_completions?.filter((c: any) => c.status === 'completed' || !c.status).length || 0;
   };
 
   const getRemainingDays = (habit: any) => {
     const completions = habit.habit_completions?.length || 0;
-    return 66 - completions;
+    return Math.max(0, 66 - completions);
   };
 
   const needsReflection = (habit: any) => {
@@ -57,9 +61,37 @@ export const HabitRow = ({
     return daysSinceLastReflection >= 7;
   };
 
+  const today = new Date();
+  const weekStart = startOfWeek(today, { weekStartsOn: 1, locale: de }); 
+  const weekEnd = endOfWeek(today, { weekStartsOn: 1, locale: de });
+  const currentWeekDates = eachDayOfInterval({ start: weekStart, end: weekEnd });
+
+  const weeklyCompletionsData = currentWeekDates.map(date => {
+    const dateString = formatDateFns(date, 'yyyy-MM-dd');
+    const completion = habit.habit_completions?.find(
+      (c: any) => c.completed_date === dateString
+    );
+    return {
+      date: dateString,
+      status: completion ? (completion.status as DayStatus) : null,
+    };
+  });
+
+  const handleDayToggle = (date: Date, currentStatus: DayStatus) => {
+    let newStatus: DayStatus = null;
+    if (currentStatus === null) {
+      newStatus = 'completed';
+    } else if (currentStatus === 'completed') {
+      newStatus = 'partial';
+    } else if (currentStatus === 'partial') {
+      newStatus = null; 
+    }
+    onUpdateWeeklyCompletion(habit.id, date, newStatus);
+  };
+
   return (
-    <div className="space-y-4">
-      <div className={`flex ${isMobile ? 'flex-col space-y-4' : 'items-center justify-between'}`}>
+    <div className="space-y-2 py-4 border-b border-gray-200 last:border-b-0">
+      <div className={`flex ${isMobile ? 'flex-col space-y-3' : 'items-center justify-between'}`}>
         <div className="flex items-center gap-2">
           <h3 className="font-medium">{habit.name}</h3>
           <div className="flex items-center gap-1">
@@ -108,13 +140,20 @@ export const HabitRow = ({
           </Button>
         </div>
       </div>
+      
       <Progress value={calculateProgress(habit)} className="h-2" />
-      <div className={`${isMobile ? 'flex flex-col space-y-1' : 'flex justify-between'} text-sm text-gray-600`}>
+      <div className={`${isMobile ? 'flex flex-col space-y-1' : 'flex justify-between'} text-sm text-gray-600 mb-2`}>
         <span>Fortschritt: {calculateProgress(habit)}%</span>
         <span>
           Noch {getRemainingDays(habit)} Tage bis zum Automatismus
         </span>
       </div>
+
+      <WeeklyDayTracker
+        weekDates={currentWeekDates}
+        completions={weeklyCompletionsData}
+        onDayToggle={handleDayToggle}
+      />
     </div>
   );
 };

@@ -1,4 +1,3 @@
-
 import { Card } from "@/components/ui/card";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,6 +5,8 @@ import { useToast } from "@/hooks/use-toast";
 import { ReflectionDialog } from "./ReflectionDialog";
 import { useState } from "react";
 import { HabitRow } from "./HabitRow";
+import { format as formatDateFns } from 'date-fns';
+import type { DayStatus } from './WeeklyDayTracker'; // Import DayStatus type
 
 export const HabitJourney = () => {
   const [selectedHabit, setSelectedHabit] = useState<any>(null);
@@ -18,11 +19,16 @@ export const HabitJourney = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
-      const { data: habitsData } = await supabase
+      const { data: habitsData, error: habitsError } = await supabase
         .from("habits")
         .select("*, habit_completions(*), habit_reflections(*)")
-        .eq("user_id", user.id);
+        .eq("user_id", user.id)
+        .order('created_at', { foreignTable: 'habit_completions', ascending: true }); // Ensure completions are somewhat ordered if needed
 
+      if (habitsError) {
+        console.error("Error fetching habits:", habitsError);
+        throw habitsError;
+      }
       return habitsData;
     },
   });
@@ -32,12 +38,16 @@ export const HabitJourney = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
+      // This old mutation sets a basic completion. Consider if it needs status.
       const { data, error } = await supabase
         .from("habit_completions")
         .insert({
           habit_id: habit.id,
           user_id: user.id,
-        });
+          completed_date: formatDateFns(new Date(), 'yyyy-MM-dd'), // ensure it uses today's date
+          status: 'completed', // Default to 'completed' if using this old button
+        })
+        .select(); // Ensure it returns data to avoid issues if `data` is expected by `onSuccess`
 
       if (error) throw error;
       return data;
@@ -134,10 +144,76 @@ export const HabitJourney = () => {
     }
   });
 
+  const upsertHabitCompletionMutation = useMutation({
+    mutationFn: async ({ 
+      habitId, 
+      date, 
+      status 
+    }: { 
+      habitId: string; 
+      date: Date; 
+      status: DayStatus; 
+    }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
+
+      const formattedDate = formatDateFns(date, 'yyyy-MM-dd');
+
+      if (status === null) {
+        const { error: deleteError } = await supabase
+          .from('habit_completions')
+          .delete()
+          .eq('habit_id', habitId)
+          .eq('user_id', user.id)
+          .eq('completed_date', formattedDate);
+        if (deleteError) throw deleteError;
+        return { status: 'deleted' }; 
+      } else {
+        const { data, error } = await supabase
+          .from('habit_completions')
+          .upsert(
+            {
+              habit_id: habitId,
+              user_id: user.id,
+              completed_date: formattedDate,
+              status: status, 
+            },
+            {
+              onConflict: 'habit_id,user_id,completed_date', 
+            }
+          )
+          .select(); 
+
+        if (error) throw error;
+        return data;
+      }
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["habits"] });
+      // Avoid toast for every quick click, or make it subtle
+      // toast({
+      //   title: "Fortschritt aktualisiert",
+      //   description: `Tag als ${variables.status || 'nicht erledigt'} markiert.`,
+      // });
+    },
+    onError: (error) => {
+      console.error("Error updating weekly completion:", error);
+      toast({
+        title: "Fehler",
+        description: "Wöchentlicher Fortschritt konnte nicht gespeichert werden.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const handleUpdateWeeklyCompletion = (habitId: string, date: Date, newStatus: DayStatus) => {
+    upsertHabitCompletionMutation.mutate({ habitId, date, status: newStatus });
+  };
+
   const isCompletedToday = (habit: any) => {
-    const today = new Date().toISOString().split('T')[0];
+    const todayStr = formatDateFns(new Date(), 'yyyy-MM-dd');
     return habit.habit_completions?.some((c: any) => 
-      c.completed_date === today
+      c.completed_date === todayStr && (c.status === 'completed' || c.status === 'partial')
     );
   };
 
@@ -163,15 +239,16 @@ export const HabitJourney = () => {
     <Card className="p-6">
       <h2 className="text-xl font-bold mb-6">Deine Gewohnheiten</h2>
       
-      <div className="space-y-6">
+      <div className="space-y-4"> {/* Changed from space-y-6 to space-y-4 to accommodate new tracker */}
         {habits?.map((habit: any) => (
           <HabitRow 
             key={habit.id}
             habit={habit}
             onReflectionClick={setSelectedHabit}
-            onCompletionClick={completeHabitMutation.mutate}
+            onCompletionClick={completeHabitMutation.mutate} 
             onSatisfactionClick={updateSatisfactionMutation.mutate}
-            isCompletedToday={isCompletedToday}
+            isCompletedToday={isCompletedToday} 
+            onUpdateWeeklyCompletion={handleUpdateWeeklyCompletion} 
           />
         ))}
       </div>
