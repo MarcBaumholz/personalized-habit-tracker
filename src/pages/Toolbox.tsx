@@ -328,7 +328,7 @@ const INSPIRATION_TOOLKITS: InspirationToolkit[] = [
 
 const Toolbox = () => {
   const [selectedToolkit, setSelectedToolkit] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<'favorites' | 'community' | 'inspiration' | 'building-blocks' | 'education'>('favorites');
+  const [activeTab, setActiveTab] = useState<'inspiration' | 'community'>('inspiration');
   const [selectedModule, setSelectedModule] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
@@ -399,16 +399,10 @@ const Toolbox = () => {
 
   const getActiveToolkits = () => {
     switch (activeTab) {
-      case 'favorites':
-        return favoriteToolkits || [];
-      case 'building-blocks':
-        return buildingBlocks || [];
       case 'inspiration':
         return INSPIRATION_TOOLKITS;
       case 'community':
         return []; // Will be implemented later
-      case 'education':
-        return []; // No toolkits for education tab
       default:
         return [];
     }
@@ -508,17 +502,9 @@ const Toolbox = () => {
   const TabsHeader = () => (
     <div className="flex justify-between items-center mb-8">
       <h1 className="text-2xl font-bold text-blue-800">
-        {activeTab === 'education' ? 'Lernbereich' : 
-         activeTab === 'community' ? 'Community Challenges' : 'Toolbox'}
+        {activeTab === 'community' ? 'Community Challenges' : 'Toolbox'}
       </h1>
       <TabsList className="bg-blue-100/50 rounded-xl p-1">
-        <TabsTrigger
-          value="favorites"
-          className="rounded-lg px-4 py-2 data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow"
-        >
-          <Star className="h-4 w-4 mr-2" />
-          Favoriten
-        </TabsTrigger>
         <TabsTrigger
           value="inspiration"
           className="rounded-lg px-4 py-2 data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow"
@@ -530,12 +516,6 @@ const Toolbox = () => {
           className="rounded-lg px-4 py-2 data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow"
         >
           Community
-        </TabsTrigger>
-        <TabsTrigger
-          value="education"
-          className="rounded-lg px-4 py-2 data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow"
-        >
-          Lernbereich
         </TabsTrigger>
       </TabsList>
     </div>
@@ -630,22 +610,6 @@ const Toolbox = () => {
           <Tabs value={activeTab} onValueChange={(value: any) => setActiveTab(value)} className="w-full">
             <TabsHeader />
             
-            <TabsContent value="favorites" className="animate-fade-in">
-              <div className="relative py-6 sm:py-10">
-                <ToolboxCarousel
-                  toolkits={getActiveToolkits()}
-                  onSelect={setSelectedToolkit}
-                  onRemove={removeRoutine}
-                  onAdd={addToolkitToProfile}
-                  activeTab={activeTab}
-                />
-              </div>
-
-              <div className="mt-8 flex justify-center">
-                <AddHabitDialog />
-              </div>
-            </TabsContent>
-            
             <TabsContent value="inspiration" className="animate-fade-in">
               <div className="space-y-8">
                 <div className="flex flex-col sm:flex-row justify-between gap-4">
@@ -659,6 +623,7 @@ const Toolbox = () => {
                     />
                   </div>
                   <div className="flex gap-2">
+                    {/* Filter and add button remain for inspiration search */}
                     <Button variant="outline" size="sm">
                       <Filter className="h-4 w-4 mr-2" />
                       Filter
@@ -688,161 +653,12 @@ const Toolbox = () => {
                 </Card>
               </div>
             </TabsContent>
-            
-            <TabsContent value="building-blocks" className="animate-fade-in">
-              <div className="relative py-6 sm:py-10">
-                <ToolboxCarousel
-                  toolkits={getActiveToolkits()}
-                  onSelect={setSelectedToolkit}
-                  onRemove={removeRoutine}
-                  onAdd={addToolkitToProfile}
-                  activeTab={activeTab}
-                />
-              </div>
-            </TabsContent>
-            
             <TabsContent value="community" className="animate-fade-in">
               <div className="py-6 sm:py-10">
                 <CommunityChallenges />
               </div>
             </TabsContent>
-            
-            <TabsContent value="education" className="animate-fade-in">
-              <div className="max-w-3xl mx-auto text-center mb-12">
-                <p className="text-lg text-gray-600">
-                  Entdecke fundiertes Wissen zur Gewohnheitsbildung und entwickle dich weiter
-                </p>
-              </div>
-
-              <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 mb-12">
-                {courses.map((course) => {
-                  const Icon = course.icon;
-                  return (
-                    <Card key={course.title} className="p-8 hover:shadow-xl transition-shadow duration-300 border border-blue-100/50">
-                      <div className="flex items-center gap-4 mb-8">
-                        <div className="p-4 bg-gradient-to-br from-blue-100 to-blue-50 rounded-xl shadow-sm">
-                          <Icon className="h-8 w-8 text-blue-600" />
-                        </div>
-                        <div>
-                          <h3 className="text-xl font-semibold text-gray-800">{course.title}</h3>
-                          <p className="text-base text-gray-600">{course.description}</p>
-                        </div>
-                      </div>
-
-                      <div className="space-y-4 mb-8">
-                        <div className="flex items-center justify-between text-base text-gray-600 mb-4">
-                          <span className="flex items-center gap-2">
-                            <Calendar className="h-5 w-5" />
-                            {course.duration}
-                          </span>
-                          <span className="flex items-center gap-2">
-                            <Target className="h-5 w-5" />
-                            {course.difficulty}
-                          </span>
-                        </div>
-
-                        {course.modules.map((module, index) => (
-                          <Dialog key={index}>
-                            <DialogTrigger asChild>
-                              <button 
-                                className="flex items-center justify-between w-full p-4 hover:bg-blue-50 rounded-xl transition-colors text-left group"
-                                onClick={() => handleModuleClick(module)}
-                              >
-                                <div className="flex items-center gap-4">
-                                  <div className="w-8 h-8 rounded-full border-2 border-blue-200 flex items-center justify-center group-hover:border-blue-400">
-                                    {index + 1}
-                                  </div>
-                                  <div>
-                                    <p className="font-medium text-gray-800">{module.title}</p>
-                                    <p className="text-sm text-gray-500">{module.duration}</p>
-                                  </div>
-                                </div>
-                                {module.isCompleted ? (
-                                  <CheckCircle2 className="h-6 w-6 text-green-500" />
-                                ) : (
-                                  <Info className="h-6 w-6 text-gray-400 group-hover:text-blue-500" />
-                                )}
-                              </button>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-2xl">
-                              <DialogHeader>
-                                <DialogTitle className="text-2xl">{module.title}</DialogTitle>
-                                <DialogDescription>{module.duration}</DialogDescription>
-                              </DialogHeader>
-                              <div 
-                                className="prose prose-blue max-w-none"
-                                dangerouslySetInnerHTML={{ __html: module.content }}
-                              />
-                              <div className="flex justify-end mt-6">
-                                <Button 
-                                  onClick={handleCompleteModule}
-                                  className="bg-blue-600 hover:bg-blue-700 text-white"
-                                  size="lg"
-                                >
-                                  <CheckCircle2 className="h-5 w-5 mr-2" />
-                                  Als abgeschlossen markieren
-                                </Button>
-                              </div>
-                            </DialogContent>
-                          </Dialog>
-                        ))}
-                      </div>
-
-                      <div className="space-y-4">
-                        <div>
-                          <div className="flex justify-between text-base mb-2">
-                            <span>Fortschritt</span>
-                            <span>{course.progress}%</span>
-                          </div>
-                          <Progress 
-                            value={course.progress} 
-                            className="h-2 bg-blue-100"
-                          />
-                        </div>
-                        
-                        <Button 
-                          className="w-full group shadow-sm"
-                          variant={course.progress > 0 ? "outline" : "default"}
-                          size="lg"
-                          onClick={() => handleStartCourse(course)}
-                        >
-                          {course.progress > 0 ? "Fortsetzen" : "Jetzt starten"}
-                          <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
-                        </Button>
-                      </div>
-                    </Card>
-                  );
-                })}
-              </div>
-
-              <Card className="p-8 bg-gradient-to-br from-blue-50 to-white border border-blue-100/50">
-                <div className="flex items-center gap-6 mb-8">
-                  <div className="p-4 bg-gradient-to-br from-blue-100 to-blue-50 rounded-xl shadow-sm">
-                    <Award className="h-8 w-8 text-blue-600" />
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-semibold text-gray-800">Deine Lernfortschritte</h2>
-                    <p className="text-lg text-gray-600">
-                      Tracking deiner Entwicklung und Zertifikate
-                    </p>
-                  </div>
-                </div>
-                <div className="grid gap-6 md:grid-cols-3">
-                  <div className="p-6 bg-gradient-to-br from-blue-50 to-white rounded-xl border border-blue-100 shadow-sm">
-                    <h4 className="font-medium mb-2 text-gray-600">Abgeschlossene Kurse</h4>
-                    <p className="text-3xl font-bold text-blue-600">2</p>
-                  </div>
-                  <div className="p-6 bg-gradient-to-br from-blue-50 to-white rounded-xl border border-blue-100 shadow-sm">
-                    <h4 className="font-medium mb-2 text-gray-600">Lernstunden</h4>
-                    <p className="text-3xl font-bold text-blue-600">12</p>
-                  </div>
-                  <div className="p-6 bg-gradient-to-br from-blue-50 to-white rounded-xl border border-blue-100 shadow-sm">
-                    <h4 className="font-medium mb-2 text-gray-600">Zertifikate</h4>
-                    <p className="text-3xl font-bold text-blue-600">1</p>
-                  </div>
-                </div>
-              </Card>
-            </TabsContent>
+            {/* Remove other TabsContent */}
           </Tabs>
         </div>
       </main>
