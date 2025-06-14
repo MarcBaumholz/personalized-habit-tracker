@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { DndContext, closestCenter } from "@dnd-kit/core";
 import { SortableContext, arrayMove, rectSortingStrategy, useSortable } from "@dnd-kit/sortable";
@@ -6,31 +5,42 @@ import { CSS } from "@dnd-kit/utilities";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Trash2, Plus, Edit, icons as lucideIcons } from "lucide-react"; // Import Edit and icons
+import { Trash2, Plus, Edit, icons as lucideIcons } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export type Block = {
   id: string;
   label: string;
   url: string;
-  icon: string; // Should be a PascalCase Lucide icon name string
-  archived?: boolean;
+  icon: string;
+  archived: boolean; // Changed from archived?: boolean
 };
 
 const DEFAULT_BLOCKS: Block[] = [
-  { id: "dashboard", label: "Dashboard", url: "/dashboard", icon: "LayoutDashboard" },
-  { id: "calendar", label: "Kalender", url: "/calendar", icon: "Calendar" },
-  { id: "toolbox", label: "Toolbox", url: "/toolbox", icon: "Package" },
-  { id: "archive", label: "Archiv", url: "/archive", icon: "Package" },
-  { id: "profile", label: "Profil", url: "/profile", icon: "User" }
+  { id: "dashboard", label: "Dashboard", url: "/dashboard", icon: "LayoutDashboard", archived: false },
+  { id: "calendar", label: "Kalender", url: "/calendar", icon: "Calendar", archived: false },
+  { id: "toolbox", label: "Toolbox", url: "/toolbox", icon: "Package", archived: false },
+  { id: "archive", label: "Archiv", url: "/archive", icon: "Package", archived: false }, // Note: "Archiv" here is a page label
+  { id: "profile", label: "Profil", url: "/profile", icon: "User", archived: false }
 ];
 
+// This local getBlocksFromStorage is mostly for the DEFAULT_BLOCKS constant if needed elsewhere,
+// but primary state comes from Navigation props.
 function getBlocksFromStorage(): Block[] {
   try {
     const stored = localStorage.getItem("nav_blocks");
-    if (stored) return JSON.parse(stored);
+    if (stored) {
+      const parsedBlocks = JSON.parse(stored) as Partial<Block>[];
+      return parsedBlocks.map(b => ({
+        id: b.id || Math.random().toString(36).slice(2),
+        label: b.label || "Untitled",
+        url: b.url || "/",
+        icon: b.icon || "Edit",
+        archived: typeof b.archived === 'boolean' ? b.archived : false,
+      })) as Block[];
+    }
   } catch {}
-  return DEFAULT_BLOCKS;
+  return DEFAULT_BLOCKS.map(b => ({ ...b })); // Return a copy
 }
 
 function saveBlocksToStorage(blocks: Block[]) {
@@ -41,7 +51,7 @@ function saveBlocksToStorage(blocks: Block[]) {
 
 function getLucideIconComponent(iconName: string): React.ElementType {
   const IconComponent = lucideIcons[iconName as keyof typeof lucideIcons];
-  return IconComponent || Edit; // Fallback to Edit icon
+  return IconComponent || Edit;
 }
 
 // Sortable Item Component
@@ -109,7 +119,7 @@ const SortableBlockItem = ({
 export const BlocksEditDialog = ({
   open,
   onOpenChange,
-  blocks,
+  blocks, // This comes from Navigation's state
   setBlocks
 }: {
   open: boolean;
@@ -117,31 +127,35 @@ export const BlocksEditDialog = ({
   blocks: Block[];
   setBlocks: (blocks: Block[]) => void;
 }) => {
-  const [editBlocks, setEditBlocks] = useState<Block[]>(blocks);
+  const [editBlocks, setEditBlocks] = useState<Block[]>([]);
   const [newBlockLabel, setNewBlockLabel] = useState("");
   const [newBlockUrl, setNewBlockUrl] = useState("");
-  const [newBlockIcon, setNewBlockIcon] = useState("Edit"); // Default to "Edit" (PascalCase)
+  const [newBlockIcon, setNewBlockIcon] = useState("Edit");
   const { toast } = useToast();
 
   useEffect(() => {
-    // Ensure editBlocks is initialized with a deep copy or re-fetched blocks
-    // to avoid issues if `blocks` prop is from an old state.
-    // The current `blocks` prop comes from Navigation's state, which is initialized from localStorage.
-    // This effect syncs `editBlocks` when the dialog is opened or `blocks` prop changes.
-    setEditBlocks(JSON.parse(JSON.stringify(blocks))); 
+    // Initialize editBlocks with a deep copy of the blocks prop when dialog opens or prop changes.
+    // Ensure all blocks have the 'archived' property.
+    if (open) {
+      const initializedBlocks = blocks.map(b => ({
+        ...b,
+        archived: typeof b.archived === 'boolean' ? b.archived : false,
+      }));
+      setEditBlocks(JSON.parse(JSON.stringify(initializedBlocks)));
+    }
   }, [blocks, open]);
 
   const handleAddBlock = () => {
     if (!newBlockLabel.trim() || !newBlockUrl.trim()) return;
-    // Ensure icon name is PascalCase if that's the convention for lucideIcons keys
-    const formattedIcon = newBlockIcon.trim() || "Edit"; 
+    const formattedIcon = newBlockIcon.trim() || "Edit";
     setEditBlocks([
       ...editBlocks,
       { 
         id: Math.random().toString(36).slice(2), 
         label: newBlockLabel.trim(), 
         url: newBlockUrl.trim(), 
-        icon: formattedIcon 
+        icon: formattedIcon,
+        archived: false // Explicitly set archived to false for new blocks
       }
     ]);
     setNewBlockLabel("");
@@ -173,8 +187,8 @@ export const BlocksEditDialog = ({
   };
 
   const handleSave = () => {
-    setBlocks(editBlocks); // Update parent state
-    saveBlocksToStorage(editBlocks); // Persist to localStorage
+    setBlocks(editBlocks); 
+    saveBlocksToStorage(editBlocks); 
     onOpenChange(false);
     toast({
       title: "Menü aktualisiert",
@@ -209,9 +223,9 @@ export const BlocksEditDialog = ({
               placeholder="Icon (z. B. Edit)"
               value={newBlockIcon}
               onChange={e => setNewBlockIcon(e.target.value)}
-              className="w-28" // Adjusted width
+              className="w-28"
             />
-            <Button onClick={handleAddBlock} variant="outline" size="icon"> {/* Changed to icon button */}
+            <Button onClick={handleAddBlock} variant="outline" size="icon">
               <Plus className="h-4 w-4" />
             </Button>
           </div>
@@ -248,4 +262,3 @@ export const BlocksEditDialog = ({
     </Dialog>
   );
 };
-

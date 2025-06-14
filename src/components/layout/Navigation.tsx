@@ -1,6 +1,6 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LogOut, User, Edit, icons as lucideIcons } from "lucide-react"; // Import Edit and icons
+import { LogOut, User, Edit, icons as lucideIcons } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -15,20 +15,31 @@ function getIconByName(iconName: string): React.ElementType {
   return IconComponent || Edit; // Fallback to Edit icon
 }
 
+// This is the primary function for loading blocks for the application state
 function getBlocksFromStorage(): Block[] {
   try {
     const stored = localStorage.getItem("nav_blocks");
-    if (stored) return JSON.parse(stored);
+    if (stored) {
+      // Ensure all blocks conform to the Block type, especially 'archived'
+      const parsedBlocks = JSON.parse(stored) as Partial<Block>[]; // Assume they might be partial from old storage
+      return parsedBlocks.map(b => ({
+        id: b.id || Math.random().toString(36).slice(2), // Basic validation/defaulting
+        label: b.label || "Unbenannt",
+        url: b.url || "/",
+        icon: b.icon || "Edit",
+        archived: typeof b.archived === 'boolean' ? b.archived : false, // Crucial: default archived to false
+      })) as Block[]; // Cast to Block[] after ensuring all props
+    }
   } catch (e) {
     console.error("Error reading blocks from localStorage", e);
   }
-  // Default blocks with PascalCase icon names
+  // Default blocks, ensuring 'archived: false'
   return [
-    { id: "dashboard", label: "Dashboard", url: "/dashboard", icon: "LayoutDashboard" },
-    { id: "calendar", label: "Kalender", url: "/calendar", icon: "Calendar" },
-    { id: "toolbox", label: "Toolbox", url: "/toolbox", icon: "Package" },
-    { id: "archive", label: "Archiv", url: "/archive", icon: "Package" },
-    { id: "profile", label: "Profil", url: "/profile", icon: "User" }
+    { id: "dashboard", label: "Dashboard", url: "/dashboard", icon: "LayoutDashboard", archived: false },
+    { id: "calendar", label: "Kalender", url: "/calendar", icon: "Calendar", archived: false },
+    { id: "toolbox", label: "Toolbox", url: "/toolbox", icon: "Package", archived: false },
+    { id: "archive", label: "Archiv", url: "/archive", icon: "Package", archived: false }, // Note: "Archiv" here is a page label
+    { id: "profile", label: "Profil", url: "/profile", icon: "User", archived: false }
   ];
 }
 
