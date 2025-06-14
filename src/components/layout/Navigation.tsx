@@ -1,3 +1,4 @@
+
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { LogOut, User, Edit, icons as lucideIcons } from "lucide-react";
@@ -21,24 +22,27 @@ function getBlocksFromStorage(): Block[] {
     const stored = localStorage.getItem("nav_blocks");
     if (stored) {
       // Ensure all blocks conform to the Block type, especially 'archived'
-      const parsedBlocks = JSON.parse(stored) as Partial<Block>[]; // Assume they might be partial from old storage
-      return parsedBlocks.map(b => ({
-        id: b.id || Math.random().toString(36).slice(2), // Basic validation/defaulting
-        label: b.label || "Unbenannt",
-        url: b.url || "/",
-        icon: b.icon || "Edit",
-        archived: typeof b.archived === 'boolean' ? b.archived : false, // Crucial: default archived to false
-      })) as Block[]; // Cast to Block[] after ensuring all props
+      const parsedBlocks = JSON.parse(stored) as Partial<Block>[];
+      // Remove any with url "/calendar" (Kalender)
+      return parsedBlocks
+        .filter(b => b.url !== "/calendar")
+        .map(b => ({
+          id: b.id || Math.random().toString(36).slice(2),
+          label: b.label === "Archiv" ? "Weitere Tools" : (b.label || "Unbenannt"),
+          url: b.url === "/archive" ? "/archive" : (b.url || "/"),
+          icon: b.icon || "Edit",
+          archived: typeof b.archived === 'boolean' ? b.archived : false,
+        })) as Block[];
     }
   } catch (e) {
     console.error("Error reading blocks from localStorage", e);
   }
-  // Default blocks, ensuring 'archived: false'
+  // Default blocks, Kalender REMOVED, Archiv renamed
   return [
     { id: "dashboard", label: "Dashboard", url: "/dashboard", icon: "LayoutDashboard", archived: false },
-    { id: "calendar", label: "Kalender", url: "/calendar", icon: "Calendar", archived: false },
+    // Kalender REMOVED from main navigation
     { id: "toolbox", label: "Toolbox", url: "/toolbox", icon: "Package", archived: false },
-    { id: "archive", label: "Archiv", url: "/archive", icon: "Package", archived: false }, // Note: "Archiv" here is a page label
+    { id: "archive", label: "Weitere Tools", url: "/archive", icon: "Package", archived: false }, // renamed!
     { id: "profile", label: "Profil", url: "/profile", icon: "User", archived: false }
   ];
 }
@@ -50,21 +54,14 @@ export const Navigation = () => {
   const isMobile = useIsMobile();
 
   const [editOpen, setEditOpen] = useState(false);
-  // Initialize with a call to getBlocksFromStorage to ensure hydration compatibility
   const [blocks, setBlocks] = useState<Block[]>(() => getBlocksFromStorage());
-  // Simulate "author" (real-world: check user roles or id)
   const isAuthor = true; // Assuming user is author for now
 
-  // Effect to re-sync from localStorage if it changes externally (e.g. another tab)
-  // or on initial mount if useState initializer isn't enough (though it should be)
   useEffect(() => {
     const handleStorageChange = () => {
       setBlocks(getBlocksFromStorage());
     };
     window.addEventListener('storage', handleStorageChange);
-    // Initial sync if needed, though useState initializer should handle it.
-    // setBlocks(getBlocksFromStorage()); // This might cause an extra render if useState already did it.
-                                        // The useState initializer is generally preferred.
     return () => {
       window.removeEventListener('storage', handleStorageChange);
     };
@@ -94,7 +91,7 @@ export const Navigation = () => {
       {blocks
         .filter(b => !b.archived)
         .map(block => {
-          const LucideIcon = getIconByName(block.icon); // Use block.icon string
+          const LucideIcon = getIconByName(block.icon);
           return (
             <Link to={block.url} key={block.id}>
               <Button
@@ -103,12 +100,12 @@ export const Navigation = () => {
                 className={cn(
                   "font-medium",
                   isActive(block.url)
-                    ? "bg-blue-50 text-blue-700" // Active style
-                    : "text-gray-700 hover:text-blue-700 hover:bg-blue-50" // Default style
+                    ? "bg-blue-50 text-blue-700"
+                    : "text-gray-700 hover:text-blue-700 hover:bg-blue-50"
                 )}
               >
                 <LucideIcon className={cn("h-5 w-5", isMobile ? "mr-3" : "mr-2")} />
-                {block.label} 
+                {block.label}
               </Button>
             </Link>
           );
@@ -140,11 +137,7 @@ export const Navigation = () => {
                 <Edit className="h-5 w-5" />
               </Button>
             )}
-            {/* The profile link is now part of the dynamic blocks if configured,
-                but keeping a static one here as a fallback or direct access point if desired.
-                If it's meant to be ONLY in blocks, this can be removed.
-            */}
-            <Link to="/profile"> 
+            <Link to="/profile">
               <Button variant="ghost" size="icon" className="text-gray-700 hover:text-blue-700 hover:bg-blue-50">
                 <User className="h-5 w-5" />
               </Button>
@@ -157,7 +150,6 @@ export const Navigation = () => {
             >
               <LogOut className="h-5 w-5" />
             </Button>
-
             {isMobile && (
               <Sheet>
                 <SheetTrigger asChild>
@@ -181,3 +173,4 @@ export const Navigation = () => {
     </nav>
   );
 };
+
