@@ -72,7 +72,27 @@ export const HabitRow = ({
 
   const handleDayToggle = (date: Date, currentStatus: DayStatus) => {
     console.log(`HabitRow: Day toggle called with date ${formatDateFns(date, 'yyyy-MM-dd')} and current status: ${currentStatus}`);
-    onUpdateWeeklyCompletion(habit.id, date, currentStatus);
+    
+    // Cycle through statuses: null -> completed -> partial -> null
+    let newStatus: DayStatus;
+    
+    if (currentStatus === null || currentStatus === undefined) {
+      newStatus = 'completed';
+      console.log(`Setting to completed (green)`);
+    } else if (currentStatus === 'completed') {
+      newStatus = 'partial';
+      console.log(`Setting to partial/minimal dose (yellow)`);
+    } else if (currentStatus === 'partial') {
+      newStatus = null;
+      console.log(`Setting to null (unmarked)`);
+    } else {
+      // Fallback case
+      newStatus = 'completed';
+      console.log(`Unknown status ${currentStatus}, setting to completed (green)`);
+    }
+    
+    console.log(`Habit ${habit.id} on ${formatDateFns(date, 'yyyy-MM-dd')}: ${currentStatus} -> ${newStatus}`);
+    onUpdateWeeklyCompletion(habit.id, date, newStatus);
   };
 
   return (
