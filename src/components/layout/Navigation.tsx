@@ -1,3 +1,4 @@
+
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { LogOut, User, Edit, icons as lucideIcons } from "lucide-react";
@@ -7,7 +8,23 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
-import { BlocksEditDialog, Block } from "./BlocksEditDialog";
+import { BlocksEditDialog } from "./BlocksEditDialog";
+
+// --- TYPE FIXES ---
+type NavBlockChild = {
+  id: string;
+  label: string;
+  url: string;
+  icon: string;
+};
+type NavBlock = {
+  id: string;
+  label: string;
+  url: string;
+  icon: string;
+  archived: boolean;
+  children?: NavBlockChild[];
+};
 
 // Helper function to get icon component by name
 function getIconByName(iconName: string): React.ElementType {
@@ -16,14 +33,16 @@ function getIconByName(iconName: string): React.ElementType {
 }
 
 // New: Helper to migrate/move Kalender into "Weitere Tools" (archive)
-function getBlocksFromStorage(): Block[] {
+// Plus move Favoriten and Lernbereich there
+function getBlocksFromStorage(): NavBlock[] {
   try {
     const stored = localStorage.getItem("nav_blocks");
     if (stored) {
-      let parsedBlocks = JSON.parse(stored) as Partial<Block>[];
+      let parsedBlocks = JSON.parse(stored) as Partial<NavBlock>[];
 
-      // Remove Kalender from root navigation if it exists
-      parsedBlocks = parsedBlocks.filter(b => b.url !== "/calendar");
+      // Remove Kalender, Favoriten, Lernbereich from root navigation if they exist
+      const SPECIAL_CHILD_URLS = ["/calendar", "/favorites", "/education"];
+      parsedBlocks = parsedBlocks.filter(b => !SPECIAL_CHILD_URLS.includes(b.url || ""));
 
       // Find 'archive'/'Weitere Tools' nav block
       let additionalToolsBlock = parsedBlocks.find(
@@ -32,7 +51,7 @@ function getBlocksFromStorage(): Block[] {
 
       if (additionalToolsBlock) {
         additionalToolsBlock.label = "Weitere Tools";
-        (additionalToolsBlock as any).children = [
+        additionalToolsBlock.children = [
           {
             id: "archive-main",
             label: "Archiv",
@@ -102,8 +121,8 @@ function getBlocksFromStorage(): Block[] {
           url: b.url === "/archive" ? "/archive" : (b.url || "/"),
           icon: b.icon || "Edit",
           archived: typeof b.archived === 'boolean' ? b.archived : false,
-          children: b.children,
-        })) as Block[];
+          children: b.children as NavBlockChild[] | undefined,
+        })) as NavBlock[];
     }
   } catch (e) {
     console.error("Error reading blocks from localStorage", e);
@@ -149,19 +168,6 @@ function getBlocksFromStorage(): Block[] {
   ];
 }
 
-export type Block = {
-  id: string;
-  label: string;
-  url: string;
-  icon: string;
-  archived: boolean;
-  children?: {
-    id: string;
-    label: string;
-    url: string;
-    icon: string;
-  }[];
-};
 
 export const Navigation = () => {
   const navigate = useNavigate();
@@ -170,7 +176,7 @@ export const Navigation = () => {
   const isMobile = useIsMobile();
 
   const [editOpen, setEditOpen] = useState(false);
-  const [blocks, setBlocks] = useState<Block[]>(() => getBlocksFromStorage());
+  const [blocks, setBlocks] = useState<NavBlock[]>(() => getBlocksFromStorage());
   const isAuthor = true;
 
   useEffect(() => {
@@ -207,7 +213,11 @@ export const Navigation = () => {
     <div className={cn("flex", isMobile ? "flex-col space-y-2" : "items-center space-x-2")}>
       {/* Only show non-archived blocks that are not "Profil" and not children blocks */}
       {blocks
-        .filter(b => !b.archived && !b.children && b.label !== "Profil")
+        .filter(b =>
+          !b.archived &&
+          !b.children && // Only blocks without children (main nav links)
+          b.label !== "Profil" // Remove profile tab
+        )
         .map(block => {
           const LucideIcon = getIconByName(block.icon);
           return (
@@ -230,7 +240,7 @@ export const Navigation = () => {
         })}
       {/* Render children of "Weitere Tools" as a submenu/group */}
       {blocks
-        .filter(b => !!b.children && !b.archived)
+        .filter(b => Array.isArray(b.children) && !b.archived)
         .map(block => {
           const LucideIcon = getIconByName(block.icon);
           const children = block.children || [];
