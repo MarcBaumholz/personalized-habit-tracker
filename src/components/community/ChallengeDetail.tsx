@@ -24,6 +24,7 @@ interface UserProfile {
   username?: string;
 }
 
+// --- Simplified Profile and ProofItem interfaces for this file only ---
 interface ProofItem {
   id: string;
   user_id: string;
@@ -31,7 +32,12 @@ interface ProofItem {
   image_url: string;
   created_at: string;
   progress_value: number;
-  profiles?: UserProfile | null;
+  profiles?: {
+    id?: string;
+    full_name?: string;
+    avatar_url?: string;
+    username?: string;
+  } | null;
 }
 
 interface ParticipantItem {
@@ -475,7 +481,7 @@ export const ChallengeDetail = () => {
 
         <TabsContent value="proofs" className="space-y-4">
           <ChallengeProofs
-            groupedProofs={groupedProofs}
+            groupedProofs={groupedProofs as Record<string, ProofItem[]>} // Defensive cast for safety
             targetUnit={challenge.targetUnit}
             currentUserId={user?.id}
             isParticipating={isParticipant}
