@@ -48,7 +48,7 @@ export const WeeklyDayTracker: React.FC<WeeklyDayTrackerProps> = ({
                 bgColor,
                 isToday(date) && 'ring-2 ring-blue-500 ring-offset-1'
               )}
-              aria-label={`Status für ${format(date, 'EEEE, d. MMMM', { locale: de })}`} {/* Use the imported 'de' locale */}
+              aria-label={`Status für ${format(date, 'EEEE, d. MMMM', { locale: de })}`}
             >
               {iconOrDayNumber}
             </button>
