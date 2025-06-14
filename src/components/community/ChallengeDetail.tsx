@@ -82,6 +82,15 @@ interface ProofsByDate {
   [date: string]: ProofData[];
 }
 
+// New interface for challenge_participants table row
+interface ChallengeParticipantDbRow {
+  id: string; // uuid
+  user_id: string; // uuid
+  challenge_id: string; // text
+  progress: number | null;
+  created_at: string | null; // timestamptz, ISO string
+}
+
 export const ChallengeDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -373,16 +382,22 @@ export const ChallengeDetail = () => {
   });
   
   // Remove participant mutation
-  const removeParticipantMutation = useMutation({
-    mutationFn: async (participantId: string) => {
-      const { data, error } = await supabase
+  const removeParticipantMutation = useMutation<
+    void,    // TData
+    Error,   // TError
+    string   // TVariables (participantId)
+  >({
+    mutationFn: async (participantId: string): Promise<void> => {
+      if (!id) {
+        throw new Error("Challenge ID is missing. Cannot remove participant.");
+      }
+      const { error } = await supabase
         .from('challenge_participants')
         .delete()
         .eq('user_id', participantId)
-        .eq('challenge_id', id!);
+        .eq('challenge_id', id); // Use guarded id
         
       if (error) throw error;
-      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['challenge-participants', id] });
@@ -402,8 +417,15 @@ export const ChallengeDetail = () => {
   });
   
   // Add participant mutation
-  const addParticipantMutation = useMutation({
-    mutationFn: async (email: string) => {
+  const addParticipantMutation = useMutation<
+    ChallengeParticipantDbRow[] | null, // TData
+    Error,                              // TError
+    string                              // TVariables (email)
+  >({
+    mutationFn: async (email: string): Promise<ChallengeParticipantDbRow[] | null> => {
+      if (!id) {
+        throw new Error("Challenge ID is missing. Cannot add participant.");
+      }
       // First, get the user ID from the email
       const { data: userData, error: userError } = await supabase
         .from('profiles')
@@ -422,9 +444,10 @@ export const ChallengeDetail = () => {
         .from('challenge_participants')
         .insert({
           user_id: userData.id,
-          challenge_id: id!,
+          challenge_id: id, // Use guarded id
           progress: 0
-        });
+        })
+        .select(); // Add .select()
         
       if (error) throw error;
       return data;
@@ -437,11 +460,11 @@ export const ChallengeDetail = () => {
         description: "Der Teilnehmer wurde zur Challenge hinzugefügt.",
       });
     },
-    onError: (error) => {
+    onError: (error) => { // error is type Error from TError
       console.error("Add participant error:", error);
       toast({
         title: "Fehler beim Hinzufügen",
-        description: error instanceof Error ? error.message : "Bitte versuche es später erneut.",
+        description: error.message || "Bitte versuche es später erneut.",
         variant: "destructive"
       });
     }
