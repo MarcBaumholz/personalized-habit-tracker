@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -73,7 +74,7 @@ export const HabitRow = ({
   const handleDayToggle = (date: Date, currentStatus: DayStatus) => {
     console.log(`HabitRow: Day toggle called with date ${formatDateFns(date, 'yyyy-MM-dd')} and current status: ${currentStatus}`);
     
-    // Cycle through statuses: null -> completed -> partial -> null
+    // Fixed cycling logic: null -> completed -> partial -> null
     let newStatus: DayStatus;
     
     if (currentStatus === null || currentStatus === undefined) {

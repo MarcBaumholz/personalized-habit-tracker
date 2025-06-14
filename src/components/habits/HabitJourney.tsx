@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -169,6 +170,15 @@ export const HabitJourney = () => {
       } else {
         // Insert or update the completion record
         console.log(`Upserting completion for habit ${habitId} on ${formattedDate} with status ${status}`);
+        
+        // Fix the completion_type mapping to match database constraints
+        let completionType = 'check'; // default
+        if (status === 'completed') {
+          completionType = 'check';
+        } else if (status === 'partial') {
+          completionType = 'check'; // Use 'check' for partial as well, since 'partial' is not in the constraint
+        }
+        
         const { data, error } = await supabase
           .from('habit_completions')
           .upsert(
@@ -177,7 +187,7 @@ export const HabitJourney = () => {
               user_id: user.id,
               completed_date: formattedDate,
               status: status,
-              completion_type: status === 'completed' ? 'check' : status === 'partial' ? 'partial' : 'check'
+              completion_type: completionType
             },
             {
               onConflict: 'habit_id,user_id,completed_date', 
