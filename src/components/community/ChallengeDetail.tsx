@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from "react-router-dom";
 import { Navigation } from "@/components/layout/Navigation";
 import { Button } from "@/components/ui/button";
@@ -38,32 +39,32 @@ import { ChallengeProofs } from "./challenge-detail/ChallengeProofs";
 import { ChallengeActionButtons } from "./challenge-detail/ChallengeActionButtons";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-// Simple interfaces without circular dependencies
-interface ProfileData {
+// Simplified interfaces to avoid circular dependencies
+interface SimpleProfile {
   id?: string;
   full_name?: string;
   avatar_url?: string;
   username?: string;
 }
 
-interface ProofData {
+interface SimpleProof {
   id: string;
   user_id: string;
   challenge_id: string;
   image_url: string;
   created_at: string;
   progress_value: number;
-  profiles?: ProfileData | null;
+  profiles?: SimpleProfile | null;
 }
 
-interface ParticipantData {
+interface SimpleParticipant {
   id: string;
   name: string;
   avatar: string;
   progress: number;
 }
 
-interface ChallengeInfo {
+interface SimpleChallengeInfo {
   id: string;
   title: string;
   description: string;
@@ -74,21 +75,12 @@ interface ChallengeInfo {
   };
   currentProgress: number;
   endDate: string;
-  participants: ParticipantData[];
+  participants: SimpleParticipant[];
   created_by?: string;
 }
 
-interface ProofsByDate {
-  [date: string]: ProofData[];
-}
-
-// New interface for challenge_participants table row
-interface ChallengeParticipantDbRow {
-  id: string; // uuid
-  user_id: string; // uuid
-  challenge_id: string; // text
-  progress: number | null;
-  created_at: string | null; // timestamptz, ISO string
+interface SimpleProofsByDate {
+  [date: string]: SimpleProof[];
 }
 
 export const ChallengeDetail = () => {
@@ -101,15 +93,15 @@ export const ChallengeDetail = () => {
   const [isManageParticipantsOpen, setIsManageParticipantsOpen] = useState(false);
   const [isAddProofOpen, setIsAddProofOpen] = useState(false);
   const [newParticipantEmail, setNewParticipantEmail] = useState("");
-  const [participants, setParticipants] = useState<ParticipantData[]>([]);
-  const [groupedProofs, setGroupedProofs] = useState<ProofsByDate>({});
+  const [participants, setParticipants] = useState<SimpleParticipant[]>([]);
+  const [groupedProofs, setGroupedProofs] = useState<SimpleProofsByDate>({});
   const [totalProgress, setTotalProgress] = useState(0);
   const [progressValue, setProgressValue] = useState(0);
   const [proofImage, setProofImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isDeleteProofDialogOpen, setIsDeleteProofDialogOpen] = useState(false);
-  const [proofToDelete, setProofToDelete] = useState<ProofData | null>(null);
-  const [realChallenge, setRealChallenge] = useState<ChallengeInfo | null>(null);
+  const [proofToDelete, setProofToDelete] = useState<SimpleProof | null>(null);
+  const [realChallenge, setRealChallenge] = useState<SimpleChallengeInfo | null>(null);
   
   // Get current user
   const { data: session } = useQuery({
@@ -226,7 +218,7 @@ export const ChallengeDetail = () => {
             progress_value: proof.progress_value || 0,
             created_at: proof.created_at,
             profiles: profileData || null
-          } as ProofData;
+          } as SimpleProof;
         })
       );
     }
@@ -262,7 +254,7 @@ export const ChallengeDetail = () => {
         }
         acc[date].push(proof);
         return acc;
-      }, {} as ProofsByDate);
+      }, {} as SimpleProofsByDate);
       
       setGroupedProofs(grouped);
     }
@@ -289,7 +281,7 @@ export const ChallengeDetail = () => {
   }, [challengeData, totalProgress, participants]);
   
   // Default challenge data if none exists in database
-  const challenge: ChallengeInfo = realChallenge || {
+  const challenge: SimpleChallengeInfo = realChallenge || {
     id: id || '',
     title: id === '1' ? '100 km Laufen' : id === '3' ? '1000 Seiten lesen' : 'Challenge',
     description: id === '1' ? 
@@ -382,12 +374,8 @@ export const ChallengeDetail = () => {
   });
   
   // Remove participant mutation
-  const removeParticipantMutation = useMutation<
-    void,    // TData
-    Error,   // TError
-    string   // TVariables (participantId)
-  >({
-    mutationFn: async (participantId: string): Promise<void> => {
+  const removeParticipantMutation = useMutation({
+    mutationFn: async (participantId: string) => {
       if (!id) {
         throw new Error("Challenge ID is missing. Cannot remove participant.");
       }
@@ -395,7 +383,7 @@ export const ChallengeDetail = () => {
         .from('challenge_participants')
         .delete()
         .eq('user_id', participantId)
-        .eq('challenge_id', id); // Use guarded id
+        .eq('challenge_id', id);
         
       if (error) throw error;
     },
@@ -417,12 +405,8 @@ export const ChallengeDetail = () => {
   });
   
   // Add participant mutation
-  const addParticipantMutation = useMutation<
-    ChallengeParticipantDbRow[] | null, // TData
-    Error,                              // TError
-    string                              // TVariables (email)
-  >({
-    mutationFn: async (email: string): Promise<ChallengeParticipantDbRow[] | null> => {
+  const addParticipantMutation = useMutation({
+    mutationFn: async (email: string) => {
       if (!id) {
         throw new Error("Challenge ID is missing. Cannot add participant.");
       }
@@ -444,10 +428,10 @@ export const ChallengeDetail = () => {
         .from('challenge_participants')
         .insert({
           user_id: userData.id,
-          challenge_id: id, // Use guarded id
+          challenge_id: id,
           progress: 0
         })
-        .select(); // Add .select()
+        .select();
         
       if (error) throw error;
       return data;
@@ -460,7 +444,7 @@ export const ChallengeDetail = () => {
         description: "Der Teilnehmer wurde zur Challenge hinzugefügt.",
       });
     },
-    onError: (error) => { // error is type Error from TError
+    onError: (error: Error) => {
       console.error("Add participant error:", error);
       toast({
         title: "Fehler beim Hinzufügen",
@@ -669,7 +653,7 @@ export const ChallengeDetail = () => {
     }
   };
   
-  const handleDeleteProof = (proof: ProofData) => {
+  const handleDeleteProof = (proof: SimpleProof) => {
     if (user?.id !== proof.user_id) {
       toast({
         title: "Nicht erlaubt",
@@ -763,9 +747,8 @@ export const ChallengeDetail = () => {
               </div>
               
               {/* Participants */}
-              {/* Pass as ParticipantData[] (no recursive/circular) */}
               <ParticipantsList
-                participants={challenge.participants as Array<{ id: string; name: string; avatar: string; progress: number }>}
+                participants={challenge.participants}
                 targetValue={challenge.target.value}
                 targetUnit={challenge.target.unit}
               />
