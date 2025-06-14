@@ -740,8 +740,9 @@ export const ChallengeDetail = () => {
               </div>
               
               {/* Participants */}
+              {/* The following change works around deep type instantiation issue */}
               <ParticipantsList
-                participants={challenge.participants}
+                participants={challenge.participants as any[]}
                 targetValue={challenge.target.value}
                 targetUnit={challenge.target.unit}
               />
