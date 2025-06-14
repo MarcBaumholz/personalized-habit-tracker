@@ -1,9 +1,9 @@
+
 import { useState } from "react";
-import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, BellDot, Star, Flame, Check, Minus } from "lucide-react";
-import { differenceInDays, startOfWeek, endOfWeek, eachDayOfInterval, format as formatDateFns, parseISO, isToday } from 'date-fns';
+import { BellDot, Flame } from "lucide-react";
+import { differenceInDays, startOfWeek, endOfWeek, eachDayOfInterval, format as formatDateFns } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { EditHabitDialog } from "./EditHabitDialog";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -13,18 +13,12 @@ import { cn } from "@/lib/utils";
 interface HabitRowProps {
   habit: any;
   onReflectionClick: (habit: any) => void;
-  onCompletionClick: (habit: any) => void;
-  onSatisfactionClick: (habit: any) => void;
-  isCompletedToday: (habit: any) => boolean;
   onUpdateWeeklyCompletion: (habitId: string, date: Date, newStatus: DayStatus) => void;
 }
 
 export const HabitRow = ({
   habit,
   onReflectionClick,
-  onCompletionClick,
-  onSatisfactionClick,
-  isCompletedToday,
   onUpdateWeeklyCompletion,
 }: HabitRowProps) => {
   const isMobile = useIsMobile();
@@ -115,28 +109,6 @@ export const HabitRow = ({
             {needsReflection(habit) && (
               <span className="absolute -top-1 -right-1 h-2 w-2 bg-red-500 rounded-full"></span>
             )}
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => onSatisfactionClick(habit)}
-          >
-            <Star className={`h-4 w-4 ${habit.satisfaction_level === 'high' ? 'text-yellow-400' : 'text-gray-400'}`} />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => {
-              if (!isCompletedToday(habit)) {
-                onCompletionClick(habit);
-              }
-            }}
-          >
-            <CheckCircle 
-              className={`h-4 w-4 ${isCompletedToday(habit) ? "text-green-500" : "text-gray-400"}`} 
-            />
           </Button>
         </div>
       </div>

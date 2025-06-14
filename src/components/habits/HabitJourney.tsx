@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,53 +31,6 @@ export const HabitJourney = () => {
         throw habitsError;
       }
       return habitsData;
-    },
-  });
-
-  const completeHabitMutation = useMutation({
-    mutationFn: async (habit: any) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("No user found");
-
-      // This old mutation sets a basic completion. Consider if it needs status.
-      const { data, error } = await supabase
-        .from("habit_completions")
-        .insert({
-          habit_id: habit.id,
-          user_id: user.id,
-          completed_date: formatDateFns(new Date(), 'yyyy-MM-dd'), // ensure it uses today's date
-          status: 'completed', // Default to 'completed' if using this old button
-        })
-        .select(); // Ensure it returns data to avoid issues if `data` is expected by `onSuccess`
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["habits"] });
-      toast({
-        title: "Gewohnheit abgeschlossen",
-        description: "Dein Fortschritt wurde gespeichert.",
-      });
-    },
-  });
-
-  const updateSatisfactionMutation = useMutation({
-    mutationFn: async (habit: any) => {
-      const { data, error } = await supabase
-        .from("habits")
-        .update({ satisfaction_level: habit.satisfaction_level === 'high' ? 'low' : 'high' })
-        .eq("id", habit.id);
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["habits"] });
-      toast({
-        title: "Zufriedenheit aktualisiert",
-        description: "Die Gewohnheit wurde als zufriedenstellend markiert.",
-      });
     },
   });
 
@@ -233,13 +187,6 @@ export const HabitJourney = () => {
 
   const handleUpdateWeeklyCompletion = (habitId: string, date: Date, newStatus: DayStatus) => {
     upsertHabitCompletionMutation.mutate({ habitId, date, status: newStatus });
-  };
-
-  const isCompletedToday = (habit: any) => {
-    const todayStr = formatDateFns(new Date(), 'yyyy-MM-dd');
-    return habit.habit_completions?.some((c: any) => 
-      c.completed_date === todayStr && (c.status === 'completed' || c.status === 'partial')
-    );
   };
 
   const handleReflectionSubmit = (reflection: string, obstacles: string, srhiResponses?: Record<number, string>) => {
