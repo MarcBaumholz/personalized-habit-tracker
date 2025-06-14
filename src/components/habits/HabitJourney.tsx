@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,7 +7,7 @@ import { ReflectionDialog } from "./ReflectionDialog";
 import { useState } from "react";
 import { HabitRow } from "./HabitRow";
 import { format as formatDateFns, parseISO, subDays } from 'date-fns';
-import type { DayStatus } from './WeeklyDayTracker'; // Import DayStatus type
+import type { DayStatus } from './WeeklyDayTracker';
 
 export const HabitJourney = () => {
   const [selectedHabit, setSelectedHabit] = useState<any>(null);
@@ -113,6 +114,9 @@ export const HabitJourney = () => {
       const formattedDate = formatDateFns(date, 'yyyy-MM-dd');
       const isForToday = formattedDate === formatDateFns(new Date(), 'yyyy-MM-dd');
 
+      console.log(`Updating habit completion: habitId=${habitId}, date=${formattedDate}, status=${status}`);
+
+      // Handle streak updates for today's completions
       if (isForToday && (status === 'completed' || status === 'partial')) {
         const { data: currentHabit, error: fetchError } = await supabase
           .from('habits')
@@ -123,10 +127,12 @@ export const HabitJourney = () => {
         if (fetchError) {
           console.error("Error fetching habit for streak update:", fetchError);
         } else if (currentHabit) {
-          const isAlreadyMarkedToday = currentHabit.last_completed_at && formatDateFns(parseISO(currentHabit.last_completed_at), 'yyyy-MM-dd') === formattedDate;
+          const isAlreadyMarkedToday = currentHabit.last_completed_at && 
+            formatDateFns(parseISO(currentHabit.last_completed_at), 'yyyy-MM-dd') === formattedDate;
 
           if (!isAlreadyMarkedToday) {
-            const lastCompletionDate = currentHabit.last_completed_at ? formatDateFns(parseISO(currentHabit.last_completed_at), 'yyyy-MM-dd') : null;
+            const lastCompletionDate = currentHabit.last_completed_at ? 
+              formatDateFns(parseISO(currentHabit.last_completed_at), 'yyyy-MM-dd') : null;
             const yesterday = formatDateFns(subDays(new Date(), 1), 'yyyy-MM-dd');
             const newStreak = lastCompletionDate === yesterday ? (currentHabit.streak_count || 0) + 1 : 1;
             
@@ -137,21 +143,33 @@ export const HabitJourney = () => {
             
             if (updateError) {
               console.error('Error updating streak:', updateError.message);
+            } else {
+              console.log(`Updated streak to ${newStreak} for habit ${habitId}`);
             }
           }
         }
       }
 
+      // Handle the completion record
       if (status === null) {
+        // Delete the completion record
+        console.log(`Deleting completion for habit ${habitId} on ${formattedDate}`);
         const { error: deleteError } = await supabase
           .from('habit_completions')
           .delete()
           .eq('habit_id', habitId)
           .eq('user_id', user.id)
           .eq('completed_date', formattedDate);
-        if (deleteError) throw deleteError;
+        
+        if (deleteError) {
+          console.error('Error deleting completion:', deleteError);
+          throw deleteError;
+        }
+        console.log(`Successfully deleted completion for habit ${habitId} on ${formattedDate}`);
         return { status: 'deleted' }; 
       } else {
+        // Insert or update the completion record
+        console.log(`Upserting completion for habit ${habitId} on ${formattedDate} with status ${status}`);
         const { data, error } = await supabase
           .from('habit_completions')
           .upsert(
@@ -159,7 +177,8 @@ export const HabitJourney = () => {
               habit_id: habitId,
               user_id: user.id,
               completed_date: formattedDate,
-              status: status, 
+              status: status,
+              completion_type: status === 'completed' ? 'check' : status === 'partial' ? 'partial' : 'check'
             },
             {
               onConflict: 'habit_id,user_id,completed_date', 
@@ -167,32 +186,51 @@ export const HabitJourney = () => {
           )
           .select(); 
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error upserting completion:', error);
+          throw error;
+        }
+        console.log(`Successfully upserted completion for habit ${habitId} on ${formattedDate} with status ${status}`);
         return data;
       }
     },
     onSuccess: (data, variables) => {
+      console.log(`Completion mutation successful for habit ${variables.habitId} with status ${variables.status}`);
       queryClient.invalidateQueries({ queryKey: ["habits"] });
+      
+      // Show user feedback
+      const statusText = variables.status === 'completed' ? 'Vollständig erledigt' : 
+                        variables.status === 'partial' ? 'Minimaldosis erledigt' : 'Entfernt';
+      toast({
+        title: "Gewohnheit aktualisiert",
+        description: `Status: ${statusText}`,
+      });
     },
-    onError: (error) => {
-      console.error("Error updating weekly completion:", error);
+    onError: (error, variables) => {
+      console.error("Error updating habit completion:", error);
       toast({
         title: "Fehler",
-        description: "Wöchentlicher Fortschritt konnte nicht gespeichert werden.",
+        description: "Gewohnheit konnte nicht aktualisiert werden.",
         variant: "destructive",
       });
     }
   });
 
   const handleUpdateWeeklyCompletion = (habitId: string, date: Date, currentStatus: DayStatus) => {
+    // Cycle through statuses: null -> completed -> partial -> null
     let newStatus: DayStatus;
     if (currentStatus === null) {
       newStatus = 'completed';
+      console.log(`Day clicked: Setting to completed (green)`);
     } else if (currentStatus === 'completed') {
       newStatus = 'partial';
+      console.log(`Day clicked: Setting to partial/minimal dose (yellow)`);
     } else {
       newStatus = null;
+      console.log(`Day clicked: Setting to null (unmarked)`);
     }
+    
+    console.log(`Habit ${habitId} on ${formatDateFns(date, 'yyyy-MM-dd')}: ${currentStatus} -> ${newStatus}`);
     upsertHabitCompletionMutation.mutate({ habitId, date, status: newStatus });
   };
 
@@ -218,7 +256,7 @@ export const HabitJourney = () => {
     <Card className="p-6">
       <h2 className="text-xl font-bold mb-6">Deine Gewohnheiten</h2>
       
-      <div className="space-y-4"> {/* Changed from space-y-6 to space-y-4 to accommodate new tracker */}
+      <div className="space-y-4">
         {habits?.map((habit: any) => (
           <HabitRow 
             key={habit.id}
