@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ReflectionDialog } from "./ReflectionDialog";
 import { useState } from "react";
 import { HabitRow } from "./HabitRow";
-import { format as formatDateFns } from 'date-fns';
+import { format as formatDateFns, parseISO, subDays } from 'date-fns';
 import type { DayStatus } from './WeeklyDayTracker'; // Import DayStatus type
 
 export const HabitJourney = () => {
@@ -158,6 +158,36 @@ export const HabitJourney = () => {
       if (!user) throw new Error("No user found");
 
       const formattedDate = formatDateFns(date, 'yyyy-MM-dd');
+      const isForToday = formattedDate === formatDateFns(new Date(), 'yyyy-MM-dd');
+
+      if (isForToday && (status === 'completed' || status === 'partial')) {
+        const { data: currentHabit, error: fetchError } = await supabase
+          .from('habits')
+          .select('streak_count, last_completed_at')
+          .eq('id', habitId)
+          .single();
+
+        if (fetchError) {
+          console.error("Error fetching habit for streak update:", fetchError);
+        } else if (currentHabit) {
+          const isAlreadyMarkedToday = currentHabit.last_completed_at && formatDateFns(parseISO(currentHabit.last_completed_at), 'yyyy-MM-dd') === formattedDate;
+
+          if (!isAlreadyMarkedToday) {
+            const lastCompletionDate = currentHabit.last_completed_at ? formatDateFns(parseISO(currentHabit.last_completed_at), 'yyyy-MM-dd') : null;
+            const yesterday = formatDateFns(subDays(new Date(), 1), 'yyyy-MM-dd');
+            const newStreak = lastCompletionDate === yesterday ? (currentHabit.streak_count || 0) + 1 : 1;
+            
+            const { error: updateError } = await supabase
+              .from('habits')
+              .update({ streak_count: newStreak, last_completed_at: new Date().toISOString() })
+              .eq('id', habitId);
+            
+            if (updateError) {
+              console.error('Error updating streak:', updateError.message);
+            }
+          }
+        }
+      }
 
       if (status === null) {
         const { error: deleteError } = await supabase
@@ -190,11 +220,6 @@ export const HabitJourney = () => {
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["habits"] });
-      // Avoid toast for every quick click, or make it subtle
-      // toast({
-      //   title: "Fortschritt aktualisiert",
-      //   description: `Tag als ${variables.status || 'nicht erledigt'} markiert.`,
-      // });
     },
     onError: (error) => {
       console.error("Error updating weekly completion:", error);
@@ -245,9 +270,6 @@ export const HabitJourney = () => {
             key={habit.id}
             habit={habit}
             onReflectionClick={setSelectedHabit}
-            onCompletionClick={completeHabitMutation.mutate} 
-            onSatisfactionClick={updateSatisfactionMutation.mutate}
-            isCompletedToday={isCompletedToday} 
             onUpdateWeeklyCompletion={handleUpdateWeeklyCompletion} 
           />
         ))}

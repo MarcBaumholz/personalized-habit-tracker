@@ -35,7 +35,7 @@ export const HabitRow = ({
   };
 
   const getStreakCount = (habit: any) => {
-    return habit.habit_completions?.filter((c: any) => c.status === 'completed' || !c.status).length || 0;
+    return habit.streak_count || 0;
   };
 
   const getRemainingDays = (habit: any) => {
