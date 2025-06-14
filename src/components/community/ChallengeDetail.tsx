@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -451,7 +450,7 @@ export const ChallengeDetail = () => {
 
   return (
     <div className="container mx-auto p-4 space-y-6">
-      <ChallengeHeader 
+      <ChallengeHeader
         title={challenge.title}
         category={challenge.category}
         description={challenge.description}
@@ -461,8 +460,8 @@ export const ChallengeDetail = () => {
         canEdit={user?.id === challenge.created_by}
         onEditClick={() => setIsEditDialogOpen(true)}
       />
-      
-      <ChallengeProgressSection 
+
+      <ChallengeProgressSection
         currentProgress={challenge.currentProgress}
         targetValue={challenge.targetValue}
         targetUnit={challenge.targetUnit}
@@ -473,9 +472,9 @@ export const ChallengeDetail = () => {
           <TabsTrigger value="proofs">Beweise</TabsTrigger>
           <TabsTrigger value="participants">Teilnehmer</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="proofs" className="space-y-4">
-          <ChallengeProofs 
+          <ChallengeProofs
             groupedProofs={groupedProofs}
             targetUnit={challenge.targetUnit}
             currentUserId={user?.id}
@@ -484,7 +483,7 @@ export const ChallengeDetail = () => {
             onDeleteProof={handleDeleteProof}
           />
         </TabsContent>
-        
+
         <TabsContent value="participants" className="space-y-4">
           <div className="space-y-4">
             <div className="flex justify-between items-center">
@@ -496,7 +495,7 @@ export const ChallengeDetail = () => {
                 </Button>
               )}
             </div>
-            <ParticipantsList 
+            <ParticipantsList
               participants={challenge.participants}
               targetValue={challenge.targetValue}
               targetUnit={challenge.targetUnit}
